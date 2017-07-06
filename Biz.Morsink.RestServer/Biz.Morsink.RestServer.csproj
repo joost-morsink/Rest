@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>RestServer</Title>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Joost W. Morsink</Authors>
+    <Company>Morsink Software</Company>
+    <PackageId>Biz.Morsink.RestServer</PackageId>
+    <Description>Class library for creating ASP.Net Core REST level 3 services.</Description>
+    <PackageProjectUrl>https://github.com/joost-morsink/RestServer</PackageProjectUrl>
+    <RootNamespace>Biz.Morsink.RestServer</RootNamespace>
+    <Copyright>(C) 2017 Joost W. Morsink</Copyright>
+    <PackageTags>RestServer</PackageTags>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://github.com/joost-morsink/RestServer.git</RepositoryUrl>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
+    <VersionSuffix>beta001</VersionSuffix>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Release'">
+
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Debug'">
+    <VersionSuffix>a000debug</VersionSuffix>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Biz.Morsink.Identity" Version="0.1.0-beta001" />
+  </ItemGroup>
+
+
+</Project>
