@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Rest service</Title>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Joost W. Morsink</Authors>
+    <Company>Morsink Software</Company>
+    <PackageId>Biz.Morsink.Rest</PackageId>
+    <Description>Class library for defining an abstract Rest service.</Description>
+    <PackageProjectUrl>https://github.com/joost-morsink/Rest</PackageProjectUrl>
+    <RootNamespace>Biz.Morsink.Rest</RootNamespace>
+    <Copyright>(C) 2017 Joost W. Morsink</Copyright>
+    <PackageTags>Rest</PackageTags>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
+    <VersionSuffix>beta001</VersionSuffix>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Release'">
+
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Debug'">
+    <VersionSuffix>a000debug</VersionSuffix>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Biz.Morsink.Identity" Version="0.1.0-beta001" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
+  </ItemGroup>
+
+
+
+</Project>
