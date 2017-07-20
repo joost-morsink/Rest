@@ -162,7 +162,7 @@ Possible class hierarchy:
 * SearchResult
 * ...
 
-#### Versioning
+#### Versioning 
 **TODO**
 * URL?
 * Header?
