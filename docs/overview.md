@@ -42,7 +42,7 @@ The following aspects come into play when designing a Rest repository:
 * Navigation.
   * LinkProviders.
 * Paging.
-* Versioning.
+* Versioning & Deprecation.
 * Localization.
 
 ### Home resource
@@ -162,7 +162,7 @@ Possible class hierarchy:
 * SearchResult
 * ...
 
-#### Versioning 
+#### Versioning and deprecation
 **TODO**
 * URL?
 * Header?

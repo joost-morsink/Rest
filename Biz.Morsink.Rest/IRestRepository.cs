@@ -5,8 +5,8 @@ namespace Biz.Morsink.Rest
 {
     public interface IRestRepository<T>
     {
-        IEnumerable<Type> GetCapabilities();
-        IRestCapability<T> GetCapability(Type capability);
+        IEnumerable<RestCapabilityDescriptor> GetCapabilities();
+        IRestCapability<T> GetCapability(RestCapabilityDescriptorKey capability);
         C GetCapability<C>()
             where C : class, IRestCapability<T>;
     }

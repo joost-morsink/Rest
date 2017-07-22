@@ -14,6 +14,6 @@ namespace Biz.Morsink.Rest
             Value = value;
         }
         public RestResult<T> Value { get; }
-        public override bool IsSuccess => Value.AsSuccess() != null;
+        public override bool IsSuccess => Value is IRestSuccess;
     }
 }
