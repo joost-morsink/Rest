@@ -9,6 +9,7 @@ namespace Biz.Morsink.Rest
         IRestValue RestValue { get; }
     }
     public interface IHasRestValue<T> : IHasRestValue
+        where T:class
     {
         new RestValue<T> RestValue { get; }
     }

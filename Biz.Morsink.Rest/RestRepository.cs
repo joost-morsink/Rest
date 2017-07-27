@@ -22,8 +22,10 @@ namespace Biz.Morsink.Rest
             {
                 var ti = this.GetType().GetTypeInfo();
                 return from itf in ti.ImplementedInterfaces
-                       where CAPABILITY_TYPEINFO.IsAssignableFrom(itf)
-                       select (RestCapabilityDescriptor.Create(itf), (IRestCapability<T>)this);
+                       where CAPABILITY_TYPEINFO.IsAssignableFrom(itf) && itf.GetTypeInfo() != CAPABILITY_TYPEINFO
+                       let desc = RestCapabilityDescriptor.Create(itf)
+                       where desc != null
+                       select (desc, (IRestCapability<T>)this);
             }
         }
         protected void Register<C>(C capability)
@@ -32,7 +34,7 @@ namespace Biz.Morsink.Rest
             var capitf = from itf in typeof(C).GetTypeInfo().ImplementedInterfaces
                          where itf.GetTypeInfo() != CAPABILITY_TYPEINFO && CAPABILITY_TYPEINFO.IsAssignableFrom(itf.GetTypeInfo())
                          let cap = RestCapabilityDescriptor.Create(itf)
-                         select new KeyValuePair<RestCapabilityDescriptorKey, (RestCapabilityDescriptor,IRestCapability<T>)>(cap, (cap,capability));
+                         select new KeyValuePair<RestCapabilityDescriptorKey, (RestCapabilityDescriptor, IRestCapability<T>)>(cap, (cap, capability));
             capabilities = capabilities.AddRange(capitf);
         }
         public virtual IEnumerable<RestCapabilityDescriptor> GetCapabilities()
@@ -45,5 +47,7 @@ namespace Biz.Morsink.Rest
 
         public virtual C GetCapability<C>() where C : class, IRestCapability<T>
             => GetCapability(RestCapabilityDescriptorKey.Create(typeof(C))) as C;
+
+        Type IRestRepository.EntityType => typeof(T);
     }
 }

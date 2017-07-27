@@ -4,10 +4,11 @@ using System.Text;
 
 namespace Biz.Morsink.Rest
 {
-    public interface IRestSuccess 
+    public interface IRestSuccess
     {
     }
     public interface IRestSuccess<T> : IRestSuccess, IHasRestValue<T>
+        where T : class
     {
     }
 }

@@ -46,7 +46,7 @@ namespace Biz.Morsink.Rest
                 && EntityType == other.EntityType;
         public static bool operator ==(RestCapabilityDescriptorKey x, RestCapabilityDescriptorKey y)
             => ReferenceEquals(x, y)
-                || x != null && x.Equals(y);
+                || !ReferenceEquals(x, null) && x.Equals(y);
         public static bool operator !=(RestCapabilityDescriptorKey x, RestCapabilityDescriptorKey y)
             => !(x == y);
 

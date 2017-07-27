@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
     public struct RestValue<T> : IRestValue
+        where T:class
     {
         public RestValue(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
         {
@@ -18,6 +20,10 @@ namespace Biz.Morsink.Rest
         public IReadOnlyList<Link> Links { get; }
         public IReadOnlyList<object> Embeddings { get; }
         object IRestValue.Value => Value;
+        public RestResult<T>.Success ToResult()
+            => new RestResult<T>.Success(this);
+        public ValueTask<RestResult<T>> ToResultAsync()
+            => new ValueTask<RestResult<T>>(ToResult());
         public static Builder Build()
             => new Builder(default(T), ImmutableList<Link>.Empty, ImmutableList<object>.Empty);
         public struct Builder
@@ -44,6 +50,10 @@ namespace Biz.Morsink.Rest
                 => new Builder(value, links, this.embeddings.AddRange(embeddings));
             public RestValue<T> Build()
                 => new RestValue<T>(value, links, embeddings);
+            public RestResult<T>.Success BuildResult()
+                => new RestResult<T>.Success(Build());
+            public ValueTask<RestResult<T>> BuildAsyncResult()
+                => new ValueTask<RestResult<T>>(BuildResult());
         }
 
 

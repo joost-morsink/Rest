@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
@@ -14,15 +15,17 @@ namespace Biz.Morsink.Rest
             => RestResult<T>.Failure.NotFound.Instance;
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
             => new RestResult<T>.Failure.Error(ex);
+        public static ValueTask<RestResult<T>> ToAsync<T>(this RestResult<T> r) where T : class
+            => new ValueTask<RestResult<T>>(r);
     }
     public abstract class RestResult<T>
         where T : class
     {
         public Success AsSuccess() => this as Success;
         public Failure AsFailure() => this as Failure;
-        
-        public class Success : RestResult<T>, IRestSuccess<T>
-        { 
+
+        public class Success : RestResult<T>, IRestSuccess<T> 
+        {
             public Success(RestValue<T> restValue)
             {
                 RestValue = restValue;
