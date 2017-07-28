@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
-    public static class RestResult
+    public class RestResult
     {
         public static RestResult<T>.Success Create<T>(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null) where T : class
             => new RestResult<T>.Success(value, links, embeddings);
@@ -15,14 +15,18 @@ namespace Biz.Morsink.Rest
             => RestResult<T>.Failure.NotFound.Instance;
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
             => new RestResult<T>.Failure.Error(ex);
-        public static ValueTask<RestResult<T>> ToAsync<T>(this RestResult<T> r) where T : class
-            => new ValueTask<RestResult<T>>(r);
+        public static IRestFailure Error(Type type, Exception ex)
+            => (IRestFailure) Activator.CreateInstance(typeof(RestResult<>.Failure.Error).MakeGenericType(type), ex, null, null);
+
     }
-    public abstract class RestResult<T>
+    public abstract class RestResult<T> : IRestResult
         where T : class
     {
         public Success AsSuccess() => this as Success;
         public Failure AsFailure() => this as Failure;
+        public RestResponse<T> ToResponse() => new RestResponse<T>(this);
+        RestResponse IRestResult.ToResponse() => ToResponse();
+        public ValueTask<RestResult<T>> ToAsync() => new ValueTask<RestResult<T>>(this);
 
         public class Success : RestResult<T>, IRestSuccess<T> 
         {

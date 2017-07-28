@@ -81,5 +81,20 @@ namespace Biz.Morsink.Rest
         public Type BodyType { get; }
         public Type ResultType { get; }
         public Type InterfaceType { get; }
+
+        public Delegate CreateDelegate(object target)
+        {
+            var mi = InterfaceType.GetTypeInfo().DeclaredMethods.Single();
+            if (BodyType == null)
+                return mi.CreateDelegate(typeof(Func<,>).MakeGenericType(
+                    typeof(IIdentity<>).MakeGenericType(EntityType),
+                    typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
+            else
+                return mi.CreateDelegate(typeof(Func<,,>).MakeGenericType(
+                    typeof(IIdentity<>).MakeGenericType(EntityType), 
+                    BodyType,
+                    typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
+        }
+
     }
 }

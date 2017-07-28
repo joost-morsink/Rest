@@ -4,8 +4,8 @@ using System.Text;
 
 namespace Biz.Morsink.Rest
 {
-    public interface IRestFailure : IRestResult
+    public interface IRestResult
     {
-
+        RestResponse ToResponse();
     }
 }
