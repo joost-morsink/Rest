@@ -1,0 +1,26 @@
+﻿using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Test.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Biz.Morsink.Rest.Test
+{
+    [TestClass]
+    public class TypeDescriptorTest
+    {
+        [TestMethod]
+        public void TypeDescriptor_Happy()
+        {
+            var schema = typeof(Person).GetDescriptor();
+            var expected = new TypeDescriptor.Record(new[]
+            {
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), TypeDescriptor.Primitive.Numeric.Integral.Instance),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName),TypeDescriptor.Primitive.String.Instance)
+            });
+            Assert.AreEqual(expected, schema);
+        }
+    }
+}
