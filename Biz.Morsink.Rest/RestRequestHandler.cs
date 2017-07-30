@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,19 +10,17 @@ namespace Biz.Morsink.Rest
 {
     public class RestRequestHandler : IRestRequestHandler
     {
-        private readonly Func<Type, object> repositoryLocator;
-
-        public RestRequestHandler(Func<Type, object> repositoryLocator)
+        private Dictionary<Type, IRestRepository> repositories;
+        public RestRequestHandler(IEnumerable<IRestRepository> repositories)
         {
-            this.repositoryLocator = repositoryLocator;
+            this.repositories = repositories.ToDictionary(r => r.EntityType);
         }
         public async ValueTask<RestResponse> HandleRequest(RestRequest request)
         {
             try
             {
                 var type = request.Address.ForType;
-                var repo = repositoryLocator(type);
-                if (repo == null)
+                if(!repositories.TryGetValue(type, out var repo))
                     return RestResult.NotFound<object>().ToResponse();
 
                 return await (ValueTask<RestResponse>)

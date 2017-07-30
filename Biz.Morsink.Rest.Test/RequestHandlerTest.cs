@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.Test
         public async Task RequestHandler_HappyGet()
         {
             var testrepo = new TestGetRepo();
-            var handler = new RestRequestHandler(ty => ty == typeof(Person) ? testrepo : null);
+            var handler = new RestRequestHandler(new[] { testrepo });
             var req = new RestRequest("GET", FreeIdentity<Person>.Create(1), Enumerable.Empty<(string, string)>(), ty => new object());
             var response = await handler.HandleRequest(req) as RestResponse<Person>;
             Assert.IsNotNull(response);
