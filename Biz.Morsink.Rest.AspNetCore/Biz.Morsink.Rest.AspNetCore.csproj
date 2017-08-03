@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <TargetFramework>netstandard1.6</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>RestServer</Title>
     <VersionPrefix>0.1.0</VersionPrefix>
     <Authors>Joost W. Morsink</Authors>
     <Company>Morsink Software</Company>
-    <PackageId>Biz.Morsink.RestServer</PackageId>
+    <PackageId>Biz.Morsink.Rest.AspNetCore</PackageId>
     <Description>Class library for creating ASP.Net Core REST level 3 services.</Description>
     <PackageProjectUrl>https://github.com/joost-morsink/RestServer</PackageProjectUrl>
     <RootNamespace>Biz.Morsink.RestServer</RootNamespace>
