@@ -28,7 +28,7 @@
     <VersionSuffix>a000debug</VersionSuffix>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Biz.Morsink.Identity" Version="0.1.0-beta001" />
+    <ProjectReference Include="..\Biz.Morsink.Rest\Biz.Morsink.Rest.csproj" />
   </ItemGroup>
 
 
