@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-
+using QueryDict = System.Collections.Immutable.ImmutableSortedDictionary<string, Biz.Morsink.RestServer.Identity.RestPath.Query.Values>;
 namespace Biz.Morsink.RestServer.Identity
 {
     /// <summary>
@@ -129,10 +131,186 @@ namespace Biz.Morsink.RestServer.Identity
             #endregion
         }
         /// <summary>
-        /// This struct will represent the query string.
+        /// This struct represents the query string.
         /// </summary>
-        public struct Query
+        public struct Query : IReadOnlyDictionary<string, Query.Values>
         {
+            /// <summary>
+            /// This struct represents a set of values that correspond to a key in the query string.
+            /// </summary>
+            public struct Values : IReadOnlyList<string>
+            {
+                private readonly string value;
+                private readonly ImmutableList<string> values;
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="value">A single value.</param>
+                public Values(string value)
+                {
+                    this.value = value;
+                    values = null;
+                }
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="values">An immutable list of values.</param>
+                public Values(ImmutableList<string> values)
+                {
+                    this.values = values;
+                    value = null;
+                }
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="values">A number of values.</param>
+                public Values(IEnumerable<string> values)
+                    : this(ImmutableList.Create(values.ToArray()))
+                { }
+                /// <summary>
+                /// Adds a value to the collection.
+                /// </summary>
+                /// <param name="item">The value to add.</param>
+                /// <returns>A new Values struct containing the new item.</returns>
+                public Values Add(string item)
+                    => value == null ?
+                        values == null ? new Values(item)
+                        : new Values(values.Add(item))
+                    : new Values(ImmutableList.Create(value, item));
+                /// <summary>
+                /// Adds values to the collection.
+                /// </summary>
+                /// <param name="items">The values to add.</param>
+                /// <returns>A new Values struct containing the new items.</returns>
+                public Values AddRange(IEnumerable<string> items)
+                    => items.Aggregate(this, (v, x) => v.Add(x));
+
+                public IEnumerator<string> GetEnumerator()
+                {
+                    var n = Count;
+                    for (int i = 0; i < n; i++)
+                        yield return this[i];
+                }
+
+                IEnumerator IEnumerable.GetEnumerator()
+                    => GetEnumerator();
+
+                public int Count => value == null ? values == null ? 0 : values.Count : 1;
+
+                public string this[int index] 
+                    => value == null 
+                        ? values ==null 
+                            ? throw new ArgumentOutOfRangeException() 
+                            : values[index] 
+                        : index == 0 
+                            ? value 
+                            : throw new ArgumentOutOfRangeException();
+            }
+            /// <summary>
+            /// Creates an empty Query that allows Values to be added.
+            /// </summary>
+            public static Query Empty => new Query(QueryDict.Empty);
+            /// <summary>
+            /// Creates a 'wildcard' querystring.
+            /// </summary>
+            public static Query Wildcard => new Query(true);
+            /// <summary>
+            /// Creates a Query with the given key-value pairs.
+            /// </summary>
+            /// <param name="pairs">Key value mappings for the query string.</param>
+            /// <returns>A Query struct.</returns>
+            public static Query FromPairs(IEnumerable<KeyValuePair<string,string>> pairs)
+            {
+                var b = QueryDict.Empty.ToBuilder();
+                foreach (var x in pairs.GroupBy(p => p.Key, p => p.Value))
+                    b.Add(x.Key, new Values(x));
+                return new Query(b.ToImmutable());
+            }
+
+            private readonly bool wildcard;
+            private readonly QueryDict values;
+            private Query(QueryDict values)
+            {
+                this.values = values;
+                wildcard = false;
+            }
+            private Query(bool wildcard)
+            {
+                this.wildcard = wildcard;
+                values = null;
+            }
+            /// <summary>
+            /// True if this Query represents a global wildcard.
+            /// </summary>
+            public bool IsWildcard => wildcard;
+            /// <summary>
+            /// True if this Query represents the absence of a Query string.
+            /// </summary>
+            public bool IsNone => values == null;
+            /// <summary>
+            /// Adds a key-value mapping to the query string.
+            /// </summary>
+            /// <param name="key">The key.</param>
+            /// <param name="value">The value.</param>
+            /// <returns>A new Query struct containing the mapping.</returns>
+            public Query Add(string key, string value)
+            {
+                var _this = this;
+                return Switch(
+                    values => new Query(values.ContainsKey(key) ? values.SetItem(key, values[key].Add(value)) : values.SetItem(key, new Values(value))),
+                    () => _this,
+                    () => _this);
+            }
+            /// <summary>
+            /// Adds key-value mappings to the query string.
+            /// </summary>
+            /// <param name="key">The key.</param>
+            /// <param name="values">The values.</param>
+            /// <returns>A new Query struct containing the mappings.</returns>
+            public Query Add(string key, params string[] values)
+            {
+                var _this = this;
+                return Switch(
+                    vals => new Query(vals.ContainsKey(key) ? vals.SetItem(key, vals[key].AddRange(values)) : vals.SetItem(key, new Values(values))),
+                    () => _this,
+                    () => _this);
+            }
+            /// <summary>
+            /// Gets the Values corresponding to some key.
+            /// </summary>
+            /// <param name="key">The key to get the Values for.</param>
+            /// <returns>A Values struct containing the values belonging to the key.</returns>
+            public Values this[string key] => values.TryGetValue(key, out var vals) ? vals : default(Values);
+            private R Switch<R>(Func<QueryDict, R> values, Func<R> wildcard, Func<R> none)
+            {
+                if (IsNone)
+                    return none();
+                else if (IsWildcard)
+                    return wildcard();
+                else
+                    return values(this.values);
+            }
+
+            public bool ContainsKey(string key)
+                => this[key].Count > 0;
+
+            public bool TryGetValue(string key, out Values value)
+            {
+                value = this[key];
+                return value.Count > 0;
+            }
+
+            public IEnumerator<KeyValuePair<string, Values>> GetEnumerator()
+                => values.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
+
+            public IEnumerable<string> Keys => values.Keys;
+
+            IEnumerable<Values> IReadOnlyDictionary<string, Values>.Values => values.Values;
+
+            public int Count => values.Count;
 
         }
         /// <summary>
@@ -204,7 +382,7 @@ namespace Biz.Morsink.RestServer.Identity
         /// <summary>
         /// Gets the number of wildcard parts in this RestPath.
         /// </summary>
-        public int Arity =>  segments.Where(s => s.IsWildcard).Count();
+        public int Arity => segments.Where(s => s.IsWildcard).Count();
 
         /// <summary>
         /// Gets the entity type this RestPath is for.
@@ -255,7 +433,7 @@ namespace Biz.Morsink.RestServer.Identity
             int n = 0;
             for (int i = 0; i < segments.Length; i++)
             {
-                if (segments[i] .IsWildcard)
+                if (segments[i].IsWildcard)
                     yield return Segment.Unescaped(s[n++]);
                 else
                     yield return segments[i];
