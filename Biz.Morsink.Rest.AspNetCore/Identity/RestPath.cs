@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using QueryDict = System.Collections.Immutable.ImmutableSortedDictionary<string, Biz.Morsink.RestServer.Identity.RestPath.Query.Values>;
-namespace Biz.Morsink.RestServer.Identity
+using QueryDict = System.Collections.Immutable.ImmutableSortedDictionary<string, Biz.Morsink.Rest.AspNetCore.RestPath.Query.Values>;
+using static Biz.Morsink.Rest.AspNetCore.Utils.Utilities;
+namespace Biz.Morsink.Rest.AspNetCore
 {
     /// <summary>
     /// This class represents a Rest path.
@@ -45,11 +46,11 @@ namespace Biz.Morsink.RestServer.Identity
             /// <param name="str">The escaped string to parse.</param>
             /// <returns>A segment.</returns>
             public static Segment Escaped(string str)
-                => str == "*" ? new Segment() : new Segment(UnescapeSegment(str));
+                => str == "*" ? new Segment() : new Segment(UriDecode(str));
             public static Segment Wildcard => default(Segment);
 
             public override string ToString()
-                => IsWildcard ? "*" : EscapeSegment(Content);
+                => IsWildcard ? "*" : UriEncode(Content);
 
             public override int GetHashCode()
                 => hasContent ? Content.GetHashCode() : 0;
@@ -64,71 +65,7 @@ namespace Biz.Morsink.RestServer.Identity
             /// <returns>True if the segments 'match'.</returns>
             public bool Matches(Segment other)
                 => IsWildcard || other.IsWildcard || Equals(other);
-            #region Helper functions
-            /// <summary>
-            /// Unescape a string into proper content
-            /// </summary>
-            public static string UnescapeSegment(string segment)
-            {
-                var n = segment.Length;
-                var sb = new StringBuilder();
-                for (int i = 0; i < n; i++)
-                {
-                    if (segment[i] != '%')
-                        sb.Append(segment[i]);
-                    else if (segment[i + 1] == '%')
-                        sb.Append(segment[++i]);
-                    else
-                    {
-                        sb.Append((char)int.Parse(segment.Substring(i + 1, 2), System.Globalization.NumberStyles.HexNumber));
-                        i += 2;
-                    }
-                }
-                return sb.ToString();
-            }
-            /// <summary>
-            /// Determines if escaping is needed on a string
-            /// </summary>
-            public static bool IsEscapingNeeded(string segment)
-            {
-                var n = segment.Length;
-                for (int i = 0; i < n; i++)
-                    if (!IsSafeCharacter(segment[i]))
-                        return true;
-                return false;
-            }
-            /// <summary>
-            /// Escapes non-safe characters in a string
-            /// </summary>
-            public static string EscapeSegment(string segment)
-            {
-                if (!IsEscapingNeeded(segment))
-                    return segment;
-                var n = segment.Length;
-                var sb = new StringBuilder();
-                for (int i = 0; i < n; i++)
-                {
-                    var ch = segment[i];
-                    if (IsSafeCharacter(ch))
-                        sb.Append(ch);
-                    else if (ch == '%')
-                        sb.Append("%%");
-                    else
-                    {
-                        sb.Append('%');
-                        sb.Append(BitConverter.ToString(new[] { (byte)ch }));
-                    }
-                }
-                return sb.ToString();
-            }
-            /// <summary>
-            /// Determines if a character is safe
-            /// </summary>
-            public static bool IsSafeCharacter(char ch)
-                => ch >= '0' && ch <= '9'
-                || ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z'
-                || ch == '-' || ch == '_' || ch == '~';
-            #endregion
+
         }
         /// <summary>
         /// This struct represents the query string.
@@ -195,15 +132,23 @@ namespace Biz.Morsink.RestServer.Identity
                 IEnumerator IEnumerable.GetEnumerator()
                     => GetEnumerator();
 
+                /// <summary>
+                /// Gets the number of values in this entry.
+                /// </summary>
                 public int Count => value == null ? values == null ? 0 : values.Count : 1;
 
-                public string this[int index] 
-                    => value == null 
-                        ? values ==null 
-                            ? throw new ArgumentOutOfRangeException() 
-                            : values[index] 
-                        : index == 0 
-                            ? value 
+                /// <summary>
+                /// Indexes into this collection of values.
+                /// </summary>
+                /// <param name="index">The index of the value</param>
+                /// <returns>The value belonging to the specified index.</returns>
+                public string this[int index]
+                    => value == null
+                        ? values == null
+                            ? throw new ArgumentOutOfRangeException()
+                            : values[index]
+                        : index == 0
+                            ? value
                             : throw new ArgumentOutOfRangeException();
             }
             /// <summary>
@@ -215,16 +160,43 @@ namespace Biz.Morsink.RestServer.Identity
             /// </summary>
             public static Query Wildcard => new Query(true);
             /// <summary>
+            /// Creates an absent querystring.
+            /// </summary>
+            public static Query None => default(Query);
+            /// <summary>
             /// Creates a Query with the given key-value pairs.
             /// </summary>
             /// <param name="pairs">Key value mappings for the query string.</param>
             /// <returns>A Query struct.</returns>
-            public static Query FromPairs(IEnumerable<KeyValuePair<string,string>> pairs)
+            public static Query FromPairs(IEnumerable<KeyValuePair<string, string>> pairs)
             {
                 var b = QueryDict.Empty.ToBuilder();
                 foreach (var x in pairs.GroupBy(p => p.Key, p => p.Value))
                     b.Add(x.Key, new Values(x));
                 return new Query(b.ToImmutable());
+            }
+            /// <summary>
+            /// Parses a query string *without leading '?') into a Query object.
+            /// </summary>
+            /// <param name="queryString">The to be parsed query string </param>
+            /// <returns>A Query object corresponding to the specified query string.</returns>
+            public static Query Parse(string queryString)
+            {
+                if (queryString == "*")
+                    return Wildcard;
+                else if (queryString == "")
+                    return Empty;
+                else if (queryString == null)
+                    return None;
+                else
+                {
+                    var kvps = from part in queryString.Split('&', ';')
+                               let eqidx = part.IndexOf('=')
+                               let key = eqidx >= 0 ? part.Substring(0, eqidx) : part
+                               let val = eqidx >= 0 ? part.Substring(eqidx + 1) : null
+                               select new KeyValuePair<string, string>(UriDecode(key), UriDecode(val));
+                    return FromPairs(kvps);
+                }
             }
 
             private readonly bool wildcard;
@@ -246,7 +218,7 @@ namespace Biz.Morsink.RestServer.Identity
             /// <summary>
             /// True if this Query represents the absence of a Query string.
             /// </summary>
-            public bool IsNone => values == null;
+            public bool IsNone => values == null && !wildcard;
             /// <summary>
             /// Adds a key-value mapping to the query string.
             /// </summary>
@@ -255,11 +227,10 @@ namespace Biz.Morsink.RestServer.Identity
             /// <returns>A new Query struct containing the mapping.</returns>
             public Query Add(string key, string value)
             {
-                var _this = this;
-                return Switch(
-                    values => new Query(values.ContainsKey(key) ? values.SetItem(key, values[key].Add(value)) : values.SetItem(key, new Values(value))),
-                    () => _this,
-                    () => _this);
+                if (IsNone || IsWildcard)
+                    return this;
+                else
+                    return new Query(values.ContainsKey(key) ? values.SetItem(key, values[key].Add(value)) : values.SetItem(key, new Values(value)));
             }
             /// <summary>
             /// Adds key-value mappings to the query string.
@@ -269,11 +240,10 @@ namespace Biz.Morsink.RestServer.Identity
             /// <returns>A new Query struct containing the mappings.</returns>
             public Query Add(string key, params string[] values)
             {
-                var _this = this;
-                return Switch(
-                    vals => new Query(vals.ContainsKey(key) ? vals.SetItem(key, vals[key].AddRange(values)) : vals.SetItem(key, new Values(values))),
-                    () => _this,
-                    () => _this);
+                if (IsNone || IsWildcard)
+                    return this;
+                else
+                    return new Query(this.values.ContainsKey(key) ? this.values.SetItem(key, this.values[key].AddRange(values)) : this.values.SetItem(key, new Values(values)));
             }
             /// <summary>
             /// Gets the Values corresponding to some key.
@@ -281,19 +251,20 @@ namespace Biz.Morsink.RestServer.Identity
             /// <param name="key">The key to get the Values for.</param>
             /// <returns>A Values struct containing the values belonging to the key.</returns>
             public Values this[string key] => values.TryGetValue(key, out var vals) ? vals : default(Values);
-            private R Switch<R>(Func<QueryDict, R> values, Func<R> wildcard, Func<R> none)
-            {
-                if (IsNone)
-                    return none();
-                else if (IsWildcard)
-                    return wildcard();
-                else
-                    return values(this.values);
-            }
 
+            /// <summary>
+            /// Determines if a certain key is present in the query string.
+            /// </summary>
+            /// <param name="key">The key.</param>
+            /// <returns>True if the key is present in the Query.</returns>
             public bool ContainsKey(string key)
                 => this[key].Count > 0;
-
+            /// <summary>
+            /// Tries to get the Values corresponding to some key.
+            /// </summary>
+            /// <param name="key">The key.</param>
+            /// <param name="value">The Values corresponding to the key.</param>
+            /// <returns>True if the key was found.</returns>
             public bool TryGetValue(string key, out Values value)
             {
                 value = this[key];
@@ -310,7 +281,26 @@ namespace Biz.Morsink.RestServer.Identity
 
             IEnumerable<Values> IReadOnlyDictionary<string, Values>.Values => values.Values;
 
+            /// <summary>
+            /// Gets the number of distinct keys in the Query.
+            /// </summary>
             public int Count => values.Count;
+            /// <summary>
+            /// Converts the this Query object into a URI-suffix. 
+            /// This includes a question mark if this Query is not 'None' (e.g. when it has value or it is Empty). 
+            /// </summary>
+            /// <returns>An URI suffix for this Query.</returns>
+            public string ToUriSuffix()
+                => IsNone ? "" : $"?{this}";
+            public override string ToString()
+            {
+                if (IsNone)
+                    return "";
+                else if (IsWildcard)
+                    return "*";
+                else
+                    return string.Join("&", values.SelectMany(kvp => kvp.Value.Select(val => $"{UriEncode(kvp.Key)}={UriEncode(val)}")));
+            }
 
         }
         /// <summary>
@@ -323,10 +313,11 @@ namespace Biz.Morsink.RestServer.Identity
             /// </summary>
             /// <param name="path">The matched path.</param>
             /// <param name="wildcardSegments">The wildcard matches. null on unsuccesful match.</param>
-            public Match(RestPath path, IEnumerable<string> wildcardSegments)
+            public Match(RestPath path, IEnumerable<string> wildcardSegments, Query wildcardQuery)
             {
                 Path = path;
                 SegmentValues = wildcardSegments.ToArray();
+                Query = wildcardQuery;
             }
             /// <summary>
             /// Indicates if the match is successful.
@@ -340,7 +331,31 @@ namespace Biz.Morsink.RestServer.Identity
             /// The content of the wildcard matches.
             /// </summary>
             public IReadOnlyList<string> SegmentValues { get; }
-            public string this[int index] => SegmentValues[index];
+            /// <summary>
+            /// Gets the matched query string.
+            /// </summary>
+            public Query Query { get; }
+            /// <summary>
+            /// Gets a dynamic part of a RestPath Match.
+            /// </summary>
+            /// <param name="index">The index of the corresponding wildcard.</param>
+            /// <returns>The value for the indexed wildcard.</returns>
+            public object this[int index] =>
+                index == SegmentValues.Count 
+                    ? Query.IsNone 
+                        ? throw new ArgumentOutOfRangeException()
+                        : (object)Query.ToDictionary(x => x.Key, x => x.Value[0]) 
+                    : SegmentValues[index];
+            /// <summary>
+            /// Converts all the wildcard match values into an object array.
+            /// </summary>
+            /// <returns>An array of all the wildcard match values.</returns>
+            public object[] ToArray() 
+                => SegmentValues.Cast<object>()
+                    .Concat(Query.IsNone 
+                        ? Enumerable.Empty<object>() 
+                        : new[] { Query.ToDictionary(x => x.Key, x => x.Value[0]) })
+                    .ToArray();
         }
         /// <summary>
         /// Parses a string into a RestPath instance.
@@ -351,8 +366,12 @@ namespace Biz.Morsink.RestServer.Identity
         public static RestPath Parse(string pathString, Type forType = null)
         {
             var qidx = pathString.IndexOf('?');
+            if (qidx >= 0)
+                return new RestPath(makeSegments(pathString.Substring(0, qidx)), Query.Parse(pathString.Substring(qidx + 1)), forType);
+            else
+                return new RestPath(makeSegments(pathString), Query.None, forType);
 
-            return new RestPath(pathString.Split('/').Select(Segment.Escaped), forType);
+            IEnumerable<Segment> makeSegments(string path) => path.Split('/').Select(Segment.Escaped);
         }
 
         /// <summary>
@@ -360,30 +379,37 @@ namespace Biz.Morsink.RestServer.Identity
         /// </summary>
         /// <param name="segments">All the parts of the path.</param>
         /// <param name="forType">The entity type the path belongs to.</param>
-        public RestPath(IEnumerable<Segment> segments, Type forType)
+        public RestPath(IEnumerable<Segment> segments, Query query, Type forType)
         {
             this.segments = segments.ToArray();
+            this.query = query;
             skip = 0;
             ForType = forType;
         }
-        private RestPath(Segment[] segments, int skip, Type forType)
+        private RestPath(Segment[] segments, Query query, int skip, Type forType)
         {
             this.segments = segments;
+            this.query = query;
             this.skip = skip;
             ForType = forType;
         }
         private readonly Segment[] segments;
+        private readonly Query query;
         private readonly int skip;
 
         /// <summary>
         /// Gets the number of path parts in this RestPath.
         /// </summary>
         public int Count => segments.Length - skip;
+        internal int SegmentArity => segments.Where(s => s.IsWildcard).Count();
         /// <summary>
         /// Gets the number of wildcard parts in this RestPath.
         /// </summary>
-        public int Arity => segments.Where(s => s.IsWildcard).Count();
-
+        public int Arity => SegmentArity + (query.IsWildcard ? 1 : 0);
+        /// <summary>
+        /// Gets the Query object corresponding to the RestPath's query string.
+        /// </summary>
+        public Query QueryString => query;
         /// <summary>
         /// Gets the entity type this RestPath is for.
         /// </summary>
@@ -400,7 +426,7 @@ namespace Biz.Morsink.RestServer.Identity
         /// <param name="num">The number of segments to skip.</param>
         /// <returns>A shorter RestPath.</returns>
         public RestPath Skip(int num = 1)
-            => new RestPath(segments, skip + num, ForType);
+            => new RestPath(segments, query, skip + num, ForType);
         /// <summary>
         /// Tries to match another Path to this one.
         /// </summary>
@@ -418,14 +444,15 @@ namespace Biz.Morsink.RestServer.Identity
                 else if (!this[i].Equals(other[i]))
                     return default(Match);
             }
-            return new Match(this, result);
+
+            return new Match(this, result, query.IsWildcard ? other.query.IsNone ? Query.Empty : other.query : Query.None);
         }
         /// <summary>
         /// Gets the full RestPath this path was constructed from.
         /// </summary>
         /// <returns>A RestPath.</returns>
         public RestPath GetFullPath()
-            => new RestPath(segments, 0, ForType);
+            => new RestPath(segments, query, 0, ForType);
 
         private IEnumerable<Segment> fillHelper(IEnumerable<string> stars)
         {
@@ -444,11 +471,11 @@ namespace Biz.Morsink.RestServer.Identity
         /// </summary>
         /// <param name="wildcards">The values for the wildcards</param>
         /// <returns>A new Path</returns>
-        public RestPath FillWildcards(IEnumerable<string> wildcards)
-            => new RestPath(fillHelper(wildcards), ForType);
+        public RestPath FillWildcards(IEnumerable<string> wildcards, Query query = default(Query))
+            => new RestPath(fillHelper(wildcards), this.query.IsWildcard ? query : this.query, ForType);
         /// <summary>
         /// Gets a string representation for the Path.
         /// </summary>
-        public string PathString => string.Join("/", segments);
+        public string PathString => string.Join("/", segments) + query.ToUriSuffix();
     }
 }

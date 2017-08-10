@@ -10,7 +10,7 @@
     <PackageId>Biz.Morsink.Rest.AspNetCore</PackageId>
     <Description>Class library for creating ASP.Net Core REST level 3 services.</Description>
     <PackageProjectUrl>https://github.com/joost-morsink/RestServer</PackageProjectUrl>
-    <RootNamespace>Biz.Morsink.RestServer</RootNamespace>
+    <RootNamespace>Biz.Morsink.Rest.AspNetCore</RootNamespace>
     <Copyright>(C) 2017 Joost W. Morsink</Copyright>
     <PackageTags>RestServer</PackageTags>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>

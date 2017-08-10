@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.DataConvert;
+using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Biz.Morsink.RestServer.Identity
+namespace Biz.Morsink.Rest.AspNetCore
 {
     /// <summary>
     /// IdentityProvider for a Rest service.
@@ -58,21 +59,10 @@ namespace Biz.Morsink.RestServer.Identity
 
             public Type GetUnderlyingType()
             {
-                switch (AllTypes.Length)
-                {
-                    case 1:
-                        return typeof(string);
-                    case 2:
-                        return typeof((string, string));
-                    case 3:
-                        return typeof((string, string, string));
-                    case 4:
-                        return typeof((string, string, string, string));
-                    case 5:
-                        return typeof((string, string, string, string, string));
-                    default:
-                        return null;
-                }
+                var tb = UnderlyingTypeBuilder.Empty.AddString(PrimaryPath.SegmentArity);
+                if (PrimaryPath.QueryString.IsWildcard)
+                    tb = tb.Add(typeof(Dictionary<string, string>));
+                return tb.ToType();
             }
         }
         /// <summary>
@@ -195,10 +185,10 @@ namespace Biz.Morsink.RestServer.Identity
                         return new Identity<T, U>(parent, res.Result);
                     else
                     {
-                        if (!converter.Convert(res.Result).TryTo(out string[] compValues) || compValues.Length != entry.AllTypes.Length)
+                        if (!converter.Convert(res.Result).TryTo(out object[] compValues) || compValues.Length != entry.AllTypes.Length)
                             throw new ArgumentException("The number of component values does not match the arity of the identity value.");
                         var bld = parent.GeneralBuilder
-                            .AddRange(entry.AllTypes.Zip(compValues, (t, cv) => (t, cv.GetType(), (object)cv)));
+                            .AddRange(entry.AllTypes.Zip(compValues, (t, cv) => (t, cv.GetType(), cv)));
                         return (IIdentity<T>)bld.Id();
                     }
                 }
@@ -210,7 +200,9 @@ namespace Biz.Morsink.RestServer.Identity
                 => Create(value);
         }
         #endregion
-
+        private DataConverter converter = Converters.CreatePipeline(regular: Converters.Regular.Concat(new IConverter[] {
+            RecordConverter.ForDictionaries()
+        }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();
         private Lazy<RestPathMatchTree> matchTree;
 
@@ -228,6 +220,18 @@ namespace Biz.Morsink.RestServer.Identity
         protected EntryBuilder BuildEntry(params Type[] types)
             => EntryBuilder.Create(this, types);
 
+        /// <summary>
+        /// Gets a data converter for converting underlying identity values.
+        /// </summary>
+        /// <param name="t">The type of object the identity value refers to.</param>
+        /// <param name="incoming">Indicates if the converter should handle incoming or outgoing conversions.</param>
+        /// <returns>An IDataConverter that is able to make conversions between different types of values.</returns>
+        public override IDataConverter GetConverter(Type t, bool incoming) => converter;
+        /// <summary>
+        /// This method should return the type of the underlying value for a certain entity type.
+        /// </summary>
+        /// <param name="forType">The entity type.</param>
+        /// <returns>The type of the underlying identity values.</returns>
         public override Type GetUnderlyingType(Type forType)
         {
             return entries.TryGetValue(forType, out var e)
@@ -247,6 +251,111 @@ namespace Biz.Morsink.RestServer.Identity
 
         protected override IIdentityCreator<T> GetCreator<T>()
             => (IIdentityCreator<T>)GetCreator(typeof(T));
+
+        /// <summary>
+        /// Parses a path string into an IIdentity value.
+        /// If a match is found, the IIdentity value is properly typed.
+        /// </summary>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="nullOnFailure">When there is not match found for the Path, this boolean indicates whether to return a null or an IIdentity&lt;object&gt;.</param>
+        /// <returns>An IIdentity value for the path.</returns>
+        public IIdentity Parse(string path, bool nullOnFailure = false)
+        {
+            var match = matchTree.Value.Walk(RestPath.Parse(path));
+            if (match.IsSuccessful)
+            {
+                if (match.Path.Arity == 1)
+                    return Create(match.Path.ForType, match[0]);
+                else
+                    return Create(match.Path.ForType, match.ToArray());
+            }
+            else
+                return nullOnFailure ? null : new Identity<object, string>(this, path);
+        }
+        /// <summary>
+        /// Parses a path string into an IIdentity&lt;T&gt; value.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="path">The path to parse.</param>
+        /// <returns>An IIdentity&lt;T&gt; value if the parse and match were successful.</returns>
+        public IIdentity<T> Parse<T>(string path)
+            => Parse(path, true) as IIdentity<T>;
+        /// <summary>
+        /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
+        /// </summary>
+        /// <param name="objectId">The input identity value.</param>
+        /// <param name="nullOnFailure">If no match is found, this boolean indicates whether to return a null or the original input identity value.</param>
+        /// <returns>An identity value.</returns>
+        public IIdentity Parse(IIdentity<object> objectId, bool nullOnFailure)
+            => Parse(Translate(objectId).Value.ToString(), nullOnFailure);
+        /// <summary>
+        /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
+        /// </summary>
+        /// <typeparam name="T">The entity type to parse the value for.</typeparam>
+        /// <param name="objectId">The input identity value.</param>
+        /// <returns>An identity value, null if the match is unsuccessful.</returns>
+        public IIdentity<T> Parse<T>(IIdentity<object> objectId)
+            => Parse(objectId, true) as IIdentity<T>;
+
+        /// <summary>
+        /// Converts any identity value for a known type into a general identity value with a pathstring as underlying value.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public IIdentity<object> ToGeneralIdentity(IIdentity id)
+        {
+            if (id.Provider != this)
+                return ToGeneralIdentity(Translate(id));
+            if (id.ForType == typeof(object))
+                return (IIdentity<object>)id;
+
+            var converter = GetConverter(id.ForType, false);
+            if (entries.TryGetValue(id.ForType, out var entry))
+            {
+                var queryString = id.ComponentValue as IEnumerable<KeyValuePair<string, string>>;
+                if (id.Arity == 1)
+                {
+                    if (queryString != null)
+                        return new Identity<object, string>(
+                            this,
+                            entry.PrimaryPath.FillWildcards(Enumerable.Empty<string>(),
+                                RestPath.Query.FromPairs(queryString)).PathString);
+                    else
+                        return new Identity<object, string>(this, entry.PrimaryPath.FillWildcards(new[] { converter.Convert(id.Value).To<string>() }).PathString);
+                }
+                else
+                {
+                    if (queryString != null)
+                        return new Identity<object, string>(
+                            this,
+                            entry.PrimaryPath.FillWildcards(componentValues(id), RestPath.Query.FromPairs(queryString)).PathString);
+                    else
+                        return new Identity<object, string>(this, entry.PrimaryPath.FillWildcards(converter.Convert(id.Value).To<string[]>()).PathString);
+                }
+            }
+            else
+                return null;
+
+            IEnumerable<string> componentValues(IIdentity idval)
+            {
+                var st = ImmutableStack<IIdentity>.Empty;
+                while (idval != null)
+                {
+                    idval = (idval as IMultiaryIdentity)?.Parent;
+                    if (idval != null)
+                        st = st.Push(idval);
+                }
+                foreach (var x in st)
+                    yield return converter.Convert(x.ComponentValue).To("");
+            }
+        }
+        /// <summary>
+        /// Converts any identity value for a known type into a pathstring.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public string ToPath(IIdentity id)
+            => ToGeneralIdentity(id)?.Value.ToString();
 
     }
 }

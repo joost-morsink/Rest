@@ -1,4 +1,4 @@
-﻿using Biz.Morsink.RestServer.Identity;
+﻿using Biz.Morsink.Rest.AspNetCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -43,8 +43,20 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             var m = p.MatchPath(q);
             Assert.IsTrue(m.IsSuccessful, "Two wildcards should each match any value.");
             Assert.AreEqual(2, m.SegmentValues.Count, "Two wildcards should result in a binary match.");
-            Assert.IsTrue(m[0] == "123" && m[1] == "456", "The matched wildcard parts should match those in the RestPath string in the same order.");
+            Assert.IsTrue(m.SegmentValues[0] == "123" && m.SegmentValues[1] == "456", "The matched wildcard parts should match those in the RestPath string in the same order.");
         }
-
+        [TestMethod]
+        public void RestPath_QueryString()
+        {
+            var p = RestPath.Parse("/api/person?search=Morsink&limit=10&skip=0");
+            Assert.AreEqual(3, p.Count);
+            Assert.AreEqual(3, p.QueryString.Count);
+            var q = RestPath.Parse("/api/person?*");
+            Assert.IsTrue(q.QueryString.IsWildcard);
+            var m = q.MatchPath(p);
+            Assert.IsTrue(m.IsSuccessful);
+            Assert.AreEqual(0, m.SegmentValues.Count);
+            Assert.AreEqual(3, m.Query.Count);
+        }
     }
 }
