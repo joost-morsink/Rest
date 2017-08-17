@@ -62,22 +62,25 @@ namespace Biz.Morsink.Rest
 
             var method = iti.DeclaredMethods.Single();
 
-            var body = method.GetParameters().Skip(1).Select(p => p.ParameterType).FirstOrDefault();
+            var par = method.GetParameters().Skip(1).Select(p => p.ParameterType).FirstOrDefault();
+            var body = method.GetParameters().Skip(2).Select(p => p.ParameterType).FirstOrDefault();
             var result = method.ReturnType.GenericTypeArguments.Length == 1
                 && (method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>) || method.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 && method.ReturnType.GenericTypeArguments[0].GenericTypeArguments.Length == 1
                 && method.ReturnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(RestResult<>)
                 ? method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0]
                 : null;
-            return new RestCapabilityDescriptor(key.Name, key.EntityType, body, result, interfaceType);
+            return new RestCapabilityDescriptor(key.Name, key.EntityType, par, body, result, interfaceType);
         }
-        public RestCapabilityDescriptor(string name, Type entityType, Type bodyType, Type resultType, Type interfaceType)
+        public RestCapabilityDescriptor(string name, Type entityType, Type parameterType, Type bodyType, Type resultType, Type interfaceType)
             : base(name, entityType)
         {
+            ParameterType = parameterType;
             BodyType = bodyType;
             ResultType = resultType;
             InterfaceType = interfaceType;
         }
+        public Type ParameterType { get; }
         public Type BodyType { get; }
         public Type ResultType { get; }
         public Type InterfaceType { get; }
@@ -86,12 +89,14 @@ namespace Biz.Morsink.Rest
         {
             var mi = InterfaceType.GetTypeInfo().DeclaredMethods.Single();
             if (BodyType == null)
-                return mi.CreateDelegate(typeof(Func<,>).MakeGenericType(
+                return mi.CreateDelegate(typeof(Func<,,>).MakeGenericType(
                     typeof(IIdentity<>).MakeGenericType(EntityType),
+                    ParameterType,
                     typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
             else
-                return mi.CreateDelegate(typeof(Func<,,>).MakeGenericType(
+                return mi.CreateDelegate(typeof(Func<,,,>).MakeGenericType(
                     typeof(IIdentity<>).MakeGenericType(EntityType), 
+                    ParameterType,
                     BodyType,
                     typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
         }

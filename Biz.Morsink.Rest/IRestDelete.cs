@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace Biz.Morsink.Rest
 {
     [Capability("DELETE")]
-    public interface IRestDelete<T> : IRestCapability<T>
+    public interface IRestDelete<T, P> : IRestCapability<T>
     {
-        ValueTask<RestResult<object>> Delete(IIdentity<T> target);
+        ValueTask<RestResult<object>> Delete(IIdentity<T> target, P parameters);
     }
 }

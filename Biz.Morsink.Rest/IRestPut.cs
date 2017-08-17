@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace Biz.Morsink.Rest
 {
     [Capability("PUT")]
-    public interface IRestPut<T> : IRestCapability<T>
+    public interface IRestPut<T, P> : IRestCapability<T>
         where T : class
     {
-        ValueTask<RestResult<T>> Put(IIdentity<T> target, T entity);
+        ValueTask<RestResult<T>> Put(IIdentity<T> target, P parameters, T entity);
     }
 }

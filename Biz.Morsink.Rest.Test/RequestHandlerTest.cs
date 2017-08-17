@@ -27,5 +27,29 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual("Morsink", val.LastName);
             Assert.AreEqual(37, val.Age);
         }
+        [TestMethod]
+        public async Task RequestHandler_HappyGetParameter()
+        {
+            var repo = new TestGetRepo2();
+            var handler = new RestRequestHandler(new[] { repo });
+            var req = new RestRequest("GET", FreeIdentity<Person2>.Create(1), new[] { ("ageFactor", "1.5") }, ty => new object());
+            var response = await handler.HandleRequest(req) as RestResponse<Person2>;
+            Assert.IsNotNull(response);
+            Assert.IsTrue(response.IsSuccess);
+            var val = response.Value.AsSuccess().RestValue.Value;
+            Assert.AreEqual("Joost", val.FirstName);
+            Assert.AreEqual("Morsink", val.LastName);
+            Assert.AreEqual(55, val.Age);
+
+            req = new RestRequest("GET", FreeIdentity<Person2>.Create(1), Enumerable.Empty<(string, string)>(), ty => new object());
+            response = await handler.HandleRequest(req) as RestResponse<Person2>;
+            Assert.IsNotNull(response);
+            Assert.IsTrue(response.IsSuccess);
+            val = response.Value.AsSuccess().RestValue.Value;
+            Assert.AreEqual("Joost", val.FirstName);
+            Assert.AreEqual("Morsink", val.LastName);
+            Assert.AreEqual(37, val.Age);
+
+        }
     }
 }

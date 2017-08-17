@@ -6,9 +6,10 @@ using Biz.Morsink.Identity;
 namespace Biz.Morsink.Rest
 {
     [Capability("GET")]
-    public interface IRestGet<T> : IRestCapability<T>
+    public interface IRestGet<T, P> : IRestCapability<T>
         where T : class
     {
-        ValueTask<RestResult<T>> Get(IIdentity<T> id);
+        ValueTask<RestResult<T>> Get(IIdentity<T> id, P parameters);
     }
+
 }

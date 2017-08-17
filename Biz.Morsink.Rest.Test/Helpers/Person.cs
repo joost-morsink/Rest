@@ -10,4 +10,10 @@ namespace Biz.Morsink.Rest.Test.Helpers
         public string LastName { get; set; }
         public int Age { get; set; }
     }
+    public class Person2
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public int Age { get; set; }
+    }
 }

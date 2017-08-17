@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest
         {
             RelType = relType;
             Target = target;
-            Capability = capability ?? typeof(IRestGet<>).MakeGenericType(target.ForType);
+            Capability = capability ?? typeof(IRestGet<,>).MakeGenericType(target.ForType, typeof(NoParameters));
         }
         public string RelType { get; }
         public IIdentity Target { get; }
@@ -34,7 +34,7 @@ namespace Biz.Morsink.Rest
     public class Link<T> : Link
         where T : class
     {
-        internal Link(string relType, IIdentity<T> target, Type capability) : base(relType, target, capability ?? typeof(IRestGet<T>))
+        internal Link(string relType, IIdentity<T> target, Type capability) : base(relType, target, capability ?? typeof(IRestGet<T, NoParameters>))
         { }
         public new IIdentity<T> Target => (IIdentity<T>)base.Target;
     }

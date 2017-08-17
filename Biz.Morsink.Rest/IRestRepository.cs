@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest
     }
     public interface IRestRepository<T> : IRestRepository
     {
-        RestCapability<T>? GetCapability(RestCapabilityDescriptorKey capability);
+        IReadOnlyList<RestCapability<T>> GetCapabilities(RestCapabilityDescriptorKey capability);
         C GetCapability<C>()
             where C : class, IRestCapability<T>;
     }
