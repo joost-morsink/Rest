@@ -9,5 +9,6 @@ namespace Biz.Morsink.Rest
         object Value { get; }
         IReadOnlyList<Link> Links { get; }
         IReadOnlyList<object> Embeddings { get; }
+        IRestValue Manipulate(Func<IRestValue, IEnumerable<Link>> links = null, Func<IRestValue, IEnumerable<object>> embeddings = null);
     }
 }

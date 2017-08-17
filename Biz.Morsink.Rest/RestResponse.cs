@@ -8,6 +8,7 @@ namespace Biz.Morsink.Rest
         public abstract bool IsSuccess { get; }
         public ValueTask<RestResponse> ToAsync()
             => new ValueTask<RestResponse>(this);
+        public abstract RestResponse Select(Func<IRestResult, IRestResult> f);
 
     }
     public class RestResponse<T> : RestResponse
@@ -19,5 +20,12 @@ namespace Biz.Morsink.Rest
         }
         public RestResult<T> Value { get; }
         public override bool IsSuccess => Value is IRestSuccess;
+        public RestResponse<U> Select<U>(Func<RestResult<T>, RestResult<U>> f)
+            where U : class
+        {
+            return new RestResponse<U>(f(Value));
+        }
+        public override RestResponse Select(Func<IRestResult, IRestResult> f)
+            => new RestResponse<T>((RestResult<T>)f(Value));
     }
 }

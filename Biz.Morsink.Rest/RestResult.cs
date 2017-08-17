@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
             => new RestResult<T>.Failure.Error(ex);
         public static IRestFailure Error(Type type, Exception ex)
-            => (IRestFailure) Activator.CreateInstance(typeof(RestResult<>.Failure.Error).MakeGenericType(type), ex, null, null);
+            => (IRestFailure)Activator.CreateInstance(typeof(RestResult<>.Failure.Error).MakeGenericType(type), ex, null, null);
 
     }
     public abstract class RestResult<T> : IRestResult
@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest
         RestResponse IRestResult.ToResponse() => ToResponse();
         public ValueTask<RestResult<T>> ToAsync() => new ValueTask<RestResult<T>>(this);
 
-        public class Success : RestResult<T>, IRestSuccess<T> 
+        public class Success : RestResult<T>, IRestSuccess<T>
         {
             public Success(RestValue<T> restValue)
             {
@@ -59,10 +59,15 @@ namespace Biz.Morsink.Rest
                 public object Data => RestValue.Value;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U>.Failure Select<U>()
+                    => new RestResult<U>.Failure.BadRequest(RestValue);
             }
             public class NotFound : Failure
             {
                 public static NotFound Instance { get; } = new NotFound();
+                public override RestResult<U>.Failure Select<U>()
+                    => RestResult<U>.Failure.NotFound.Instance;
             }
             public class Error : Failure, IHasRestValue<Exception>
             {
@@ -77,7 +82,29 @@ namespace Biz.Morsink.Rest
                 public Exception Exception => RestValue.Value;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U>.Failure Select<U>()
+                    => new RestResult<U>.Failure.Error(RestValue);
             }
+            public abstract RestResult<U>.Failure Select<U>()
+                where U : class;
         }
+
+        public RestResult<U> Select<U>(Func<RestValue<T>, RestValue<U>> f)
+            where U : class
+        {
+            switch (this)
+            {
+                case Success success:
+                    return new RestResult<U>.Success(f(success.RestValue));
+                case Failure failure:
+                    return failure.Select<U>();
+                default:
+                    throw new NotSupportedException();
+            }
+
+        }
+        IRestResult IRestResult.Select(Func<IRestValue, IRestValue> f)
+            => Select(rv => (RestValue<T>)f(rv));
     }
 }

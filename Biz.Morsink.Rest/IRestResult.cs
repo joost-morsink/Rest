@@ -7,5 +7,6 @@ namespace Biz.Morsink.Rest
     public interface IRestResult
     {
         RestResponse ToResponse();
+        IRestResult Select(Func<IRestValue, IRestValue> f);
     }
 }

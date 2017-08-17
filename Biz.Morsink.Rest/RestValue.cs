@@ -8,18 +8,30 @@ using System.Threading.Tasks;
 namespace Biz.Morsink.Rest
 {
     public struct RestValue<T> : IRestValue
-        where T:class
+        where T : class
     {
         public RestValue(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
         {
             Value = value;
-            Links = (links ?? Enumerable.Empty<Link>()).ToArray();
-            Embeddings = (embeddings ?? Enumerable.Empty<object>()).ToArray();
+            Links = links is IReadOnlyList<Link> rolLink ? rolLink : (links ?? Enumerable.Empty<Link>()).ToArray();
+            Embeddings = embeddings is IReadOnlyList<object> rolEmbedding ? rolEmbedding : (embeddings ?? Enumerable.Empty<object>()).ToArray();
         }
         public T Value { get; }
         public IReadOnlyList<Link> Links { get; }
         public IReadOnlyList<object> Embeddings { get; }
         object IRestValue.Value => Value;
+        public RestValue<U> Select<U>(Func<T, U> f)
+            where U : class
+            => new RestValue<U>(f(Value), Links, Embeddings);
+        public RestValue<T> Manipulate(Func<RestValue<T>, IEnumerable<Link>> links = null, Func<RestValue<T>, IEnumerable<object>> embeddings = null)
+        {
+            var l = links == null ? Links : links(this);
+            var e = embeddings == null ? Embeddings : embeddings(this);
+            return new RestValue<T>(Value, l, e);
+        }
+        IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<object>> embeddings)
+            => Manipulate(links == null ? (Func<RestValue<T>,IEnumerable<Link>>)null : rv => links(rv), 
+                embeddings == null ? (Func<RestValue<T>,IEnumerable<object>>)null : rv => embeddings(rv));
         public RestResult<T>.Success ToResult()
             => new RestResult<T>.Success(this);
         public ValueTask<RestResult<T>> ToResultAsync()
@@ -55,8 +67,5 @@ namespace Biz.Morsink.Rest
             public ValueTask<RestResult<T>> BuildAsyncResult()
                 => new ValueTask<RestResult<T>>(BuildResult());
         }
-
-
     }
-
 }

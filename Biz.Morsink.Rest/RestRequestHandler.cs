@@ -12,13 +12,7 @@ namespace Biz.Morsink.Rest
 {
     public class RestRequestHandler : IRestRequestHandler
     {
-        private readonly Dictionary<Type, IRestRepository> repositories;
-        private readonly IDataConverter converter;
-
-        public RestRequestHandler(IEnumerable<IRestRepository> repositories, IDataConverter converter = null)
-        {
-            this.repositories = repositories.ToDictionary(r => r.EntityType);
-            this.converter = converter ?? new DataConverter(
+        public static IDataConverter DefaultDataConverter { get; } = new DataConverter(
                 IdentityConverter.Instance,
                 IsoDateTimeConverter.Instance,
                 Base64Converter.Instance,
@@ -36,47 +30,82 @@ namespace Biz.Morsink.Rest
                 ToObjectConverter.Instance,
                 new FromStringRepresentationConverter().Restrict((from, to) => from != typeof(Version)), // Version could conflict with numeric types' syntaxes.
                 new DynamicConverter());
+        private readonly IDataConverter converter;
+        private readonly IServiceLocator locator;
+
+        public RestRequestHandler(IServiceLocator locator, IDataConverter converter = null)
+        {
+            this.locator = locator;
+            this.converter = converter ?? DefaultDataConverter;
         }
         public async ValueTask<RestResponse> HandleRequest(RestRequest request)
         {
             try
             {
                 var type = request.Address.ForType;
-                if (!repositories.TryGetValue(type, out var repo))
+                var repo = locator.ResolveOptional(typeof(IRestRepository<>).MakeGenericType(type)) as IRestRepository;
+                if (repo == null)
                     return RestResult.NotFound<object>().ToResponse();
 
+                var lps = locator.ResolveMulti(typeof(ILinkProvider<>).MakeGenericType(type));
+                var dlps = locator.ResolveMulti(typeof(IDynamicLinkProvider<>).MakeGenericType(type));
+
+                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, converter });
                 return await (ValueTask<RestResponse>)
-                    typeof(RestRequestHandler).GetTypeInfo()
-                    .GetDeclaredMethod(nameof(HandleTypedRequest))
-                    .MakeGenericMethod(type)
-                    .Invoke(this, new object[] { request, repo });
+                    typeof(RestRequestHandler<>).MakeGenericType(type).GetTypeInfo()
+                    .GetDeclaredMethod(nameof(RestRequestHandler<object>.HandleTypedRequest))
+                    .Invoke(t, new object[] { request, repo });
             }
             catch (Exception ex)
             {
                 return RestResult.Error<object>(ex).ToResponse();
             }
         }
-        private async ValueTask<RestResponse> HandleTypedRequest<T>(RestRequest request, IRestRepository<T> repo)
-            where T : class
+    }
+    internal class RestRequestHandler<T>
+        where T : class
+    {
+        private readonly IDataConverter converter;
+        private readonly ILinkProvider<T>[] linkProviders;
+        private readonly IDynamicLinkProvider<T>[] dynamicLinkProviders;
+
+        public RestRequestHandler(IEnumerable<ILinkProvider<T>> linkProviders, IEnumerable<IDynamicLinkProvider<T>> dynamicLinkProviders, IDataConverter converter = null)
+        {
+            this.linkProviders = linkProviders.ToArray();
+            this.dynamicLinkProviders = dynamicLinkProviders.ToArray();
+            this.converter = converter ?? RestRequestHandler.DefaultDataConverter;
+
+        }
+        public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
         {
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
 
             foreach (var cap in capabilities)
             {
-                System.Diagnostics.Debug.WriteLine($"{cap.Descriptor.Name} on {cap.Descriptor.EntityType} with parameter {cap.Descriptor.ParameterType}");
                 var descriptor = cap.Descriptor;
                 try
                 {
                     var method = descriptor.BodyType != null
-                        ? typeof(RestRequestHandler).GetTypeInfo()
+                        ? typeof(RestRequestHandler<T>).GetTypeInfo()
                             .GetDeclaredMethod(nameof(HandleWithBody))
-                            .MakeGenericMethod(descriptor.EntityType, descriptor.ParameterType, descriptor.BodyType, descriptor.ResultType)
-                        : typeof(RestRequestHandler).GetTypeInfo()
+                            .MakeGenericMethod(descriptor.ParameterType, descriptor.BodyType, descriptor.ResultType)
+                        : typeof(RestRequestHandler<T>).GetTypeInfo()
                             .GetDeclaredMethod(nameof(Handle))
-                            .MakeGenericMethod(descriptor.EntityType, descriptor.ParameterType, descriptor.ResultType);
+                            .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
                     var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { request, cap });
                     if (res.IsSuccess)
-                        return res;
+                    {
+                        if (cap.Descriptor.Name == "GET")
+                        {
+                            return res.Select(r =>
+                                r.Select(v =>
+                                    v.Manipulate(rv => rv.Links
+                                        .Concat(linkProviders.SelectMany(lp => lp.GetLinks((IIdentity<T>)request.Address)))
+                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value))))));
+                        }
+                        else
+                            return res;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -86,8 +115,7 @@ namespace Biz.Morsink.Rest
             return RestResult.NotFound<T>().ToResponse();
 
         }
-        private async ValueTask<RestResponse> HandleWithBody<T, P, E, R>(RestRequest request, RestCapability<T> capability)
-            where T : class
+        private async ValueTask<RestResponse> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.RequestParameters.AsDictionary()).TryTo(out P param))
@@ -97,7 +125,7 @@ namespace Biz.Morsink.Rest
             var res = await action(request.Address as IIdentity<T>, param, body);
             return res.ToResponse();
         }
-        private async ValueTask<RestResponse> Handle<T, P, R>(RestRequest request, RestCapability<T> capability)
+        private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.RequestParameters.AsDictionary()).TryTo(out P param))
@@ -107,4 +135,5 @@ namespace Biz.Morsink.Rest
             return res.ToResponse();
         }
     }
+
 }
