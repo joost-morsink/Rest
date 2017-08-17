@@ -99,7 +99,7 @@ namespace Biz.Morsink.Rest.Schema
         public class Null : TypeDescriptor
         {
             private readonly static int hashcode = typeof(Null).GetHashCode();
-            public static Null Instance { get; }
+            public static Null Instance { get; } = new Null();
 
             public override bool Equals(TypeDescriptor other)
                 => other is Null;

@@ -22,5 +22,17 @@ namespace Biz.Morsink.Rest.Test
             });
             Assert.AreEqual(expected, schema);
         }
+        [TestMethod]
+        public void TypeDescriptor_HappyConstructor()
+        {
+            var schema = typeof(PersonC).GetDescriptor();
+            var expected = new TypeDescriptor.Record(new[]
+            {
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union(new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance })),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance, true),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName), TypeDescriptor.Primitive.String.Instance, true)
+            });
+            Assert.IsTrue(expected.Equals(schema));
+        }
     }
 }

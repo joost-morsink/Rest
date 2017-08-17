@@ -7,35 +7,27 @@ namespace Biz.Morsink.Rest.Schema
         protected TypeVisitor() { }
         public R Visit(TypeDescriptor t)
         {
-            var p = t as TypeDescriptor.Primitive;
-            if (p != null)
+            if (t is TypeDescriptor.Primitive p)
             {
-                var s = p as TypeDescriptor.Primitive.String;
-                if (s != null)
+                if (p is TypeDescriptor.Primitive.String s)
                     return VisitString(s);
-                var n = (TypeDescriptor.Primitive.Numeric)p;
-
-                var dt = p as TypeDescriptor.Primitive.DateTime;
-                if (dt != null)
+                if (p is TypeDescriptor.Primitive.DateTime dt)
                     return VisitDateTime(dt);
 
-                var i = n as TypeDescriptor.Primitive.Numeric.Integral;
-                if (i != null)
+                var n = (TypeDescriptor.Primitive.Numeric)p;
+                if (n is TypeDescriptor.Primitive.Numeric.Integral i)
                     return VisitIntegral(i);
+
                 var f = (TypeDescriptor.Primitive.Numeric.Float)n;
                 return VisitFloat(t);
             }
-            var a = t as TypeDescriptor.Array;
-            if (a != null)
+            if (t is TypeDescriptor.Array a)
                 return PrevisitArray(a);
-            var r = t as TypeDescriptor.Record;
-            if (r != null)
+            if (t is TypeDescriptor.Record r)
                 return PrevisitRecord(r);
-            var nl = t as TypeDescriptor.Null;
-            if (nl != null)
+            if (t is TypeDescriptor.Null nl)
                 return VisitNull(nl);
-            var v = t as TypeDescriptor.Value;
-            if (v != null)
+            if (t is TypeDescriptor.Value v )
                 return PrevisitValue(v);
             var u = (TypeDescriptor.Union)t;
             return PrevisitUnion(u);

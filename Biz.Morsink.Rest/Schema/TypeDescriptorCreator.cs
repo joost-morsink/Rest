@@ -1,9 +1,12 @@
-﻿using System;
+﻿using Biz.Morsink.Identity.PathProvider;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
@@ -39,12 +42,27 @@ namespace Biz.Morsink.Rest.Schema
 
         public static TypeDescriptor GetDescriptor(this Type type)
         {
-            if (descriptors.TryGetValue(type, out var res)) 
+            if (descriptors.TryGetValue(type, out var res))
                 return res;
 
-            return GetArrayDescriptor(type) 
+            return GetNullableDescriptor(type)
+                ?? GetArrayDescriptor(type)
                 ?? GetRecordDescriptor(type)
                 ;
+        }
+        private static TypeDescriptor GetNullableDescriptor (Type type)
+        {
+            var ti = type.GetTypeInfo();
+            var ga = ti.GetGenericArguments();
+            if (ga.Length == 1)
+            {
+                if(ti.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    var t = ga[0].GetDescriptor();
+                    return t == null ? null : new TypeDescriptor.Union(new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
+                }
+            }
+            return null;
         }
         private static TypeDescriptor GetArrayDescriptor(Type type)
         {
@@ -63,12 +81,42 @@ namespace Biz.Morsink.Rest.Schema
         }
         private static TypeDescriptor GetRecordDescriptor(Type type)
         {
-            var props = from p in type.GetTypeInfo().DeclaredProperties
-                        where p.CanRead && p.CanWrite
-                        select new PropertyDescriptor<TypeDescriptor>(p.Name, p.PropertyType.GetDescriptor(), false);
-            return props.Any()
-                ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(props))
-                : null;
+            var ti = type.GetTypeInfo();
+            if (ti.DeclaredConstructors.Where(ci => ci.GetParameters().Length == 0).Any())
+            {
+                var props = from p in type.GetTypeInfo().DeclaredProperties
+                            where p.CanRead && p.CanWrite
+                            let req = p.GetCustomAttributes<RequiredAttribute>().Any()
+                            select new PropertyDescriptor<TypeDescriptor>(p.Name, p.PropertyType.GetDescriptor(), req);
+                return props.Any()
+                    ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(props))
+                    : null;
+            }
+            else
+            {
+                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != null).SelectMany(x => x.DeclaredProperties).ToArray();
+                if (!props.All(pi => pi.CanRead && !pi.CanWrite))
+                    return null;
+                var properties = from ci in ti.DeclaredConstructors
+                                 let ps = ci.GetParameters()
+                                 where ps.Length > 0 && ps.Length == props.Count()
+                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == ps.Length
+                                 from p in ps.Join(props, p => p.Name, p => p.Name,
+                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, prop.PropertyType.GetDescriptor(), !par.GetCustomAttributes<OptionalAttribute>().Any()),
+                                     CaseInsensitiveEqualityComparer.Instance)
+                                 select p;
+
+                return properties.Any() ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(properties)) : null;
+            }
+            IEnumerable<T> Iterate<T>(T seed, Func<T, T> next)
+            {
+                while (true)
+                {
+                    yield return seed;
+                    seed = next(seed);
+                }
+            
+            }
         }
     }
 }
