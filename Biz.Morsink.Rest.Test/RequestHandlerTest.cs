@@ -30,8 +30,8 @@ namespace Biz.Morsink.Rest.Test
 
             using (var lts = cont.BeginLifetimeScope())
             {
-                var handler = lts.Resolve<IRestRequestHandler>(); 
-                var req = new RestRequest("GET", FreeIdentity<Person>.Create(1), Enumerable.Empty<(string, string)>(), ty => new object());
+                var handler = lts.Resolve<IRestRequestHandler>();
+                var req = RestRequest.Create("GET", FreeIdentity<Person>.Create(1));
                 var response = await handler.HandleRequest(req) as RestResponse<Person>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
@@ -51,7 +51,7 @@ namespace Biz.Morsink.Rest.Test
             using (var lts = cont.BeginLifetimeScope())
             {
                 var handler = lts.Resolve<IRestRequestHandler>();
-                var req = new RestRequest("GET", FreeIdentity<Person2>.Create(1), new[] { ("ageFactor", "1.5") }, ty => new object());
+                var req = RestRequest.CreateWithTuples("GET", FreeIdentity<Person2>.Create(1), new[] { ("ageFactor", "1.5") });
                 var response = await handler.HandleRequest(req) as RestResponse<Person2>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
@@ -60,7 +60,7 @@ namespace Biz.Morsink.Rest.Test
                 Assert.AreEqual("Morsink", val.LastName);
                 Assert.AreEqual(55, val.Age);
 
-                req = new RestRequest("GET", FreeIdentity<Person2>.Create(1), Enumerable.Empty<(string, string)>(), ty => new object());
+                req = RestRequest.Create("GET", FreeIdentity<Person2>.Create(1));
                 response = await handler.HandleRequest(req) as RestResponse<Person2>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
@@ -83,14 +83,14 @@ namespace Biz.Morsink.Rest.Test
             {
                 var handler = lts.Resolve<IRestRequestHandler>();
                 var id = FreeIdentity<Person>.Create(1);
-                var req = new RestRequest("GET", id, Enumerable.Empty<(string, string)>(), ty => new object());
+                var req = RestRequest.Create("GET", id);
                 var response = await handler.HandleRequest(req) as RestResponse<Person>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
                 Assert.AreEqual(1, response.Value.AsSuccess().Links.Count);
                 Assert.AreEqual(typeof(PersonFriendCollection), response.Value.AsSuccess().Links.First().Target.ForType);
 
-                var req2 = new RestRequest("GET", response.Value.AsSuccess().Links.First().Target, Enumerable.Empty<(string, string)>(), ty => new object());
+                var req2 = RestRequest.Create("GET", response.Value.AsSuccess().Links.First().Target);
                 var response2 = await handler.HandleRequest(req2) as RestResponse<PersonFriendCollection>;
                 Assert.IsNotNull(response2);
                 Assert.IsTrue(response2.IsSuccess);

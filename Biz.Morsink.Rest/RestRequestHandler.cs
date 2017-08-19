@@ -118,7 +118,7 @@ namespace Biz.Morsink.Rest
         private async ValueTask<RestResponse> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
-            if (!converter.Convert(request.RequestParameters.AsDictionary()).TryTo(out P param))
+            if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
             var action = (Func<IIdentity<T>, P, E, ValueTask<RestResult<R>>>)capability.CreateDelegate();
             var body = (E)request.BodyParser(typeof(E));
@@ -128,7 +128,7 @@ namespace Biz.Morsink.Rest
         private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
-            if (!converter.Convert(request.RequestParameters.AsDictionary()).TryTo(out P param))
+            if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
             var action = (Func<IIdentity<T>, P, ValueTask<RestResult<R>>>)capability.CreateDelegate();
             var res = await action(request.Address as IIdentity<T>, param);

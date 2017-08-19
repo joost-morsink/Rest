@@ -1,49 +1,35 @@
 ﻿using Biz.Morsink.Identity;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace Biz.Morsink.Rest
 {
     public class RestRequest
     {
-        public class Parameters
-        {
-            private KeyValuePair<string, string>[] parameters;
-            private ILookup<string, string> lookup;
-            private IReadOnlyDictionary<string, string> firstDict;
-            public Parameters(IEnumerable<KeyValuePair<string, string>> parameters)
-            {
-                this.parameters = parameters.ToArray();
-            }
-            public Parameters(IEnumerable<(string, string)> parameters)
-                : this(parameters.Select(x => new KeyValuePair<string, string>(x.Item1, x.Item2)))
-            { }
-            public ILookup<string, string> AsLookup()
-                => lookup = lookup ?? parameters.ToLookup(p => p.Key, p => p.Value);
-            public IReadOnlyDictionary<string, string> AsDictionary()
-                => firstDict = firstDict ?? parameters.GroupBy(p => p.Key).ToImmutableDictionary(p => p.Key, p => p.First().Value);
-        }
-
-        public RestRequest(string capability, IIdentity address, IEnumerable<KeyValuePair<string, string>> parameters, Func<Type, object> bodyParser)
+        public RestRequest(string capability, IIdentity address, RestParameterCollection parameters , Func<Type,object> bodyParser, RestParameterCollection metadata)
         {
             Capability = capability;
             Address = address;
-            RequestParameters = new Parameters(parameters);
-            BodyParser = bodyParser;
+            Parameters = parameters ?? RestParameterCollection.Empty;
+            BodyParser = bodyParser ?? (ty => new object());
+            Metadata = metadata ?? RestParameterCollection.Empty;
         }
-        public RestRequest(string capability, IIdentity address, IEnumerable<(string, string)> parameters, Func<Type, object> bodyParser)
-        {
-            Capability = capability;
-            Address = address;
-            RequestParameters = new Parameters(parameters);
-            BodyParser = bodyParser;
-        }
+        public static RestRequest Create(string capability, IIdentity address, IEnumerable<KeyValuePair<string, string>> parameters = null, Func<Type, object> bodyParser = null, IEnumerable<KeyValuePair<string, string>> metadata = null)
+            => new RestRequest(capability, address, RestParameterCollection.Create(parameters), bodyParser, RestParameterCollection.Create(metadata));
+        public static RestRequest CreateWithTuples(string capability, IIdentity address, IEnumerable<(string, string)> parameters = null, Func<Type, object> bodyParser = null, IEnumerable<(string, string)> metadata = null)
+            => new RestRequest(capability, address, RestParameterCollection.Create(parameters), bodyParser, RestParameterCollection.Create(metadata));
 
         public string Capability { get; }
         public IIdentity Address { get; }
         public Func<Type, object> BodyParser { get; }
-        public Parameters RequestParameters { get; }
+        /// <summary>
+        /// TODO: Maps to query string
+        /// </summary>
+        public RestParameterCollection Parameters { get; }
+        /// <summary>
+        /// TODO: Maps to HTTP headers
+        /// </summary>
+        public RestParameterCollection Metadata { get; }
     }
 }
