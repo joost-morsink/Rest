@@ -13,7 +13,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// IdentityProvider for a Rest service.
     /// </summary>
-    public class RestIdentityProvider : AbstractIdentityProvider
+    public class RestIdentityProvider : AbstractIdentityProvider, IRestIdentityProvider
     {
         #region Helper classes
         private struct UnderlyingTypeBuilder
@@ -272,31 +272,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return nullOnFailure ? null : new Identity<object, string>(this, path);
         }
-        /// <summary>
-        /// Parses a path string into an IIdentity&lt;T&gt; value.
-        /// </summary>
-        /// <typeparam name="T">The entity type.</typeparam>
-        /// <param name="path">The path to parse.</param>
-        /// <returns>An IIdentity&lt;T&gt; value if the parse and match were successful.</returns>
-        public IIdentity<T> Parse<T>(string path)
-            => Parse(path, true) as IIdentity<T>;
-        /// <summary>
-        /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
-        /// </summary>
-        /// <param name="objectId">The input identity value.</param>
-        /// <param name="nullOnFailure">If no match is found, this boolean indicates whether to return a null or the original input identity value.</param>
-        /// <returns>An identity value.</returns>
-        public IIdentity Parse(IIdentity<object> objectId, bool nullOnFailure)
-            => Parse(Translate(objectId).Value.ToString(), nullOnFailure);
-        /// <summary>
-        /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
-        /// </summary>
-        /// <typeparam name="T">The entity type to parse the value for.</typeparam>
-        /// <param name="objectId">The input identity value.</param>
-        /// <returns>An identity value, null if the match is unsuccessful.</returns>
-        public IIdentity<T> Parse<T>(IIdentity<object> objectId)
-            => Parse(objectId, true) as IIdentity<T>;
-
+  
         /// <summary>
         /// Converts any identity value for a known type into a general identity value with a pathstring as underlying value.
         /// </summary>
@@ -349,13 +325,6 @@ namespace Biz.Morsink.Rest.AspNetCore
                     yield return converter.Convert(x.ComponentValue).To("");
             }
         }
-        /// <summary>
-        /// Converts any identity value for a known type into a pathstring.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public string ToPath(IIdentity id)
-            => ToGeneralIdentity(id)?.Value.ToString();
-
+ 
     }
 }
