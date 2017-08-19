@@ -15,6 +15,10 @@ namespace Biz.Morsink.Rest.AspNetCore
     public struct RestPath
     {
         /// <summary>
+        /// Enum to indicate whether a RestPath can be considered Local to the current server or Remote.
+        /// </summary>
+        public enum PathType { Local, Remote }
+        /// <summary>
         /// Represents a single segment of a RestPath.
         /// </summary>
         public struct Segment : IEquatable<Segment>
@@ -341,19 +345,19 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <param name="index">The index of the corresponding wildcard.</param>
             /// <returns>The value for the indexed wildcard.</returns>
             public object this[int index] =>
-                index == SegmentValues.Count 
-                    ? Query.IsNone 
+                index == SegmentValues.Count
+                    ? Query.IsNone
                         ? throw new ArgumentOutOfRangeException()
-                        : (object)Query.ToDictionary(x => x.Key, x => x.Value[0]) 
+                        : (object)Query.ToDictionary(x => x.Key, x => x.Value[0])
                     : SegmentValues[index];
             /// <summary>
             /// Converts all the wildcard match values into an object array.
             /// </summary>
             /// <returns>An array of all the wildcard match values.</returns>
-            public object[] ToArray() 
+            public object[] ToArray()
                 => SegmentValues.Cast<object>()
-                    .Concat(Query.IsNone 
-                        ? Enumerable.Empty<object>() 
+                    .Concat(Query.IsNone
+                        ? Enumerable.Empty<object>()
                         : new[] { Query.ToDictionary(x => x.Key, x => x.Value[0]) })
                     .ToArray();
         }
@@ -377,17 +381,30 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="segments">All the parts of the path.</param>
+        /// <param name="segments">All the path-parts of the path.</param>
+        /// <param name="query">The query string part of the path.</param>
         /// <param name="forType">The entity type the path belongs to.</param>
         public RestPath(IEnumerable<Segment> segments, Query query, Type forType)
+            : this(null, segments, query, forType)
+        { }
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="pathBase">The base path for this path.</param>
+        /// <param name="segments">All the path-parts of the path.</param>
+        /// <param name="query">The query string part of the path.</param>
+        /// <param name="forType">The entity type the path belongs to.</param>
+        public RestPath(string pathBase, IEnumerable<Segment> segments, Query query, Type forType)
         {
+            this.pathBase = pathBase;
             this.segments = segments.ToArray();
             this.query = query;
             skip = 0;
             ForType = forType;
         }
-        private RestPath(Segment[] segments, Query query, int skip, Type forType)
+        private RestPath(string pathBase, Segment[] segments, Query query, int skip, Type forType)
         {
+            this.pathBase = pathBase;
             this.segments = segments;
             this.query = query;
             this.skip = skip;
@@ -396,11 +413,28 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly Segment[] segments;
         private readonly Query query;
         private readonly int skip;
+        private readonly string pathBase;
 
         /// <summary>
         /// Gets the number of path parts in this RestPath.
         /// </summary>
         public int Count => segments.Length - skip;
+        /// <summary>
+        /// The base path for this path.
+        /// </summary>
+        public string PathBase => pathBase;
+        /// <summary>
+        /// Gets whether the path is a Local or Remote one.
+        /// </summary>
+        public PathType Location => pathBase == null ? PathType.Local : PathType.Remote;
+        /// <summary>
+        /// True if this is a local path.
+        /// </summary>
+        public bool IsLocal => pathBase == null;
+        /// <summary>
+        /// True if this is a remote path.
+        /// </summary>
+        public bool IsRemote => pathBase != null;
         internal int SegmentArity => segments.Where(s => s.IsWildcard).Count();
         /// <summary>
         /// Gets the number of wildcard parts in this RestPath.
@@ -410,6 +444,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Gets the Query object corresponding to the RestPath's query string.
         /// </summary>
         public Query QueryString => query;
+
         /// <summary>
         /// Gets the entity type this RestPath is for.
         /// </summary>
@@ -426,15 +461,16 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="num">The number of segments to skip.</param>
         /// <returns>A shorter RestPath.</returns>
         public RestPath Skip(int num = 1)
-            => new RestPath(segments, query, skip + num, ForType);
+            => new RestPath(pathBase, segments, query, skip + num, ForType);
         /// <summary>
         /// Tries to match another Path to this one.
         /// </summary>
         /// <param name="other">The Path to match.</param>
         /// <returns>A Match instance containing the match results.</returns>
-        public Match MatchPath(RestPath other)
+        public Match MatchPath(RestPath other, string localPathBase = null)
         {
-            if (Count != other.Count)
+            if (Count != other.Count
+                || !string.Equals(pathBase ?? localPathBase, other.pathBase ?? localPathBase))
                 return default(Match);
             var result = new List<string>();
             for (int i = 0; i < Count; i++)
@@ -452,7 +488,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <returns>A RestPath.</returns>
         public RestPath GetFullPath()
-            => new RestPath(segments, query, 0, ForType);
+            => new RestPath(pathBase, segments, query, 0, ForType);
 
         private IEnumerable<Segment> fillHelper(IEnumerable<string> stars)
         {
@@ -477,5 +513,18 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Gets a string representation for the Path.
         /// </summary>
         public string PathString => string.Join("/", segments) + query.ToUriSuffix();
+        /// <summary>
+        /// Turn the path into a remote path. Throws if the path is already remote.
+        /// </summary>
+        /// <param name="pathBase">The base path of the remote server.</param>
+        /// <returns>A Remote RestPath.</returns>
+        public RestPath ToRemote(string pathBase)
+            => IsLocal ? new RestPath(pathBase, segments, query, skip, ForType) : throw new InvalidOperationException("Path is already remote.");
+        /// <summary>
+        /// Turn the path into a local path. 'Forgets' its PathBase.
+        /// </summary>
+        /// <returns>A Local RestPath.</returns>
+        public RestPath ToLocal()
+            => IsLocal ? this : new RestPath(null, segments, query, skip, ForType);
     }
 }
