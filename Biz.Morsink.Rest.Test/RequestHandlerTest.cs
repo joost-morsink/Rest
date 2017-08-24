@@ -17,7 +17,7 @@ namespace Biz.Morsink.Rest.Test
         {
             var cb = new ContainerBuilder();
             cb.RegisterType<AutofacServiceLocator>().AsImplementedInterfaces();
-            cb.RegisterType<RestRequestHandler>().AsImplementedInterfaces().SingleInstance();
+            cb.RegisterType<CoreRestRequestHandler>().AsImplementedInterfaces().SingleInstance();
             return cb;
         }
         

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
-    public class RestRequestHandler : IRestRequestHandler
+    public class CoreRestRequestHandler : IRestRequestHandler
     {
         public static IDataConverter DefaultDataConverter { get; } = new DataConverter(
                 IdentityConverter.Instance,
@@ -33,7 +33,7 @@ namespace Biz.Morsink.Rest
         private readonly IDataConverter converter;
         private readonly IServiceLocator locator;
 
-        public RestRequestHandler(IServiceLocator locator, IDataConverter converter = null)
+        public CoreRestRequestHandler(IServiceLocator locator, IDataConverter converter = null)
         {
             this.locator = locator;
             this.converter = converter ?? DefaultDataConverter;
@@ -73,7 +73,7 @@ namespace Biz.Morsink.Rest
         {
             this.linkProviders = linkProviders.ToArray();
             this.dynamicLinkProviders = dynamicLinkProviders.ToArray();
-            this.converter = converter ?? RestRequestHandler.DefaultDataConverter;
+            this.converter = converter ?? CoreRestRequestHandler.DefaultDataConverter;
 
         }
         public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
