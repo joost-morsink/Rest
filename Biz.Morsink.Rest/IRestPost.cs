@@ -10,6 +10,6 @@ namespace Biz.Morsink.Rest
     public interface IRestPost<T, P, E, R> : IRestCapability<T>
         where R : class
     {
-        ValueTask<RestResult<R>> Post(IIdentity<T> target, P parameters, E entity);
+        ValueTask<RestResponse<R>> Post(IIdentity<T> target, P parameters, E entity);
     }
 }

@@ -97,8 +97,7 @@ namespace Biz.Morsink.Rest
                     {
                         if (cap.Descriptor.Name == "GET")
                         {
-                            return res.Select(r =>
-                                r.Select(v =>
+                            return res.Select(r => r.Select(v =>
                                     v.Manipulate(rv => rv.Links
                                         .Concat(linkProviders.SelectMany(lp => lp.GetLinks((IIdentity<T>)request.Address)))
                                         .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value))))));
@@ -120,19 +119,19 @@ namespace Biz.Morsink.Rest
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, E, ValueTask<RestResult<R>>>)capability.CreateDelegate();
+            var action = (Func<IIdentity<T>, P, E, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
             var body = (E)request.BodyParser(typeof(E));
             var res = await action(request.Address as IIdentity<T>, param, body);
-            return res.ToResponse();
+            return res;
         }
         private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, ValueTask<RestResult<R>>>)capability.CreateDelegate();
+            var action = (Func<IIdentity<T>, P, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
             var res = await action(request.Address as IIdentity<T>, param);
-            return res.ToResponse();
+            return res;
         }
     }
 

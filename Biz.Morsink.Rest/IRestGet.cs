@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest
     public interface IRestGet<T, P> : IRestCapability<T>
         where T : class
     {
-        ValueTask<RestResult<T>> Get(IIdentity<T> id, P parameters);
+        ValueTask<RestResponse<T>> Get(IIdentity<T> id, P parameters);
     }
 
 }

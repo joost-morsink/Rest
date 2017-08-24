@@ -67,7 +67,7 @@ namespace Biz.Morsink.Rest
             var result = method.ReturnType.GenericTypeArguments.Length == 1
                 && (method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>) || method.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 && method.ReturnType.GenericTypeArguments[0].GenericTypeArguments.Length == 1
-                && method.ReturnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(RestResult<>)
+                && method.ReturnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(RestResponse<>)
                 ? method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0]
                 : null;
             return new RestCapabilityDescriptor(key.Name, key.EntityType, par, body, result, interfaceType);
@@ -92,13 +92,13 @@ namespace Biz.Morsink.Rest
                 return mi.CreateDelegate(typeof(Func<,,>).MakeGenericType(
                     typeof(IIdentity<>).MakeGenericType(EntityType),
                     ParameterType,
-                    typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
+                    typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(ResultType))), target);
             else
                 return mi.CreateDelegate(typeof(Func<,,,>).MakeGenericType(
                     typeof(IIdentity<>).MakeGenericType(EntityType), 
                     ParameterType,
                     BodyType,
-                    typeof(ValueTask<>).MakeGenericType(typeof(RestResult<>).MakeGenericType(ResultType))), target);
+                    typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(ResultType))), target);
         }
 
     }

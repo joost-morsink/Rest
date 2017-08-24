@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.Test", "Bi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.AspNetCore.Test", "Biz.Morsink.Rest.AspNetCore.Test\Biz.Morsink.Rest.AspNetCore.Test.csproj", "{17D91349-2BCE-4211-9A7E-52048FB741F9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.Json", "Biz.Morsink.Rest.HttpConverter.Json\Biz.Morsink.Rest.HttpConverter.Json.csproj", "{DC25F41B-1445-4606-B40E-88D0938A6733}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,12 @@ Global
 		{17D91349-2BCE-4211-9A7E-52048FB741F9}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
 		{17D91349-2BCE-4211-9A7E-52048FB741F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17D91349-2BCE-4211-9A7E-52048FB741F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC25F41B-1445-4606-B40E-88D0938A6733}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

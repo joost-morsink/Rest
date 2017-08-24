@@ -9,6 +9,6 @@ namespace Biz.Morsink.Rest
     [Capability("DELETE")]
     public interface IRestDelete<T, P> : IRestCapability<T>
     {
-        ValueTask<RestResult<object>> Delete(IIdentity<T> target, P parameters);
+        ValueTask<RestResponse<object>> Delete(IIdentity<T> target, P parameters);
     }
 }

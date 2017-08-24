@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Utils;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -34,8 +35,10 @@ namespace Biz.Morsink.Rest
                 embeddings == null ? (Func<RestValue<T>,IEnumerable<object>>)null : rv => embeddings(rv));
         public RestResult<T>.Success ToResult()
             => new RestResult<T>.Success(this);
-        public ValueTask<RestResult<T>> ToResultAsync()
-            => new ValueTask<RestResult<T>>(ToResult());
+        public RestResponse<T> ToResponse(TypeKeyedDictionary metadata = null)
+            => ToResult().ToResponse(metadata);
+        public ValueTask<RestResponse<T>> ToResponseAsync(TypeKeyedDictionary metadata = null)
+            => ToResponse(metadata).ToAsync();
         public static Builder Build()
             => new Builder(default(T), ImmutableList<Link>.Empty, ImmutableList<object>.Empty);
         public struct Builder
@@ -60,12 +63,17 @@ namespace Biz.Morsink.Rest
                 => new Builder(value, links, embeddings.Add(embedding));
             public Builder WithEmbeddings(IEnumerable<object> embeddings)
                 => new Builder(value, links, this.embeddings.AddRange(embeddings));
+
             public RestValue<T> Build()
                 => new RestValue<T>(value, links, embeddings);
             public RestResult<T>.Success BuildResult()
-                => new RestResult<T>.Success(Build());
+                => Build().ToResult();
             public ValueTask<RestResult<T>> BuildAsyncResult()
-                => new ValueTask<RestResult<T>>(BuildResult());
+                => Build().ToResult().ToAsync();
+            public RestResponse<T> BuildResponse(TypeKeyedDictionary metadata = null)
+                => Build().ToResponse(metadata);
+            public ValueTask<RestResponse<T>> BuildResponseAsync(TypeKeyedDictionary metadata = null)
+                => Build().ToResponseAsync(metadata);
         }
     }
 }

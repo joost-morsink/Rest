@@ -8,29 +8,29 @@ namespace Biz.Morsink.Rest.Test.Helpers
 {
     public class TestGetRepo : RestRepository<Person>, IRestGet<Person, NoParameters>
     {
-        public ValueTask<RestResult<Person>> Get(IIdentity<Person> id, NoParameters np)
+        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters np)
         {
             if (id.Value?.ToString() == "1")
             {
                 var p = new Person { FirstName = "Joost", LastName = "Morsink", Age = 37 };
-                return Rest.Value(p).ToResultAsync();
+                return Rest.Value(p).ToResponseAsync();
             }
             else
-                return RestResult.NotFound<Person>().ToAsync();
+                return RestResult.NotFound<Person>().ToResponse().ToAsync();
         }
     }
     public class TestGetFriendCollectionRepo : RestRepository<PersonFriendCollection>, IRestGet<PersonFriendCollection, NoParameters>
     {
-        public ValueTask<RestResult<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, NoParameters parameters)
+        public ValueTask<RestResponse<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, NoParameters parameters)
         {
             if (id.Value?.ToString() == "1")
             {
                 // I am my own best friend :)
                 var pfc = new PersonFriendCollection { PersonId = FreeIdentity<Person>.Create(1), FriendIds = new IIdentity<Person>[] { FreeIdentity<Person>.Create(1) } };
-                return Rest.Value(pfc).ToResultAsync();
+                return Rest.Value(pfc).ToResponseAsync();
             }
             else
-                return RestResult.NotFound<PersonFriendCollection>().ToAsync();
+                return RestResult.NotFound<PersonFriendCollection>().ToResponseAsync();
         }
     }
     public class PersonFriendCollectionLinkProvider : ILinkProvider<Person>
@@ -51,26 +51,26 @@ namespace Biz.Morsink.Rest.Test.Helpers
     }
     public class TestGetRepo2 : RestRepository<Person2>, IRestGet<Person2, AgeFactorParameter>, IRestGet<Person2, NoParameters>
     {
-        public ValueTask<RestResult<Person2>> Get(IIdentity<Person2> id, AgeFactorParameter parameters)
+        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, AgeFactorParameter parameters)
         {
             if (id.Value?.ToString() == "1")
             {
                 var p = new Person2 { FirstName = "Joost", LastName = "Morsink", Age = (int)(37 * parameters.AgeFactor) };
-                return Rest.Value(p).ToResultAsync();
+                return Rest.Value(p).ToResponseAsync();
             }
             else
-                return RestResult.NotFound<Person2>().ToAsync();
+                return RestResult.NotFound<Person2>().ToResponseAsync();
         }
 
-        public ValueTask<RestResult<Person2>> Get(IIdentity<Person2> id, NoParameters parameters)
+        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, NoParameters parameters)
         {
             if (id.Value?.ToString() == "1")
             {
                 var p = new Person2 { FirstName = "Joost", LastName = "Morsink", Age = 37 };
-                return Rest.Value(p).ToResultAsync();
+                return Rest.Value(p).ToResponseAsync();
             }
             else
-                return RestResult.NotFound<Person2>().ToAsync();
+                return RestResult.NotFound<Person2>().ToResponseAsync();
         }
     }
 }

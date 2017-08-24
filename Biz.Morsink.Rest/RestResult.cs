@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Utils;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,9 +24,14 @@ namespace Biz.Morsink.Rest
         where T : class
     {
         public Success AsSuccess() => this as Success;
+        IRestSuccess IRestResult.AsSuccess() => this as IRestSuccess;
         public Failure AsFailure() => this as Failure;
-        public RestResponse<T> ToResponse() => new RestResponse<T>(this);
-        RestResponse IRestResult.ToResponse() => ToResponse();
+        IRestFailure IRestResult.AsFailure() => this as IRestFailure;
+        bool IRestResult.IsSuccess => this is Success;
+
+        public RestResponse<T> ToResponse(TypeKeyedDictionary metadata = null) => new RestResponse<T>(this, metadata);
+        RestResponse IRestResult.ToResponse(TypeKeyedDictionary metadata) => ToResponse(metadata);
+        public ValueTask<RestResponse<T>> ToResponseAsync(TypeKeyedDictionary metadata = null) => ToResponse(metadata).ToAsync();
         public ValueTask<RestResult<T>> ToAsync() => new ValueTask<RestResult<T>>(this);
 
         public class Success : RestResult<T>, IRestSuccess<T>
