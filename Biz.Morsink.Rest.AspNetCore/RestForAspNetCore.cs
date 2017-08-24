@@ -29,7 +29,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             try
             {
-                var (req, conv) = ReadRequest(context);
+                var (req,conv) = ReadRequest(context);
                 if (req == null)
                 {
                     context.Response.StatusCode = STATUS_NOTFOUND;
@@ -37,7 +37,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
                 else
                 {
-                    var resp = await restRequestDelegate(context, req, conv);
+                    var resp = await restRequestDelegate(context, req,conv);
                     await WriteResponse(conv, context, resp);
                 }
             }
@@ -55,7 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             for (int i = 0; i < converters.Length; i++)
                 if (converters[i].Applies(context))
                     return (converters[i].ManipulateRequest(req, context), converters[i]);
-            return (null, null);
+            return (null,null);
         }
         private Task WriteResponse(IHttpRestConverter converter, HttpContext context, RestResponse response)
         {
