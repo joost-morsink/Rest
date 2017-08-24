@@ -38,27 +38,27 @@ namespace Biz.Morsink.Rest
             this.locator = locator;
             this.converter = converter ?? DefaultDataConverter;
         }
-        public async ValueTask<RestResponse> HandleRequest(RestRequest request)
+        public async ValueTask<IRestResult> HandleRequest(RestRequest request)
         {
             try
             {
                 var type = request.Address.ForType;
                 var repo = locator.ResolveOptional(typeof(IRestRepository<>).MakeGenericType(type)) as IRestRepository;
                 if (repo == null)
-                    return RestResult.NotFound<object>().ToResponse();
+                    return RestResult.NotFound<object>();
 
                 var lps = locator.ResolveMulti(typeof(ILinkProvider<>).MakeGenericType(type));
                 var dlps = locator.ResolveMulti(typeof(IDynamicLinkProvider<>).MakeGenericType(type));
 
                 var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, converter });
-                return await (ValueTask<RestResponse>)
+                return await (ValueTask<IRestResult>)
                     typeof(RestRequestHandler<>).MakeGenericType(type).GetTypeInfo()
                     .GetDeclaredMethod(nameof(RestRequestHandler<object>.HandleTypedRequest))
                     .Invoke(t, new object[] { request, repo });
             }
             catch (Exception ex)
             {
-                return RestResult.Error<object>(ex).ToResponse();
+                return RestResult.Error<object>(ex);
             }
         }
     }
@@ -76,7 +76,7 @@ namespace Biz.Morsink.Rest
             this.converter = converter ?? RestRequestHandler.DefaultDataConverter;
 
         }
-        public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
+        public async ValueTask<IRestResult> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
         {
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
 
@@ -92,16 +92,15 @@ namespace Biz.Morsink.Rest
                         : typeof(RestRequestHandler<T>).GetTypeInfo()
                             .GetDeclaredMethod(nameof(Handle))
                             .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
-                    var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { request, cap });
+                    var res = await (ValueTask<IRestResult>)method.Invoke(this, new object[] { request, cap });
                     if (res.IsSuccess)
                     {
                         if (cap.Descriptor.Name == "GET")
                         {
-                            return res.Select(r =>
-                                r.Select(v =>
+                            return res.Select(v =>
                                     v.Manipulate(rv => rv.Links
                                         .Concat(linkProviders.SelectMany(lp => lp.GetLinks((IIdentity<T>)request.Address)))
-                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value))))));
+                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value)))));
                         }
                         else
                             return res;
@@ -109,30 +108,30 @@ namespace Biz.Morsink.Rest
                 }
                 catch (Exception ex)
                 {
-                    return RestResult.Error(descriptor.ResultType, ex).ToResponse();
+                    return RestResult.Error(descriptor.ResultType, ex);
                 }
             }
-            return RestResult.NotFound<T>().ToResponse();
+            return RestResult.NotFound<T>();
 
         }
-        private async ValueTask<RestResponse> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
+        private async ValueTask<IRestResult> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
-                return RestResult.BadRequest<R>("Parameter").ToResponse();
+                return RestResult.BadRequest<R>("Parameter");
             var action = (Func<IIdentity<T>, P, E, ValueTask<RestResult<R>>>)capability.CreateDelegate();
             var body = (E)request.BodyParser(typeof(E));
             var res = await action(request.Address as IIdentity<T>, param, body);
-            return res.ToResponse();
+            return res;
         }
-        private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)
+        private async ValueTask<IRestResult> Handle<P, R>(RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
-                return RestResult.BadRequest<R>("Parameter").ToResponse();
+                return RestResult.BadRequest<R>("Parameter");
             var action = (Func<IIdentity<T>, P, ValueTask<RestResult<R>>>)capability.CreateDelegate();
             var res = await action(request.Address as IIdentity<T>, param);
-            return res.ToResponse();
+            return res;
         }
     }
 

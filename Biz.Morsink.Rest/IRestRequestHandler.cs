@@ -7,6 +7,6 @@ namespace Biz.Morsink.Rest
 {
     public interface IRestRequestHandler
     {
-        ValueTask<RestResponse> HandleRequest(RestRequest request);
+        ValueTask<IRestResult> HandleRequest(RestRequest request);
     }
 }

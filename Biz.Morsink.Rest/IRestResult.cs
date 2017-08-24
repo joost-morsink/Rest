@@ -6,7 +6,10 @@ namespace Biz.Morsink.Rest
 {
     public interface IRestResult
     {
-        RestResponse ToResponse();
+        RestResponse ToResponse(RestParameterCollection metadata);
         IRestResult Select(Func<IRestValue, IRestValue> f);
+        bool IsSuccess { get; }
+        IRestSuccess AsSuccess();
+        IRestFailure AsFailure();
     }
 }

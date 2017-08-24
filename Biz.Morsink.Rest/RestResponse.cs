@@ -5,7 +5,12 @@ namespace Biz.Morsink.Rest
 {
     public abstract class RestResponse
     {
+        protected RestResponse(RestParameterCollection metadata)
+        {
+            Metadata = metadata;
+        }
         public abstract bool IsSuccess { get; }
+        public RestParameterCollection Metadata { get; }
         public ValueTask<RestResponse> ToAsync()
             => new ValueTask<RestResponse>(this);
         public abstract RestResponse Select(Func<IRestResult, IRestResult> f);
@@ -14,7 +19,7 @@ namespace Biz.Morsink.Rest
     public class RestResponse<T> : RestResponse
         where T : class
     {
-        public RestResponse(RestResult<T> value)
+        public RestResponse(RestResult<T> value, RestParameterCollection metadata = null) : base(metadata ?? RestParameterCollection.Empty)
         {
             Value = value;
         }

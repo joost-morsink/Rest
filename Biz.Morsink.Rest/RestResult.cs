@@ -22,10 +22,14 @@ namespace Biz.Morsink.Rest
     public abstract class RestResult<T> : IRestResult
         where T : class
     {
+        public bool IsSuccess => this is Success;
+
         public Success AsSuccess() => this as Success;
         public Failure AsFailure() => this as Failure;
-        public RestResponse<T> ToResponse() => new RestResponse<T>(this);
-        RestResponse IRestResult.ToResponse() => ToResponse();
+        IRestSuccess IRestResult.AsSuccess() => AsSuccess();
+        IRestFailure IRestResult.AsFailure() => AsFailure();
+        public RestResponse<T> ToResponse(RestParameterCollection metadata) => new RestResponse<T>(this,metadata);
+        RestResponse IRestResult.ToResponse(RestParameterCollection metadata) => ToResponse(metadata);
         public ValueTask<RestResult<T>> ToAsync() => new ValueTask<RestResult<T>>(this);
 
         public class Success : RestResult<T>, IRestSuccess<T>
@@ -106,5 +110,6 @@ namespace Biz.Morsink.Rest
         }
         IRestResult IRestResult.Select(Func<IRestValue, IRestValue> f)
             => Select(rv => (RestValue<T>)f(rv));
+
     }
 }

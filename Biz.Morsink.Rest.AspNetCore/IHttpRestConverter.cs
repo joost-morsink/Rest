@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -12,6 +13,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         RestRequest ManipulateRequest(RestRequest req, HttpContext context);
 
         object ParseBody(Type t, byte[] body);
-        byte[] SerializeResponse(IRestValue value);
+
+        RestResponse CreateResponse(IRestResult result, HttpContext context);
+
+        Task SerializeResponse(RestResponse response, HttpContext context);
     }
 }

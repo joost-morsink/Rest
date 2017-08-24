@@ -13,18 +13,18 @@ namespace Biz.Morsink.Rest
         IRestRequestHandler Run(Func<IRestRequestHandler> handler);
     }
     public static class RestRequestHandlerBuilderExt {
-        public static IRestRequestHandlerBuilder Use(this IRestRequestHandlerBuilder builder, Func<IRestRequestHandler, Func<RestRequest, ValueTask<RestResponse>>> handler)
+        public static IRestRequestHandlerBuilder Use(this IRestRequestHandlerBuilder builder, Func<IRestRequestHandler, Func<RestRequest, ValueTask<IRestResult>>> handler)
             => builder.Use(next => new FunctionalRestRequestHandler(handler(next)));
         private class FunctionalRestRequestHandler : IRestRequestHandler
         {
-            private readonly Func<RestRequest, ValueTask<RestResponse>> f;
+            private readonly Func<RestRequest, ValueTask<IRestResult>> f;
 
-            public FunctionalRestRequestHandler(Func<RestRequest, ValueTask<RestResponse>> f)
+            public FunctionalRestRequestHandler(Func<RestRequest, ValueTask<IRestResult>> f)
             {
                 this.f = f;
             }
 
-            public ValueTask<RestResponse> HandleRequest(RestRequest request)
+            public ValueTask<IRestResult> HandleRequest(RestRequest request)
                 => f(request);
         }
         public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceLocator locator)
