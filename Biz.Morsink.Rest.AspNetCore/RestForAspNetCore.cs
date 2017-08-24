@@ -16,19 +16,20 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly IRestRequestHandler handler;
         private readonly IHttpRestConverter[] converters;
         private readonly IRestIdentityProvider identityProvider;
+        private readonly RestRequestDelegate restRequestDelegate;
 
-        public RestForAspNetCore(IRestRequestHandler handler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters)
+        public RestForAspNetCore(IRestRequestHandler handler, IRestHttpPipeline pipeline, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters)
         {
             this.handler = handler;
             this.converters = converters.ToArray();
             this.identityProvider = identityProvider;
-
+            this.restRequestDelegate = pipeline.GetRequestDelegate(handler);
         }
         public async Task Invoke(HttpContext context)
         {
             try
             {
-                var (req,conv) = ReadRequest(context);
+                var (req, conv) = ReadRequest(context);
                 if (req == null)
                 {
                     context.Response.StatusCode = STATUS_NOTFOUND;
@@ -36,7 +37,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
                 else
                 {
-                    var resp = await handler.HandleRequest(req);
+                    var resp = await restRequestDelegate(context, req, conv);
                     await WriteResponse(conv, context, resp);
                 }
             }
@@ -54,7 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             for (int i = 0; i < converters.Length; i++)
                 if (converters[i].Applies(context))
                     return (converters[i].ManipulateRequest(req, context), converters[i]);
-            return (null,null);
+            return (null, null);
         }
         private Task WriteResponse(IHttpRestConverter converter, HttpContext context, RestResponse response)
         {
