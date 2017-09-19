@@ -11,6 +11,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A static class that helps construct TypeDescriptor objects for CLR types.
+    /// </summary>
     public static class TypeDescriptorCreator
     {
         private static ConcurrentDictionary<Type, TypeDescriptor> descriptors;
@@ -40,14 +43,19 @@ namespace Biz.Morsink.Rest.Schema
             descriptors = d;
         }
 
+        /// <summary>
+        /// Gets a TypeDescriptor for this type.
+        /// </summary>
+        /// <param name="type">The type to get a TypeDescriptor for.</param>
+        /// <returns>A TypeDescriptor for the type.</returns>
         public static TypeDescriptor GetDescriptor(this Type type)
         {
             if (descriptors.TryGetValue(type, out var res))
                 return res;
 
-            return GetNullableDescriptor(type)
-                ?? GetArrayDescriptor(type)
-                ?? GetRecordDescriptor(type)
+            return GetNullableDescriptor(type) // Check for nullability
+                ?? GetArrayDescriptor(type) // Check for collections
+                ?? GetRecordDescriptor(type) // Check for records (regular objects)
                 ;
         }
         private static TypeDescriptor GetNullableDescriptor (Type type)
