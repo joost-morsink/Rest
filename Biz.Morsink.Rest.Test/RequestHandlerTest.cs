@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.Test
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
 
-                var val = response.Value.AsSuccess().RestValue.Value; 
+                var val = response.Result.AsSuccess().RestValue.Value; 
                 Assert.AreEqual("Joost", val.FirstName);
                 Assert.AreEqual("Morsink", val.LastName);
                 Assert.AreEqual(37, val.Age);
@@ -55,7 +55,7 @@ namespace Biz.Morsink.Rest.Test
                 var response = await handler.HandleRequest(req) as RestResponse<Person2>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
-                var val = response.Value.AsSuccess().RestValue.Value;
+                var val = response.Result.AsSuccess().RestValue.Value;
                 Assert.AreEqual("Joost", val.FirstName);
                 Assert.AreEqual("Morsink", val.LastName);
                 Assert.AreEqual(55, val.Age);
@@ -64,7 +64,7 @@ namespace Biz.Morsink.Rest.Test
                 response = await handler.HandleRequest(req) as RestResponse<Person2>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
-                val = response.Value.AsSuccess().RestValue.Value;
+                val = response.Result.AsSuccess().RestValue.Value;
                 Assert.AreEqual("Joost", val.FirstName);
                 Assert.AreEqual("Morsink", val.LastName);
                 Assert.AreEqual(37, val.Age);
@@ -87,16 +87,16 @@ namespace Biz.Morsink.Rest.Test
                 var response = await handler.HandleRequest(req) as RestResponse<Person>;
                 Assert.IsNotNull(response);
                 Assert.IsTrue(response.IsSuccess);
-                Assert.AreEqual(1, response.Value.AsSuccess().Links.Count);
-                Assert.AreEqual(typeof(PersonFriendCollection), response.Value.AsSuccess().Links.First().Target.ForType);
+                Assert.AreEqual(1, response.Result.AsSuccess().Links.Count);
+                Assert.AreEqual(typeof(PersonFriendCollection), response.Result.AsSuccess().Links.First().Target.ForType);
 
-                var req2 = RestRequest.Create("GET", response.Value.AsSuccess().Links.First().Target);
+                var req2 = RestRequest.Create("GET", response.Result.AsSuccess().Links.First().Target);
                 var response2 = await handler.HandleRequest(req2) as RestResponse<PersonFriendCollection>;
                 Assert.IsNotNull(response2);
                 Assert.IsTrue(response2.IsSuccess);
-                Assert.AreEqual(id, response2.Value.AsSuccess().Value.PersonId);
-                Assert.AreEqual(1, response2.Value.AsSuccess().Value.FriendIds.Length);
-                Assert.AreEqual(id, response2.Value.AsSuccess().Value.FriendIds[0]);
+                Assert.AreEqual(id, response2.Result.AsSuccess().Value.PersonId);
+                Assert.AreEqual(1, response2.Result.AsSuccess().Value.FriendIds.Length);
+                Assert.AreEqual(id, response2.Result.AsSuccess().Value.FriendIds[0]);
 
             }
         }

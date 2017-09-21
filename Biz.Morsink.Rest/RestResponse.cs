@@ -45,6 +45,10 @@ namespace Biz.Morsink.Rest
         /// <param name="item">An instance of metadata to include in the response.</param>
         /// <returns>A new RestResponse with added metadata.</returns>
         public abstract RestResponse AddMetadata<X>(X item);
+        /// <summary>
+        /// Gets an untyped Rest result.
+        /// </summary>
+        public abstract IRestResult UntypedResult { get; }
     }
     /// <summary>
     /// Generic class representing Rest responses.
@@ -60,20 +64,24 @@ namespace Biz.Morsink.Rest
         /// <param name="metadata">Metadata for the response.</param>
         public RestResponse(RestResult<T> value, TypeKeyedDictionary metadata) : base(metadata)
         {
-            Value = value;
+            Result = value;
         }
         /// <summary>
         /// Gets the typed Rest result.
         /// </summary>
-        public RestResult<T> Value { get; }
+        public RestResult<T> Result { get; }
+        /// <summary>
+        /// Gets the untyped Rest result.
+        /// </summary>
+        public override IRestResult UntypedResult => Result;
         /// <summary>
         /// True if the Value is a successful one.
         /// </summary>
-        public override bool IsSuccess => Value is IRestSuccess;
+        public override bool IsSuccess => Result is IRestSuccess;
         public RestResponse<U> Select<U>(Func<RestResult<T>, RestResult<U>> f)
             where U : class
         {
-            return new RestResponse<U>(f(Value), Metadata);
+            return new RestResponse<U>(f(Result), Metadata);
         }
         /// <summary>
         /// Implementation of the Linq Select method.
@@ -81,7 +89,7 @@ namespace Biz.Morsink.Rest
         /// <param name="f">Manipulation of the inner Rest result value. The resulting value should have the same underlying type.</param>
         /// <returns>A new RestResponse with a manipulateds Rest result.</returns>
         public override RestResponse Select(Func<IRestResult, IRestResult> f)
-            => new RestResponse<T>((RestResult<T>)f(Value), Metadata);
+            => new RestResponse<T>((RestResult<T>)f(Result), Metadata);
         /// <summary>
         /// Creates a new RestResponse with added metadata.
         /// </summary>
@@ -89,7 +97,7 @@ namespace Biz.Morsink.Rest
         /// <param name="item">An instance of metadata to include in the response.</param>
         /// <returns>A new RestResponse with added metadata.</returns>
         public override RestResponse AddMetadata<X>(X item)
-            => new RestResponse<T>(Value, Metadata.Add(item));
+            => new RestResponse<T>(Result, Metadata.Add(item));
         /// <summary>
         /// Wraps the response in a ValueTask,.
         /// </summary>

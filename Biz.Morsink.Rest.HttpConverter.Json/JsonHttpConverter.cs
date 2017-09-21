@@ -43,11 +43,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             context.Response.Headers["Content-Type"] = "application/json";
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-            var rv = (response as IHasRestValue)?.RestValue;
+            var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
             {
-                var json = JObject.FromObject(rv, ser);
-                await json.WriteToAsync(new JsonTextWriter(new StreamWriter(context.Response.Body)));
+                var json = JObject.FromObject(rv.Value, ser);
+                var sb= new StringBuilder();
+                {
+                    json.WriteTo(new JsonTextWriter(new StringWriter(sb)));
+                    var body = sb.ToString();
+                    await context.Response.WriteAsync(body);
+                    //await json.WriteToAsync(new JsonTextWriter(new StreamWriter(context.Response.Body)));
+                }
             }
         }
     }
