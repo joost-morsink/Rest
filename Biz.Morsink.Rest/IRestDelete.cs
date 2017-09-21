@@ -8,7 +8,7 @@ namespace Biz.Morsink.Rest
 {
     /// <summary>
     /// Interface that defines the DELETE capability.
-    /// A DELETE should be idempotent.
+    /// A DELETE should be idempotent, but may return different results on subsequent calls. (like NotFound)
     /// </summary>
     /// <typeparam name="T">The resource type.</typeparam>
     /// <typeparam name="P">The parameter type.</typeparam>
