@@ -55,6 +55,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             cb.RegisterType<CoreRestRequestHandler>().AsSelf().SingleInstance();
             cb.RegisterType<AutofacServiceLocator>().AsImplementedInterfaces();
             cb.RegisterType<PersonRepository>().As<IRestRepository<Person>>();
+            cb.RegisterType<HomeRepository>().As<IRestRepository<Home>>();
             cb.RegisterType<ExampleRestIdentityProvider>().AsImplementedInterfaces();
             cb.RegisterType<JsonHttpConverter>().AsImplementedInterfaces();
             cb.RegisterInstance(ConfigurePipeline(RestHttpPipeline.Create()));

@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         public ExampleRestIdentityProvider()
         {
             BuildEntry(typeof(Person)).WithPath("/person/*").Add();
+            BuildEntry(typeof(Home)).WithPath("/?*").Add();
         }
     }
 }

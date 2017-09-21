@@ -6,11 +6,11 @@ using Biz.Morsink.Identity;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
-    public class PersonRepository : RestRepository<Person>, IRestGet<Person,NoParameters>
+    public class PersonRepository : RestRepository<Person>, IRestGet<Person, NoParameters>
     {
         private Dictionary<string, Person> data = new Dictionary<string, Person>
         {
-            ["1"] = new Person("Joost", "Morsink", 38)
+            ["1"] = new Person(FreeIdentity<Person>.Create(1), "Joost", "Morsink", 38)
         };
         public PersonRepository() { }
 

@@ -8,16 +8,19 @@ using Newtonsoft.Json;
 using System.Text;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
     public class JsonHttpConverter : IHttpRestConverter
     {
         private readonly IOptions<JsonHttpConverterOptions> options;
+        private readonly IRestIdentityProvider provider;
 
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestIdentityProvider provider)
         {
             this.options = options;
+            this.provider = provider;
         }
         public bool Applies(HttpContext context)
         {
@@ -34,7 +37,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             using (var ms = new MemoryStream(body))
             {
-                var ser = JsonSerializer.Create(options.Value.SerializerSettings);              
+                var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 return ser.Deserialize(new JsonTextReader(new StreamReader(ms, Encoding.UTF8)), t);
             }
         }
@@ -46,8 +49,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
             {
+                if (rv.Links.Count > 0)
+                {
+                    foreach (var x in rv.Links.GroupBy(l => l.RelType))
+                        context.Response.Headers[$"Link-{x.Key}"] = new StringValues(x.Select(l => provider.ToPath(l.Target)).ToArray());
+                }
                 var json = JObject.FromObject(rv.Value, ser);
-                var sb= new StringBuilder();
+                var sb = new StringBuilder();
                 {
                     json.WriteTo(new JsonTextWriter(new StringWriter(sb)));
                     var body = sb.ToString();
