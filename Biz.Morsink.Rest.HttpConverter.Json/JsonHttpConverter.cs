@@ -12,27 +12,49 @@ using Microsoft.Extensions.Primitives;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
+    /// <summary>
+    /// Component that converts Http Json bodies from and to Rest requests and responses.
+    /// </summary>
     public class JsonHttpConverter : IHttpRestConverter
     {
         private readonly IOptions<JsonHttpConverterOptions> options;
         private readonly IRestIdentityProvider provider;
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options">Configuration for the component.</param>
+        /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
         public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestIdentityProvider provider)
         {
             this.options = options;
             this.provider = provider;
         }
+        /// <summary>
+        /// Determines if the converter applies to the given HttpContext.
+        /// </summary>
+        /// <param name="context">The HttpContext associated with the Http Request.</param>
+        /// <returns>True if this converter is applicable to the context.</returns>
         public bool Applies(HttpContext context)
         {
             var accept = context.Request.Headers["Accept"].ToArray();
             return accept.Contains("application/json");
         }
-
+        /// <summary>
+        /// The JsonHttpConverter does not manipulate requests.
+        /// </summary>
+        /// <param name="req">The RestRequest extracted from the HttpRequest.</param>
+        /// <param name="context">The HttpContext for the request. Not used.</param>
+        /// <returns>The req parameter.</returns>
         public RestRequest ManipulateRequest(RestRequest req, HttpContext context)
         {
             return req;
         }
-
+        /// <summary>
+        /// Json parser.
+        /// </summary>
+        /// <param name="t">The type of Json present in the body.</param>
+        /// <param name="body">The raw data for the Json body.</param>
+        /// <returns>A parsed object of the specified type.</returns>
         public object ParseBody(Type t, byte[] body)
         {
             using (var ms = new MemoryStream(body))
@@ -41,7 +63,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 return ser.Deserialize(new JsonTextReader(new StreamReader(ms, Encoding.UTF8)), t);
             }
         }
-
+        /// <summary>
+        /// Asynchronously serializes a RestResponse to a Json document on the response stream.
+        /// </summary>
+        /// <param name="response">The response to serialize.</param>
+        /// <param name="context">The HttpContext for the request.</param>
+        /// <returns>A Task describing the asynchronous progress of the serialization.</returns>
         public async Task SerializeResponse(RestResponse response, HttpContext context)
         {
             context.Response.Headers["Content-Type"] = "application/json";
