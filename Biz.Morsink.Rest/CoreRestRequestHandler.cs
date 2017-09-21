@@ -10,8 +10,14 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
+    /// <summary>
+    /// As the core RestRequest handler, this component breaks down a RestRequest instance to a specific method call on a repository.
+    /// </summary>
     public class CoreRestRequestHandler : IRestRequestHandler
     {
+        /// <summary>
+        /// A default DataConverter for conversion within the handler.
+        /// </summary>
         public static IDataConverter DefaultDataConverter { get; } = new DataConverter(
                 IdentityConverter.Instance,
                 IsoDateTimeConverter.Instance,
@@ -33,11 +39,21 @@ namespace Biz.Morsink.Rest
         private readonly IDataConverter converter;
         private readonly IServiceLocator locator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="locator">A service locator to resolve repositories.</param>
+        /// <param name="converter">An optional DataConverter for use within the handler.</param>
         public CoreRestRequestHandler(IServiceLocator locator, IDataConverter converter = null)
         {
             this.locator = locator;
             this.converter = converter ?? DefaultDataConverter;
         }
+        /// <summary>
+        /// Handles a RestRequest
+        /// </summary>
+        /// <param name="request">The request to handle.</param>
+        /// <returns>A possibly asynchronous RestResponse.</returns>
         public async ValueTask<RestResponse> HandleRequest(RestRequest request)
         {
             try
