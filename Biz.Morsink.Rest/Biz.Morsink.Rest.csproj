@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Rest service</Title>
     <VersionPrefix>0.1.0</VersionPrefix>
@@ -17,6 +17,7 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
+    <Configurations>Debug;Release;Prerelease</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
     <VersionSuffix>beta001</VersionSuffix>

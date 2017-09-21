@@ -12,7 +12,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     {
         private readonly ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>> middlewares;
 
-        public static RestHttpPipeline Create() => null;
+        public static RestHttpPipeline Create() => new RestHttpPipeline(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>>.Empty);
         private RestHttpPipeline(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>> middlewares)
         {
             this.middlewares = middlewares;
