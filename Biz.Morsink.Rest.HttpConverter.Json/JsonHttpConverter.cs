@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
+using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Identity;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -78,6 +80,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             {
                 if (rv.Links.Count > 0)
                 {
+                    context.Response.Headers["Schema-Location"] = new StringValues(provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.Value.GetType())));
                     foreach (var x in rv.Links.GroupBy(l => l.RelType))
                         context.Response.Headers[$"Link-{x.Key}"] = new StringValues(x.Select(l => provider.ToPath(l.Target)).ToArray());
                 }

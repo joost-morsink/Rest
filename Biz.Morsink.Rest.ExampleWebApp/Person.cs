@@ -8,7 +8,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 {
     public class Person
     {
-        public Person(IIdentity<Person> id, string firstName, string lastName, int age)
+        public Person(/*IIdentity<Person> id,*/ string firstName, string lastName, int age)
         {
             //Id = id;
             FirstName = firstName;

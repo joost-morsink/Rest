@@ -12,6 +12,7 @@ using Autofac.Extensions.DependencyInjection;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.HttpConverter.Json;
 using Newtonsoft.Json;
+using Biz.Morsink.Rest.Schema;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -54,8 +55,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             var cb = new ContainerBuilder();
             cb.RegisterType<CoreRestRequestHandler>().AsSelf().SingleInstance();
             cb.RegisterType<AutofacServiceLocator>().AsImplementedInterfaces();
-            cb.RegisterType<PersonRepository>().As<IRestRepository<Person>>();
-            cb.RegisterType<HomeRepository>().As<IRestRepository<Home>>();
+            cb.RegisterType<PersonRepository>().As<IRestRepository>().As<IRestRepository<Person>>();
+            cb.RegisterType<HomeRepository>().As<IRestRepository>().As<IRestRepository<Home>>();
+            cb.RegisterType<SchemaRepository>().As<IRestRepository<TypeDescriptor>>().SingleInstance();
             cb.RegisterType<ExampleRestIdentityProvider>().AsImplementedInterfaces();
             cb.RegisterType<JsonHttpConverter>().AsImplementedInterfaces();
             cb.RegisterInstance(ConfigurePipeline(RestHttpPipeline.Create()));
@@ -66,7 +68,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             return new AutofacServiceProvider(container);
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env,IApplicationLifetime lifetime, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole();
 

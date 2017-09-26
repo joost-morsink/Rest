@@ -53,9 +53,11 @@ namespace Biz.Morsink.Rest.Schema
             if (descriptors.TryGetValue(type, out var res))
                 return res;
 
+
             return GetNullableDescriptor(type) // Check for nullability
                 ?? GetArrayDescriptor(type) // Check for collections
                 ?? GetRecordDescriptor(type) // Check for records (regular objects)
+                ?? GetUnitDescriptor(type) // Check form empty types
                 ;
         }
         private static TypeDescriptor GetNullableDescriptor (Type type)
@@ -116,15 +118,24 @@ namespace Biz.Morsink.Rest.Schema
 
                 return properties.Any() ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(properties)) : null;
             }
-            IEnumerable<T> Iterate<T>(T seed, Func<T, T> next)
-            {
-                while (true)
-                {
-                    yield return seed;
-                    seed = next(seed);
-                }
             
+        }
+        private static TypeDescriptor GetUnitDescriptor(Type type)
+        {
+            var ti = type.GetTypeInfo();
+            return ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any()
+                && !Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
+                ? new TypeDescriptor.Record(Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
+                : null;
+        }
+        private static IEnumerable<T> Iterate<T>(T seed, Func<T, T> next)
+        {
+            while (true)
+            {
+                yield return seed;
+                seed = next(seed);
             }
+
         }
     }
 }

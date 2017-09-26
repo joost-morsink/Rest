@@ -17,6 +17,11 @@ namespace Biz.Morsink.Rest
         /// The entity/resource type for the repository.
         /// </summary>
         Type EntityType { get; }
+        /// <summary>
+        /// This property should return a collection of types that are used by this repository.
+        /// This information can be used to populate schema information.
+        /// </summary>
+        IEnumerable<Type> SchemaTypes { get; }
     }
     /// <summary>
     /// Generic interface to indicate a Rest repository of a certain resource type.

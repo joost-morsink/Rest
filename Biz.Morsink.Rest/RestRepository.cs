@@ -86,5 +86,20 @@ namespace Biz.Morsink.Rest
         /// The entity/resource type for the repository.
         /// </summary>
         Type IRestRepository.EntityType => typeof(T);
+        /// <summary>
+        /// This property returns a collection of types that are used by this repository, based on an overridable implementation.
+        /// This information can be used to populate schema information
+        /// </summary>
+        IEnumerable<Type> IRestRepository.SchemaTypes => GetSchemaTypes();
+        /// <summary>
+        /// Default implementation for schematypes. 
+        /// Returns all the relevant types used by Rest capability interfaces.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual IEnumerable<Type> GetSchemaTypes()
+            => GetCapabilities()
+                .SelectMany(d => new[] { d.EntityType, d.BodyType, d.ParameterType, d.ResultType })
+                .Where(t => t != null)
+                .Distinct();
     }
 }
