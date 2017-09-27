@@ -31,6 +31,7 @@ namespace Biz.Morsink.Rest
         /// Gets the underlying (main) value.
         /// </summary>
         public T Value { get; }
+        Type IRestValue.ValueType => typeof(T);
         /// <summary>
         /// Gets a list of links for the value.
         /// </summary>

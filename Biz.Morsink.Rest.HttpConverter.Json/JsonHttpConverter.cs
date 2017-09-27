@@ -74,13 +74,28 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public async Task SerializeResponse(RestResponse response, HttpContext context)
         {
             context.Response.Headers["Content-Type"] = "application/json";
+            if (!response.IsSuccess)
+            {
+                switch (response.UntypedResult.AsFailure().Reason)
+                {
+                    case RestFailureReason.BadRequest:
+                        context.Response.StatusCode = 400;
+                        break;
+                    case RestFailureReason.NotFound:
+                        context.Response.StatusCode = 404;
+                        break;
+                    case RestFailureReason.Error:
+                        context.Response.StatusCode = 500;
+                        break;
+                }
+            }
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
             {
+                context.Response.Headers["Schema-Location"] = new StringValues(provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType)));
                 if (rv.Links.Count > 0)
                 {
-                    context.Response.Headers["Schema-Location"] = new StringValues(provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.Value.GetType())));
                     foreach (var x in rv.Links.GroupBy(l => l.RelType))
                         context.Response.Headers[$"Link-{x.Key}"] = new StringValues(x.Select(l => provider.ToPath(l.Target)).ToArray());
                 }

@@ -14,6 +14,10 @@ namespace Biz.Morsink.Rest
         /// </summary>
         object Value { get; }
         /// <summary>
+        /// Gets the 'static' Type of the Value in this Rest value instance.
+        /// </summary>
+        Type ValueType { get; }
+        /// <summary>
         /// Optional list of provided links for the value.
         /// </summary>
         IReadOnlyList<Link> Links { get; }

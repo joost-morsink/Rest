@@ -5,10 +5,14 @@ using System.Text;
 namespace Biz.Morsink.Rest
 {
     /// <summary>
-    /// Marker interface for Rest failure results.
+    /// Interface for Rest failure results.
     /// </summary>
     public interface IRestFailure : IRestResult
     {
-
+        /// <summary>
+        /// Gets the reason for failure of the Rest request.
+        /// </summary>
+        RestFailureReason Reason { get; }
     }
+
 }

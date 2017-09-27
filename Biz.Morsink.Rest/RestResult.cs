@@ -178,6 +178,7 @@ namespace Biz.Morsink.Rest
                 /// <returns>A new BadRequest failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
                     => new RestResult<U>.Failure.BadRequest(RestValue);
+                public override RestFailureReason Reason => RestFailureReason.BadRequest;
             }
             /// <summary>
             /// This class represents the resource addressed in the request could not be found.
@@ -195,6 +196,8 @@ namespace Biz.Morsink.Rest
                 /// <returns>A new NotFound failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
                     => RestResult<U>.Failure.NotFound.Instance;
+                public override RestFailureReason Reason => RestFailureReason.NotFound;
+
             }
             /// <summary>
             /// This class represents an unexpected error occurred during processing of the request.
@@ -235,6 +238,8 @@ namespace Biz.Morsink.Rest
                 /// <returns>A new Error failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
                     => new RestResult<U>.Failure.Error(RestValue);
+                public override RestFailureReason Reason => RestFailureReason.Error;
+
             }
             /// <summary>
             /// This abstract method can be used to transform the underlying successful value type into another.
@@ -245,6 +250,10 @@ namespace Biz.Morsink.Rest
             /// <returns>A new failure with a different underlying successful value type.</returns>
             public abstract RestResult<U>.Failure Select<U>()
                 where U : class;
+            /// <summary>
+            /// Gets the reason for failure of the Rest request.
+            /// </summary>
+            public abstract RestFailureReason Reason { get; }
         }
         /// <summary>
         /// Implementation of the Linq Select method.
