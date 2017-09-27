@@ -7,8 +7,15 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
+    /// <summary>
+    /// Exmaple WebApp Entry Point class.
+    /// </summary>
     public class Program
     {
+        /// <summary>
+        /// Entry point.
+        /// </summary>
+        /// <param name="args">Ignored.</param>
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()

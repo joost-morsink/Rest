@@ -75,20 +75,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             context.Response.Headers["Content-Type"] = "application/json";
             if (!response.IsSuccess)
-            {
-                switch (response.UntypedResult.AsFailure().Reason)
-                {
-                    case RestFailureReason.BadRequest:
-                        context.Response.StatusCode = 400;
-                        break;
-                    case RestFailureReason.NotFound:
-                        context.Response.StatusCode = 404;
-                        break;
-                    case RestFailureReason.Error:
-                        context.Response.StatusCode = 500;
-                        break;
-                }
-            }
+                setFailureStatusCode(response, context);
+            
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
@@ -107,6 +95,22 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                     await context.Response.WriteAsync(body);
                     //await json.WriteToAsync(new JsonTextWriter(new StreamWriter(context.Response.Body)));
                 }
+            }
+        }
+
+        private static void setFailureStatusCode(RestResponse response, HttpContext context)
+        {
+            switch (response.UntypedResult.AsFailure().Reason)
+            {
+                case RestFailureReason.BadRequest:
+                    context.Response.StatusCode = 400;
+                    break;
+                case RestFailureReason.NotFound:
+                    context.Response.StatusCode = 404;
+                    break;
+                case RestFailureReason.Error:
+                    context.Response.StatusCode = 500;
+                    break;
             }
         }
     }

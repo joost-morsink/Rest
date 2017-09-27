@@ -7,8 +7,14 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
+    /// <summary>
+    /// A Rest Identity Provider for the Example WebApp
+    /// </summary>
     public class ExampleRestIdentityProvider : RestIdentityProvider
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         public ExampleRestIdentityProvider()
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
