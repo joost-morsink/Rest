@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <summary>
         /// Constructor.
         /// </summary>
-        public ExampleRestIdentityProvider()
+        public ExampleRestIdentityProvider(IEnumerable<IRestRepository> repositories) : base(repositories)
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
             BuildEntry(typeof(Person)).WithPath("/person/*").Add();

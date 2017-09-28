@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Test
@@ -51,7 +52,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
     }
     public class TestRestIdentityProvider : RestIdentityProvider
     {
-        public TestRestIdentityProvider()
+        public TestRestIdentityProvider(IEnumerable<IRestRepository> repositories = null) : base(repositories ?? Enumerable.Empty<IRestRepository>())
         {
             BuildEntry(typeof(PersonCollection)).WithPath("/api/person?*").Add();
             BuildEntry(typeof(Person)).WithPath("/api/person/*").Add();

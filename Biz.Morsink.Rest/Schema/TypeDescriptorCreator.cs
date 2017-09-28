@@ -18,6 +18,8 @@ namespace Biz.Morsink.Rest.Schema
     {
         private static ConcurrentDictionary<Type, TypeDescriptor> descriptors;
 
+        public static ICollection<Type> RegisteredTypes => descriptors.Keys;
+
         static TypeDescriptorCreator()
         {
             var d = new ConcurrentDictionary<Type, TypeDescriptor>();
@@ -50,23 +52,19 @@ namespace Biz.Morsink.Rest.Schema
         /// <returns>A TypeDescriptor for the type.</returns>
         public static TypeDescriptor GetDescriptor(this Type type)
         {
-            if (descriptors.TryGetValue(type, out var res))
-                return res;
-
-
-            return GetNullableDescriptor(type) // Check for nullability
-                ?? GetArrayDescriptor(type) // Check for collections
-                ?? GetRecordDescriptor(type) // Check for records (regular objects)
-                ?? GetUnitDescriptor(type) // Check form empty types
-                ;
+            return descriptors.GetOrAdd(type, ty =>
+                GetNullableDescriptor(ty) // Check for nullability
+                ?? GetArrayDescriptor(ty) // Check for collections
+                ?? GetRecordDescriptor(ty) // Check for records (regular objects)
+                ?? GetUnitDescriptor(ty));// Check form empty types
         }
-        private static TypeDescriptor GetNullableDescriptor (Type type)
+        private static TypeDescriptor GetNullableDescriptor(Type type)
         {
             var ti = type.GetTypeInfo();
             var ga = ti.GetGenericArguments();
             if (ga.Length == 1)
             {
-                if(ti.GetGenericTypeDefinition() == typeof(Nullable<>))
+                if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     var t = ga[0].GetDescriptor();
                     return t == null ? null : new TypeDescriptor.Union(new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
@@ -118,7 +116,7 @@ namespace Biz.Morsink.Rest.Schema
 
                 return properties.Any() ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(properties)) : null;
             }
-            
+
         }
         private static TypeDescriptor GetUnitDescriptor(Type type)
         {

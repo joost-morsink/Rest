@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -208,9 +209,16 @@ namespace Biz.Morsink.Rest.AspNetCore
 
         private RestPathMatchTree GetMatchTree()
             => new RestPathMatchTree(entries.SelectMany(e => e.Value.Paths));
-        public RestIdentityProvider()
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="repositories">A collection of all registered repositories.</param>
+        public RestIdentityProvider(IEnumerable<IRestRepository> repositories)
         {
             matchTree = new Lazy<RestPathMatchTree>(GetMatchTree);
+            // Prime the schema cache:
+            foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
+                type.GetDescriptor();
         }
         /// <summary>
         /// Creates an entry builder
