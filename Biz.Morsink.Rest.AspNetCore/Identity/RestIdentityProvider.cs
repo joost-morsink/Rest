@@ -219,6 +219,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             // Prime the schema cache:
             foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
                 type.GetDescriptor();
+            typeof(TypeDescriptor).GetDescriptor();
         }
         /// <summary>
         /// Creates an entry builder

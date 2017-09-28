@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
@@ -40,7 +41,7 @@ namespace Biz.Morsink.Rest.Schema
 
             d[typeof(DateTime)] = TypeDescriptor.Primitive.DateTime.Instance;
 
-            d[typeof(object)] = new TypeDescriptor.Record(Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
+            d[typeof(object)] = new TypeDescriptor.Record(typeof(object).ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
 
             descriptors = d;
         }
@@ -50,15 +51,23 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         /// <param name="type">The type to get a TypeDescriptor for.</param>
         /// <returns>A TypeDescriptor for the type.</returns>
-        public static TypeDescriptor GetDescriptor(this Type type)
+        public static TypeDescriptor GetDescriptor(this Type type, Type cutoff = null, ImmutableStack<Type> enclosing = null)
         {
+            enclosing = enclosing ?? ImmutableStack<Type>.Empty;
+            if (enclosing.Contains(type))
+                return new TypeDescriptor.Reference(type.ToString());
             return descriptors.GetOrAdd(type, ty =>
-                GetNullableDescriptor(ty) // Check for nullability
-                ?? GetArrayDescriptor(ty) // Check for collections
-                ?? GetRecordDescriptor(ty) // Check for records (regular objects)
-                ?? GetUnitDescriptor(ty));// Check form empty types
+            {
+                var desc = GetNullableDescriptor(ty, cutoff, enclosing.Push(type)) // Check for nullability
+                ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
+                ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
+                ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
+                ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
+                return desc;
+            });
+
         }
-        private static TypeDescriptor GetNullableDescriptor(Type type)
+        private static TypeDescriptor GetNullableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();
             var ga = ti.GetGenericArguments();
@@ -66,13 +75,13 @@ namespace Biz.Morsink.Rest.Schema
             {
                 if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    var t = ga[0].GetDescriptor();
-                    return t == null ? null : new TypeDescriptor.Union(new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
+                    var t = ga[0].GetDescriptor(cutoff, enclosing);
+                    return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
                 }
             }
             return null;
         }
-        private static TypeDescriptor GetArrayDescriptor(Type type)
+        private static TypeDescriptor GetArrayDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
@@ -81,50 +90,67 @@ namespace Biz.Morsink.Rest.Schema
                         let ga = iti.GetGenericArguments()
                         where ga.Length == 1 && iti.GetGenericTypeDefinition() == typeof(IEnumerable<>)
                         select ga[0];
-                var inner = (q.FirstOrDefault() ?? typeof(object)).GetDescriptor();
-                return descriptors.GetOrAdd(type, new TypeDescriptor.Array(inner));
+                var inner = (q.FirstOrDefault() ?? typeof(object)).GetDescriptor(null, enclosing);
+                return new TypeDescriptor.Array(inner);
             }
             else
                 return null;
         }
-        private static TypeDescriptor GetRecordDescriptor(Type type)
+        private static TypeDescriptor GetRecordDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();
-            if (ti.DeclaredConstructors.Where(ci => ci.GetParameters().Length == 0).Any())
+            if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
             {
                 var props = from p in type.GetTypeInfo().DeclaredProperties
                             where p.CanRead && p.CanWrite
                             let req = p.GetCustomAttributes<RequiredAttribute>().Any()
-                            select new PropertyDescriptor<TypeDescriptor>(p.Name, p.PropertyType.GetDescriptor(), req);
+                            select new PropertyDescriptor<TypeDescriptor>(p.Name, p.PropertyType.GetDescriptor(null, enclosing), req);
                 return props.Any()
-                    ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(props))
+                    ? new TypeDescriptor.Record(type.ToString(), props)
                     : null;
             }
             else
             {
-                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != null).SelectMany(x => x.DeclaredProperties).ToArray();
+                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties).ToArray();
                 if (!props.All(pi => pi.CanRead && !pi.CanWrite))
                     return null;
                 var properties = from ci in ti.DeclaredConstructors
                                  let ps = ci.GetParameters()
-                                 where ps.Length > 0 && ps.Length == props.Count()
-                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == ps.Length
+                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Count()
+                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
                                  from p in ps.Join(props, p => p.Name, p => p.Name,
-                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, prop.PropertyType.GetDescriptor(), !par.GetCustomAttributes<OptionalAttribute>().Any()),
+                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, prop.PropertyType.GetDescriptor(null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),
                                      CaseInsensitiveEqualityComparer.Instance)
                                  select p;
 
-                return properties.Any() ? descriptors.GetOrAdd(type, new TypeDescriptor.Record(properties)) : null;
+                return properties.Any() ? new TypeDescriptor.Record(type.ToString(), properties) : null;
             }
 
         }
-        private static TypeDescriptor GetUnitDescriptor(Type type)
+        private static TypeDescriptor GetUnitDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();
-            return ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any()
-                && !Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
-                ? new TypeDescriptor.Record(Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
+            var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);
+            return parameterlessConstructors.Any()
+                && !Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
+                ? new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
                 : null;
+        }
+        private static TypeDescriptor GetUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            var ti = type.GetTypeInfo();
+            if (ti.IsAbstract && ti.DeclaredNestedTypes.Any(nt => nt.BaseType == type))
+            {
+                var rec = GetRecordDescriptor(type, cutoff, enclosing);
+                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type).Select(ty => ty.GetDescriptor(type, enclosing)));
+
+                if (rec != null)
+                    res = new TypeDescriptor.Intersection(type.ToString(), new[] { rec, res });
+
+                return res;
+            }
+            else
+                return null;
         }
         private static IEnumerable<T> Iterate<T>(T seed, Func<T, T> next)
         {

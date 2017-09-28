@@ -12,16 +12,30 @@ namespace Biz.Morsink.Rest.Schema
     public abstract class TypeDescriptor : IEquatable<TypeDescriptor>
     {
         /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="name">The name for the TypeDescriptor.</param>
+        public TypeDescriptor(string name)
+        {
+            Name = name;
+        }
+        /// <summary>
+        /// Gets the name of the TypeDescriptor.
+        /// </summary>
+        public string Name { get; }
+        /// <summary>
         /// This abstract class represents primitive types.
         /// A primitive type is not parameterized in a recursive way and often has a specific syntax.
         /// </summary>
         public abstract class Primitive : TypeDescriptor
         {
+            public Primitive(string name) : base(name) { }
             /// <summary>
             /// This class represents the string type.
             /// </summary>
             public class String : Primitive
             {
+                public String() : base(nameof(String)) { }
                 private readonly static int hashcode = typeof(String).GetHashCode();
                 /// <summary>
                 /// Singleton instance for String.
@@ -38,11 +52,14 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public abstract class Numeric : Primitive
             {
+                public Numeric(string name) : base(name) { }
                 /// <summary>
                 /// This class represents floating point numeric types.
                 /// </summary>
                 public class Float : Numeric
                 {
+                    public Float() : this(null) { }
+                    public Float(string name) : base(name ?? nameof(Float)) { }
                     private readonly static int hashcode = typeof(Float).GetHashCode();
                     /// <summary>
                     /// Singleton instance for Float.
@@ -59,12 +76,14 @@ namespace Biz.Morsink.Rest.Schema
                 /// </summary>
                 public class Integral : Numeric
                 {
+                    public Integral() : this(null) { }
+                    public Integral(string name) : base(name ?? nameof(Integral)) { }
                     private readonly static int hashcode = typeof(Integral).GetHashCode();
                     /// <summary>
                     /// Singleton instance for Integral.
                     /// </summary>
                     public static Integral Instance { get; } = new Integral();
-                    
+
                     public override bool Equals(TypeDescriptor other)
                         => other is Integral;
                     public override int GetHashCode()
@@ -76,6 +95,8 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public class DateTime : Primitive
             {
+                public DateTime() : base(null) { }
+                public DateTime(string name) : base(name ?? nameof(DateTime)) { }
                 private readonly static int hashcode = typeof(DateTime).GetHashCode();
                 public static DateTime Instance { get; } = new DateTime();
 
@@ -95,7 +116,7 @@ namespace Biz.Morsink.Rest.Schema
             /// <summary>
             /// Constructor.
             /// </summary>
-            public Array(TypeDescriptor elementType)
+            public Array(TypeDescriptor elementType) : base(string.Concat(nameof(Array), "<", elementType.Name, ">"))
             {
                 ElementType = elementType;
             }
@@ -126,15 +147,15 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="properties">The property descriptors for all properties of the record.</param>
-            public Record(IEnumerable<PropertyDescriptor<TypeDescriptor>> properties)
+            public Record(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties) : base(name)
             {
                 Properties = properties.ToDictionary(x => x.Name);
             }
-   
+
             /// <summary>
             /// A dictionary containing mappings from property names to property descriptors.
             /// </summary>
-            public IReadOnlyDictionary<string, PropertyDescriptor<TypeDescriptor>> Properties { get; private set; }
+            public IReadOnlyDictionary<string, PropertyDescriptor<TypeDescriptor>> Properties { get; }
 
             public override bool Equals(TypeDescriptor other)
                 => Equals(other as Record);
@@ -154,6 +175,7 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public class Null : TypeDescriptor
         {
+            public Null() : base(nameof(Null)) { }
             private readonly static int hashcode = typeof(Null).GetHashCode();
             /// <summary>
             /// Singleton instance for Null.
@@ -175,11 +197,11 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="baseType">The base type of the value.</param>
-            /// <param name="value">The actual value.</param>
-            public Value(TypeDescriptor baseType, object value)
+            /// <param name="innerValue">The actual value.</param>
+            public Value(TypeDescriptor baseType, object innerValue) : base(string.Concat(baseType.Name, "=", innerValue.ToString()))
             {
                 BaseType = baseType;
-                InnerValue = value;
+                InnerValue = innerValue;
             }
             /// <summary>
             /// Gets the type descriptor for the type value.
@@ -193,7 +215,7 @@ namespace Biz.Morsink.Rest.Schema
             public override bool Equals(TypeDescriptor other)
                 => Equals(other as Value);
             public bool Equals(Value other)
-                => BaseType.Equals(other.BaseType) && Equals(InnerValue, other.InnerValue);
+                => other != null && BaseType.Equals(other.BaseType) && Equals(InnerValue, other.InnerValue);
         }
         /// <summary>
         /// This class represents union types.
@@ -207,7 +229,7 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="options">A collection of the options for this union type.</param>
-            public Union(IEnumerable<TypeDescriptor> options)
+            public Union(string name, IEnumerable<TypeDescriptor> options) : base(name)
             {
                 Options = options.ToArray();
             }
@@ -219,23 +241,81 @@ namespace Biz.Morsink.Rest.Schema
             public override bool Equals(TypeDescriptor other)
                 => Equals(other as Union);
             public bool Equals(Union other)
-                => Options.Count == other.Options.Count &&  Options.OrderBy(o => o.GetHashCode()).SequenceEqual(other.Options.OrderBy(o => o.GetHashCode()));
+                => other != null && Options.Count == other.Options.Count && Options.OrderBy(o => o.GetHashCode()).SequenceEqual(other.Options.OrderBy(o => o.GetHashCode()));
             public override int GetHashCode()
             {
                 var res = hashcode;
-                foreach(var o in  Options.OrderBy(x => x.GetHashCode()))
+                foreach (var o in Options.OrderBy(x => x.GetHashCode()))
                     res = (res << 11) ^ (res >> 21 & 0x7ff) ^ o.GetHashCode();
                 return res;
             }
+        }
+        /// <summary>
+        /// This class represents intersection types.
+        /// Intersection types implement all of their parts.
+        /// </summary>
+        public class Intersection : TypeDescriptor
+        {
+            private readonly static int hashcode = typeof(Intersection).GetHashCode();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="parts">A collection of the parts for this intersection type.</param>
+            public Intersection(string name, IEnumerable<TypeDescriptor> parts) : base(name)
+            {
+                Parts = parts.ToArray();
+            }
+            /// <summary>
+            /// The parts for this intersection type.
+            /// </summary>
+            public IReadOnlyCollection<TypeDescriptor> Parts { get; }
+
+            public override bool Equals(TypeDescriptor other)
+                => Equals(other as Intersection);
+            public bool Equals(Intersection other)
+                => other != null && Parts.Count == other.Parts.Count && Parts.OrderBy(o => o.GetHashCode()).SequenceEqual(other.Parts.OrderBy(o => o.GetHashCode()));
+            public override int GetHashCode()
+            {
+                var res = hashcode;
+                foreach (var o in Parts.OrderBy(x => x.GetHashCode()))
+                    res = (res << 11) ^ (res >> 21 & 0x7ff) ^ o.GetHashCode();
+                return res;
+            }
+        }
+        /// <summary>
+        /// This class represents a reference to a TypeDescriptor by name.
+        /// </summary>
+        public class Reference : TypeDescriptor
+        {
+            private static int hashcode = typeof(Reference).GetHashCode();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="refname">The name of the reference.</param>
+            public Reference(string refname) : base("&" + refname)
+            {
+                RefName = refname;
+            }
+            /// <summary>
+            /// Gets the name of the TypeDescriptor referenced by this TypeDescriptor.
+            /// </summary>
+            public string RefName { get; }
+
+            public bool Equals(Reference other)
+                => other != null && Name == other.Name;
+            public override bool Equals(TypeDescriptor other)
+                => Equals(other as Reference);
+            public override int GetHashCode()
+                => hashcode ^ Name.GetHashCode();
         }
 
         public abstract bool Equals(TypeDescriptor other);
         public override bool Equals(object obj)
             => Equals(obj as TypeDescriptor);
-        public static bool operator == (TypeDescriptor x, TypeDescriptor y)
-            => ReferenceEquals(x,y) || !ReferenceEquals(x,null) && x.Equals(y);
+        public static bool operator ==(TypeDescriptor x, TypeDescriptor y)
+            => ReferenceEquals(x, y) || !ReferenceEquals(x, null) && x.Equals(y);
         public static bool operator !=(TypeDescriptor x, TypeDescriptor y)
-            => !ReferenceEquals(x, y) && (ReferenceEquals(x,null) || !x.Equals(y));
+            => !ReferenceEquals(x, y) && (ReferenceEquals(x, null) || !x.Equals(y));
         public override int GetHashCode()
             => base.GetHashCode();
     }

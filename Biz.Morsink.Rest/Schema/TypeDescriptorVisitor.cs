@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace Biz.Morsink.Rest.Schema
 {
@@ -37,12 +38,16 @@ namespace Biz.Morsink.Rest.Schema
                 return PrevisitArray(a);
             if (t is TypeDescriptor.Record r)
                 return PrevisitRecord(r);
+            if (t is TypeDescriptor.Reference rf)
+                return VisitReference(rf);
             if (t is TypeDescriptor.Null nl)
                 return VisitNull(nl);
             if (t is TypeDescriptor.Value v )
                 return PrevisitValue(v);
-            var u = (TypeDescriptor.Union)t;
-            return PrevisitUnion(u);
+            if (t is TypeDescriptor.Union u)
+                return PrevisitUnion(u);
+            var j = (TypeDescriptor.Intersection)t;
+            return PrevisitIntersection(j);
         }
         /// <summary>
         /// Previsit function for Union types. 
@@ -54,6 +59,17 @@ namespace Biz.Morsink.Rest.Schema
         {
             var options = u.Options.Select(Visit).ToArray();
             return VisitUnion(u, options);
+        }
+        /// <summary>
+        /// Previsit function for Intersection types.
+        /// Override if recursive processing is not needed.
+        /// </summary>
+        /// <param name="i">An Intersection TypeDescriptor</param>
+        /// <returns>An object of type R.</returns>
+        protected virtual R PrevisitIntersection(TypeDescriptor.Intersection i)
+        {
+            var parts = i.Parts.Select(Visit).ToArray();
+            return VisitIntersection(i, parts);
         }
         /// <summary>
         /// Previsit function for Record types. 
@@ -141,11 +157,24 @@ namespace Biz.Morsink.Rest.Schema
         /// <returns>An object of type R.</returns>
         protected abstract R VisitRecord(TypeDescriptor.Record r, PropertyDescriptor<R>[] props);
         /// <summary>
+        /// Visit Reference TypeDescriptors.
+        /// </summary>
+        /// <param name="r">A Reference TypeDescriptor.</param>
+        /// <returns>An object of type R.</returns>
+        protected abstract R VisitReference(TypeDescriptor.Reference r);
+        /// <summary>
         /// Visits Union TypeDescriptors.
         /// </summary>
         /// <param name="u">A Union TypeDescriptor.</param>
         /// <param name="options">An array of already visited values for the option descriptors.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitUnion(TypeDescriptor.Union u, R[] options);
+        /// <summary>
+        /// Visits Intersection TypeDescriptors.
+        /// </summary>
+        /// <param name="i">An Intersection TypeDescriptor.</param>
+        /// <param name="parts">An array of already visited values for the part descriptors.</param>
+        /// <returns>An object of type R.</returns>
+        protected abstract R VisitIntersection(TypeDescriptor.Intersection i, R[] parts);
     }
 }

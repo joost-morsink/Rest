@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.Test
         public void TypeDescriptor_Happy()
         {
             var schema = typeof(Person).GetDescriptor();
-            var expected = new TypeDescriptor.Record(new[]
+            var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
             {
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), TypeDescriptor.Primitive.Numeric.Integral.Instance),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance),
@@ -26,9 +26,9 @@ namespace Biz.Morsink.Rest.Test
         public void TypeDescriptor_HappyConstructor()
         {
             var schema = typeof(PersonC).GetDescriptor();
-            var expected = new TypeDescriptor.Record(new[]
+            var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.PersonC", new[]
             {
-                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union(new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance })),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union("System.Int64?", new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance })),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance, true),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName), TypeDescriptor.Primitive.String.Instance, true)
             });
