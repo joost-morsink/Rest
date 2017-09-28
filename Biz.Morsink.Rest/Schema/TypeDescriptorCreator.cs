@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Identity.PathProvider;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Identity.PathProvider;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -62,11 +63,21 @@ namespace Biz.Morsink.Rest.Schema
                 ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
                 ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
                 ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
+                ?? GetIdentityDescriptor(ty,cutoff, enclosing.Push(type)) // Check for IIdentity<T>
                 ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
                 return desc;
             });
 
         }
+
+        private static TypeDescriptor GetIdentityDescriptor(Type ty, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            var ti = ty.GetTypeInfo();
+            if (ti.GenericTypeArguments.Length != 1 || ti.GetGenericTypeDefinition() != typeof(IIdentity<>))
+                return null;
+            return new TypeDescriptor.Identity(ti.GenericTypeArguments[0].GetDescriptor(null, enclosing));
+        }
+
         private static TypeDescriptor GetNullableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();

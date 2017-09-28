@@ -308,7 +308,31 @@ namespace Biz.Morsink.Rest.Schema
             public override int GetHashCode()
                 => hashcode ^ Name.GetHashCode();
         }
-
+        /// <summary>
+        /// This class represents an identity value for some entity type.
+        /// </summary>
+        public class Identity : TypeDescriptor
+        {
+            private static int hashcode = typeof(Identity).GetHashCode();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="entityType">A TypeDescriptor for the entity type.</param>
+            public Identity(TypeDescriptor entityType) : base(string.Concat("Id<", entityType.Name, ">"))
+            {
+                EntityType = entityType;
+            }
+            /// <summary>
+            /// Gets the TypeDescriptor for the entity type.
+            /// </summary>
+            public TypeDescriptor EntityType { get; }
+            public bool Equals(Identity other)
+                => other != null && EntityType.Equals(other.EntityType);
+            public override bool Equals(TypeDescriptor other)
+                => Equals(other as Identity);
+            public override int GetHashCode()
+                => hashcode ^ EntityType.GetHashCode();
+        }
         public abstract bool Equals(TypeDescriptor other);
         public override bool Equals(object obj)
             => Equals(obj as TypeDescriptor);
