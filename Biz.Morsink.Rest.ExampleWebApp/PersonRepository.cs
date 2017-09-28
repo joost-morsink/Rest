@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         private Dictionary<string, Person> data = new Dictionary<string, Person>
         {
-            ["1"] = new Person(/*FreeIdentity<Person>.Create(1),*/ "Joost", "Morsink", 38)
+            ["1"] = new Person(FreeIdentity<Person>.Create(1), "Joost", "Morsink", 38)
         };
         /// <summary>
         /// Constructor.

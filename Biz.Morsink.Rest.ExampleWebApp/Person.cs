@@ -17,15 +17,15 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="firstName">First Name</param>
         /// <param name="lastName">Last Name</param>
         /// <param name="age">Age</param>
-        public Person(/*IIdentity<Person> id,*/ string firstName, string lastName, int age)
+        public Person(IIdentity<Person> id, string firstName, string lastName, int age)
         {
-            //Id = id;
+            Id = id;
             FirstName = firstName;
             LastName = lastName;
             Age = age;
         }
 
-        //public IIdentity<Person> Id { get; }
+        public IIdentity<Person> Id { get; }
         /// <summary>
         /// Gets the first name.
         /// </summary>

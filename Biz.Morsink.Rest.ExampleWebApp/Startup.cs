@@ -51,7 +51,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.Configure<JsonHttpConverterOptions>(options => { });
+            IServiceProvider provider = null;
+            services.Configure<JsonHttpConverterOptions>(options =>
+            {
+                options.SerializerSettings.ContractResolver = new RestJsonContractResolver(provider);
+            });
             var cb = new ContainerBuilder();
             cb.RegisterType<CoreRestRequestHandler>().AsSelf().SingleInstance();
             cb.RegisterType<AutofacServiceLocator>().AsImplementedInterfaces();
@@ -65,7 +69,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             cb.Register(cc => builder.Run(() => cc.Resolve<CoreRestRequestHandler>().HandleRequest)).SingleInstance();
             cb.Populate(services);
             container = cb.Build();
-            return new AutofacServiceProvider(container);
+            return provider = new AutofacServiceProvider(container);
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)

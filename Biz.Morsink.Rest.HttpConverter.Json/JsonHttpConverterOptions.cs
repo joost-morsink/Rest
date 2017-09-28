@@ -7,6 +7,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverterOptions
     {
+
         /// <summary>
         /// Get or sets the JsonSerializerSettings for the JsonHttpConverter.
         /// </summary>
