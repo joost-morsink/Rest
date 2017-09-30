@@ -76,17 +76,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             context.Response.Headers["Content-Type"] = "application/json";
             if (!response.IsSuccess)
                 setFailureStatusCode(response, context);
-            
+
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
             {
                 context.Response.Headers["Schema-Location"] = new StringValues(provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType)));
-                if (rv.Links.Count > 0)
-                {
-                    foreach (var x in rv.Links.GroupBy(l => l.RelType))
-                        context.Response.Headers[$"Link-{x.Key}"] = new StringValues(x.Select(l => provider.ToPath(l.Target)).ToArray());
-                }
+
+                var links = rv.Links.Select(l => $"<{provider.ToPath(l.Target)}>;rel={l.RelType}").ToList();
+                links.Add($"<{provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType))}>;rel=describedby");
+                context.Response.Headers["Link"] = new StringValues(links.ToArray());
+
                 var json = JObject.FromObject(rv.Value, ser);
                 var sb = new StringBuilder();
                 {
