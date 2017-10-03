@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Biz.Morsink.Rest.Schema;
+using Microsoft.Extensions.Options;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -15,6 +17,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class RestJsonContractResolver : CamelCasePropertyNamesContractResolver
     {
         private readonly IServiceProvider serviceProvider;
+        private readonly IOptions<JsonHttpConverterOptions> options;
 
         /// <summary>
         /// Constructor.
@@ -23,12 +26,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public RestJsonContractResolver(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
+            options = serviceProvider.GetRequiredService<IOptions<JsonHttpConverterOptions>>();
         }
         protected override JsonContract CreateContract(Type objectType)
         {
             var contract = base.CreateContract(objectType);
             if (typeof(IIdentity).IsAssignableFrom(objectType))
                 contract.Converter = new IdentityConverter(serviceProvider.GetService<IRestIdentityProvider>());
+            if (typeof(TypeDescriptor).IsAssignableFrom(objectType))
+                contract.Converter = new TypeDescriptorConverter(options);
             return contract;
         }
     }
