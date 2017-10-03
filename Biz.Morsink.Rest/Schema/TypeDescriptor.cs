@@ -105,6 +105,20 @@ namespace Biz.Morsink.Rest.Schema
                 public override int GetHashCode()
                     => hashcode;
             }
+            /// <summary>
+            /// This class represents Boolean values
+            /// </summary>
+            public class Boolean : Primitive
+            {
+                public Boolean() : this(null) { }
+                public Boolean(string name) : base(name ?? nameof(Boolean)) { }
+                private readonly static int hashcode = typeof(Boolean).GetHashCode();
+                public static Boolean Instance { get; } = new Boolean();
+                public override bool Equals(TypeDescriptor other)
+                    => other is Boolean;
+                public override int GetHashCode()
+                    => hashcode;
+            }
         }
         /// <summary>
         /// This class represents enumerated collection types.

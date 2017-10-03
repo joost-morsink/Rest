@@ -40,6 +40,8 @@ namespace Biz.Morsink.Rest.Schema
             d[typeof(float)] = TypeDescriptor.Primitive.Numeric.Float.Instance;
             d[typeof(double)] = TypeDescriptor.Primitive.Numeric.Float.Instance;
 
+            d[typeof(bool)] = TypeDescriptor.Primitive.Boolean.Instance;
+
             d[typeof(DateTime)] = TypeDescriptor.Primitive.DateTime.Instance;
 
             d[typeof(object)] = new TypeDescriptor.Record(typeof(object).ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());

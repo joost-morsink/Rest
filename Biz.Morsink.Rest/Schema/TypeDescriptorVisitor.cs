@@ -26,6 +26,8 @@ namespace Biz.Morsink.Rest.Schema
                     return VisitString(s);
                 if (p is TypeDescriptor.Primitive.DateTime dt)
                     return VisitDateTime(dt);
+                if (p is TypeDescriptor.Primitive.Boolean b)
+                    return VisitBoolean(b);
 
                 var n = (TypeDescriptor.Primitive.Numeric)p;
                 if (n is TypeDescriptor.Primitive.Numeric.Integral i)
@@ -150,6 +152,12 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="f">A Float TypeDescriptor.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitFloat(TypeDescriptor.Primitive.Numeric.Float f);
+        /// <summary>
+        /// Visits Boolean TypeDescriptors.
+        /// </summary>
+        /// <param name="b">A Boolean TypeDescriptor.</param>
+        /// <returns>An object of type R.</returns>
+        protected abstract R VisitBoolean(TypeDescriptor.Primitive.Boolean b);
         /// <summary>
         /// Visits Integral TypeDescriptors.
         /// </summary>
