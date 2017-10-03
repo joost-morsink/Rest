@@ -95,7 +95,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public class DateTime : Primitive
             {
-                public DateTime() : base(null) { }
+                public DateTime() : this(null) { }
                 public DateTime(string name) : base(name ?? nameof(DateTime)) { }
                 private readonly static int hashcode = typeof(DateTime).GetHashCode();
                 public static DateTime Instance { get; } = new DateTime();
