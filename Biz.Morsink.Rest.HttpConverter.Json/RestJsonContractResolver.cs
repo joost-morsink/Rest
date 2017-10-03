@@ -7,6 +7,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -18,23 +19,22 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         private readonly IServiceProvider serviceProvider;
         private readonly IOptions<JsonHttpConverterOptions> options;
+        private readonly IJsonSchemaTranslator[] translators;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="serviceProvider">A service provider to instantiate dependencies.</param>
-        public RestJsonContractResolver(IServiceProvider serviceProvider)
+        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators)
         {
-            this.serviceProvider = serviceProvider;
-            options = serviceProvider.GetRequiredService<IOptions<JsonHttpConverterOptions>>();
+            this.translators = translators.ToArray();
         }
         protected override JsonContract CreateContract(Type objectType)
         {
             var contract = base.CreateContract(objectType);
-            if (typeof(IIdentity).IsAssignableFrom(objectType))
-                contract.Converter = new IdentityConverter(serviceProvider.GetService<IRestIdentityProvider>());
-            if (typeof(TypeDescriptor).IsAssignableFrom(objectType))
-                contract.Converter = new TypeDescriptorConverter(options);
+            var converter = translators.Select(t => t.GetConverter()).Where(c => c.CanConvert(objectType)).FirstOrDefault();
+            if (converter != null)
+                contract.Converter = converter;
             return contract;
         }
     }

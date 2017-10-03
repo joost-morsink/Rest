@@ -13,6 +13,7 @@ using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.HttpConverter.Json;
 using Newtonsoft.Json;
 using Biz.Morsink.Rest.Schema;
+using Newtonsoft.Json.Serialization;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -54,7 +55,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             IServiceProvider provider = null;
             services.Configure<JsonHttpConverterOptions>(options =>
             {
-                options.SerializerSettings.ContractResolver = new RestJsonContractResolver(provider);
+                options.SerializerSettings.ContractResolver = provider.GetService<IContractResolver>() ?? options.SerializerSettings.ContractResolver;
             });
             var cb = new ContainerBuilder();
             cb.RegisterType<CoreRestRequestHandler>().AsSelf().SingleInstance();
@@ -64,6 +65,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             cb.RegisterType<SchemaRepository>().As<IRestRepository>().As<IRestRepository<TypeDescriptor>>().SingleInstance();
             cb.RegisterType<ExampleRestIdentityProvider>().AsImplementedInterfaces();
             cb.RegisterType<JsonHttpConverter>().AsImplementedInterfaces();
+            cb.RegisterType<RestJsonContractResolver>().AsImplementedInterfaces();
+            cb.RegisterType<IdentityConverter>().AsImplementedInterfaces();
+            cb.RegisterType<TypeDescriptorConverter>().AsImplementedInterfaces();
             cb.RegisterInstance(ConfigurePipeline(RestHttpPipeline.Create()));
             var builder = ConfigureRestRequestHandler(RestRequestHandlerBuilder.Create());
             cb.Register(cc => builder.Run(() => cc.Resolve<CoreRestRequestHandler>().HandleRequest)).SingleInstance();

@@ -67,10 +67,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             return new JObject(new JProperty("type", "array"), new JProperty("items", inner));
         }
+
         protected override JObject VisitBoolean(TypeDescriptor.Primitive.Boolean b)
         {
             return new JObject(new JProperty("type", "boolean"));
         }
+
         protected override JObject VisitDateTime(TypeDescriptor.Primitive.DateTime dt)
         {
             return new JObject(new JProperty("type", "string"), new JProperty("format", "date-time"));

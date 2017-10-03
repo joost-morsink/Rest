@@ -11,7 +11,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// <summary>
     /// JsonConverter for IIdentity values.
     /// </summary>
-    public class IdentityConverter : JsonConverter
+    public class IdentityConverter : JsonConverter , IJsonSchemaTranslator<IIdentity>
     {
         private readonly IRestIdentityProvider idProvider;
 
@@ -34,6 +34,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// Returns true, the converter is able to write IIdentity values.
         /// </summary>
         public override bool CanWrite => true;
+
+        Type ISchemaTranslator<JsonSchema>.ForType => typeof(IIdentity);
+
         /// <summary>
         /// Reads an IIdentity value from the stream.
         /// </summary>
@@ -61,5 +64,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             writer.WriteValue(path);
             writer.WriteEndObject();
         }
+
+        JsonConverter IJsonSchemaTranslator.GetConverter()
+            => this;
+        JsonSchema ISchemaTranslator<JsonSchema>.GetSchema()
+            => new JsonSchema(new JObject(new JProperty("properties", new JObject(new JProperty("href", new JObject(new JProperty("type", "string")))))));
     }
 }
