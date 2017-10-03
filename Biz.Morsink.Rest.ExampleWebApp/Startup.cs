@@ -47,7 +47,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         }
         public IRestHttpPipeline ConfigurePipeline(IRestHttpPipeline pipeline)
         {
-            return pipeline;
+            return pipeline.UseCapabilityDiscovery();
         }
 
         public IServiceProvider ConfigureServices(IServiceCollection services)

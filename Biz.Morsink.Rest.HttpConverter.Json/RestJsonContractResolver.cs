@@ -17,8 +17,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class RestJsonContractResolver : CamelCasePropertyNamesContractResolver
     {
-        private readonly IServiceProvider serviceProvider;
-        private readonly IOptions<JsonHttpConverterOptions> options;
         private readonly IJsonSchemaTranslator[] translators;
 
         /// <summary>

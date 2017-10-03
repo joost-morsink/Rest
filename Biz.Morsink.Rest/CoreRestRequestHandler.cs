@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,6 +95,11 @@ namespace Biz.Morsink.Rest
         }
         public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
         {
+            if (request.Capability.ToUpperInvariant() == "OPTIONS")
+            {
+                var res = new RestCapabilities(repo);
+                return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" })));
+            }
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
 
             foreach (var cap in capabilities)

@@ -1,8 +1,10 @@
 ﻿using Biz.Morsink.Rest.Metadata;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -112,6 +114,19 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
                 return response;
             });
-
+        /// <summary>
+        /// Adds a middleware component to the RestHttpPipeline that implements metadata for capability discovery.
+        /// This mainly applies to OPTIONS requests.
+        /// </summary>
+        /// <param name="pipeline">The Rest HTTP pipeline.</param>
+        /// <returns>A new Rest HTTP pipeline containing the capability discovery middleware.</returns>
+        public static IRestHttpPipeline UseCapabilityDiscovery(this IRestHttpPipeline pipeline)
+            => pipeline.Use(next => async (context, req, conv) =>
+            {
+                var response = await next(context, req, conv);
+                response.Metadata.Execute<Capabilities>(caps =>
+                    context.Response.Headers["Allow"] = string.Join(",", caps.Methods));// new StringValues(caps.Methods.ToArray())));
+                return response;
+            });
     }
 }
