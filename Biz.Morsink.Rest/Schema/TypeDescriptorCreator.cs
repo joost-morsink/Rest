@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.Schema
     public static class TypeDescriptorCreator
     {
         private static ConcurrentDictionary<Type, TypeDescriptor> descriptors;
-
+        private static ConcurrentDictionary<string, TypeDescriptor> byString;
         public static ICollection<Type> RegisteredTypes => descriptors.Keys;
 
         static TypeDescriptorCreator()
@@ -47,6 +47,7 @@ namespace Biz.Morsink.Rest.Schema
             d[typeof(object)] = new TypeDescriptor.Record(typeof(object).ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
 
             descriptors = d;
+            byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
         }
 
         /// <summary>
@@ -65,13 +66,27 @@ namespace Biz.Morsink.Rest.Schema
                 ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
                 ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
                 ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
-                ?? GetIdentityDescriptor(ty,cutoff, enclosing.Push(type)) // Check for IIdentity<T>
+                ?? GetIdentityDescriptor(ty, cutoff, enclosing.Push(type)) // Check for IIdentity<T>
                 ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
+                byString.AddOrUpdate(GetTypeName(type), desc, (_, __) => desc);
                 return desc;
             });
-
         }
-
+        /// <summary>
+        /// Gets a TypeDescriptor with a specified name.
+        /// </summary>
+        /// <param name="name">The name of the TypeDescriptor.</param>
+        /// <returns></returns>
+        public static TypeDescriptor GetDescriptorByName(string name)
+            => byString.TryGetValue(name, out var res) ? res : null;
+        /// <summary>
+        /// Gets the 'name' for a Type.
+        /// The name is used as a key to lookup TypeDescriptors.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>The name for a type.</returns>
+        public static string GetTypeName(Type type)
+            => type.ToString();
         private static TypeDescriptor GetIdentityDescriptor(Type ty, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = ty.GetTypeInfo();

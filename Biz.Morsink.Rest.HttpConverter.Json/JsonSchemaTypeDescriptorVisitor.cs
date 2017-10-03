@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.Rest.Schema;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
@@ -9,12 +10,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         public const string DATETIME_REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(.[0-9]+)?)?Z)?$";
         public const string JSON_SCHEMA_VERSION = "http://json-schema.org/draft-04/schema#";
-
+        public Dictionary<string, string> done;
+        private Dictionary<string, string> todo;
         public JsonSchemaTypeDescriptorVisitor()
         {
 
         }
-        private string camelCase(string name)
+        private string CamelCase(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return name;
@@ -25,9 +27,41 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
         public JObject Transform(TypeDescriptor descriptor)
         {
+            todo = new Dictionary<string, string>();
+            done = new Dictionary<string, string>();
+            done.Add(descriptor.Name, "#");
             var res = Visit(descriptor);
+            if (todo.Count > 0)
+            {
+                res = AddDefinitions(res);
+            }
             res["$schema"] = JSON_SCHEMA_VERSION;
             return res;
+        }
+        private string GetSchemaAddress(string name)
+        {
+            if (todo.TryGetValue(name, out var res))
+                return res;
+            if (done.TryGetValue(name, out res))
+                return res;
+            
+            res = "#/definitions/"+( name?.Substring(name.LastIndexOf('.') + 1));
+            todo.Add(name, res);
+
+            return res;
+        }
+        private JObject AddDefinitions(JObject result)
+        {
+            var defs = new JObject();
+            while (todo.Count > 0)
+            {
+                var item = todo.First();
+                todo.Remove(item.Key);
+                done.Add(item.Key, item.Value);
+                defs.Add(new JProperty(item.Value, Visit(TypeDescriptorCreator.GetDescriptorByName(item.Key))));
+            }
+            result.Add(new JProperty("definitions", defs));
+            return result;
         }
         protected override JObject VisitArray(TypeDescriptor.Array a, JObject inner)
         {
@@ -73,14 +107,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         protected override JObject VisitRecord(TypeDescriptor.Record r, PropertyDescriptor<JObject>[] props)
         {
             return new JObject(
-                new JProperty("type","object"),
-                new JProperty("properties", new JObject(props.Select(x => new JProperty(camelCase(x.Name), x.Type)))),
-                new JProperty("required", new JArray(props.Where(p => p.Required).Select(p => camelCase(p.Name)))));
+                new JProperty("type", "object"),
+                new JProperty("properties", new JObject(props.Select(x => new JProperty(CamelCase(x.Name), x.Type)))),
+                new JProperty("required", new JArray(props.Where(p => p.Required).Select(p => CamelCase(p.Name)))));
         }
 
         protected override JObject VisitReference(TypeDescriptor.Reference r)
         {
-            return new JObject(new JProperty("unsupported", true));
+            var shortName = GetSchemaAddress(r.RefName);
+
+            return new JObject(new JProperty("$ref", shortName));
         }
 
         protected override JObject VisitString(TypeDescriptor.Primitive.String s)
