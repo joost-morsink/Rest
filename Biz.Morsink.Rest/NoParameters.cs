@@ -10,14 +10,8 @@ namespace Biz.Morsink.Rest
     public class NoParameters
     {
         /// <summary>
-        /// Constructor/
+        /// Constructor.
         /// </summary>
-        /// <param name="_">Dummy parameter needed for DataConvert</param>
-        public NoParameters(object _ = null) { }
-        
-        /// <summary>
-        /// Dummy property needed for DataConvert.
-        /// </summary>
-        public object _ => null;
+        public NoParameters() { }
     }
 }
