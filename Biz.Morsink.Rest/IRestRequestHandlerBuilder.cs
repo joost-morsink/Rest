@@ -39,12 +39,12 @@ namespace Biz.Morsink.Rest
         /// <param name="builder">The builder to add the middleware component to.</param>
         /// <param name="locator">A service locator to resolve all the middleware's dependencies.</param>
         /// <returns>A new builder using the middleware component.</returns>
-        public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceLocator locator)
+        public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceProvider locator)
             where T : IRestRequestHandler
             =>  builder.Use(next =>
                 {
                     var ctor = typeof(T).GetTypeInfo().DeclaredConstructors.First();
-                    var parameters = ctor.GetParameters().Select(p => p.ParameterType == typeof(RestRequestHandlerDelegate) ? next : locator.ResolveRequired(p.ParameterType)).ToArray();
+                    var parameters = ctor.GetParameters().Select(p => p.ParameterType == typeof(RestRequestHandlerDelegate) ? next : locator.GetService(p.ParameterType)).ToArray();
                     return ((IRestRequestHandler)Activator.CreateInstance(typeof(T), parameters)).HandleRequest;
                 });
         

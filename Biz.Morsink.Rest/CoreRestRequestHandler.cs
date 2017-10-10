@@ -38,14 +38,14 @@ namespace Biz.Morsink.Rest
                 new FromStringRepresentationConverter().Restrict((from, to) => from != typeof(Version)), // Version could conflict with numeric types' syntaxes.
                 new DynamicConverter());
         private readonly IDataConverter converter;
-        private readonly IServiceLocator locator;
+        private readonly IServiceProvider locator;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="locator">A service locator to resolve repositories.</param>
         /// <param name="converter">An optional DataConverter for use within the handler.</param>
-        public CoreRestRequestHandler(IServiceLocator locator, IDataConverter converter = null)
+        public CoreRestRequestHandler(IServiceProvider locator, IDataConverter converter = null)
         {
             this.locator = locator;
             this.converter = converter ?? DefaultDataConverter;
@@ -60,12 +60,12 @@ namespace Biz.Morsink.Rest
             try
             {
                 var type = request.Address.ForType;
-                var repo = locator.ResolveOptional(typeof(IRestRepository<>).MakeGenericType(type)) as IRestRepository;
+                var repo = locator.GetService(typeof(IRestRepository<>).MakeGenericType(type)) as IRestRepository;
                 if (repo == null)
                     return RestResult.NotFound<object>().ToResponse();
 
-                var lps = locator.ResolveMulti(typeof(ILinkProvider<>).MakeGenericType(type));
-                var dlps = locator.ResolveMulti(typeof(IDynamicLinkProvider<>).MakeGenericType(type));
+                var lps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(ILinkProvider<>).MakeGenericType(type)));
+                var dlps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(IDynamicLinkProvider<>).MakeGenericType(type)));
 
                 var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, converter });
                 return await (ValueTask<RestResponse>)

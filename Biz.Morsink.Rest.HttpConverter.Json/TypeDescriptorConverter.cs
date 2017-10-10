@@ -17,17 +17,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class TypeDescriptorConverter : JsonConverter, IJsonSchemaTranslator<TypeDescriptor>
     {
         private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
-        private readonly IOptions<JsonHttpConverterOptions> options;
-
+        
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="options">Options for JsonHttpConverter.</param>
-        /// <param name="translators">A lazy collection of IJsonSchemaTranslators.</param>
-        public TypeDescriptorConverter(IOptions<JsonHttpConverterOptions> options, Lazy<IEnumerable<IJsonSchemaTranslator>> translators)
+        /// <param name="serviceProvider">A service provider to lazily evaluate a collection of IJsonSchemaTranslators.</param>
+        public TypeDescriptorConverter(IServiceProvider serviceProvider)
         {
-            this.translators = translators;
-            this.options = options;
+            this.translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() =>
+            (IEnumerable<IJsonSchemaTranslator>)serviceProvider.GetService(typeof(IEnumerable<IJsonSchemaTranslator>))); 
         }
         public override bool CanConvert(Type objectType)
             => typeof(TypeDescriptor).IsAssignableFrom(objectType);

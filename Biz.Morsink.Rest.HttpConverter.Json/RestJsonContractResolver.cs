@@ -30,8 +30,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         protected override JsonContract CreateContract(Type objectType)
         {
             var contract = base.CreateContract(objectType);
-            var converter = translators.Select(t => t.GetConverter()).Where(c => c.CanConvert(objectType)).FirstOrDefault();
-            if (converter != null)
+            foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
             return contract;
         }
