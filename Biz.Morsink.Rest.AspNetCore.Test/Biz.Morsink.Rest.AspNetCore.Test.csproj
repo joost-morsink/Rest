@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Biz.Morsink.Rest.AspNetCore\Biz.Morsink.Rest.AspNetCore.csproj" />
+    <ProjectReference Include="..\Biz.Morsink.Rest.ExampleWebApp\Biz.Morsink.Rest.ExampleWebApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
