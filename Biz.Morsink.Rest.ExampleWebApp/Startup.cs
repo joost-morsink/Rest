@@ -29,22 +29,15 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IOptions<JsonHttpConverterOptions>>(sp => new JsonHttpConverterOptionsProvider(sp.GetRequiredService<IContractResolver>(), opts => opts));
-            services.AddSingleton<CoreRestRequestHandler>();
-
-            services.AddRestRepository<PersonRepository>()
-                .AddRestRepository<HomeRepository>()
-                .AddRestRepository<SchemaRepository>(ServiceLifetime.Singleton);
-
-            services.AddScoped<IRestIdentityProvider, ExampleRestIdentityProvider>();
-            services.AddSingleton<IContractResolver, RestJsonContractResolver>();
-            services.AddSingleton<IHttpRestConverter, JsonHttpConverter>();
-            services.AddJsonSchemaTranslator<IdentityConverter>()
-                .AddJsonSchemaTranslator<TypeDescriptorConverter>();
-
-            services.AddSingleton(ConfigurePipeline(RestHttpPipeline.Create()));
-            services.AddSingleton(sp => ConfigureRestRequestHandler(RestRequestHandlerBuilder.Create())
-                .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
+            services.AddRestForAspNetCore(bld => bld
+                // Configure the basics
+                .ConfigurePipeline(pipeline => pipeline.UseCapabilityDiscovery())
+                .AddIdentityProvider<ExampleRestIdentityProvider>()
+                // Configure HttpConverters
+                .AddJsonHttpConverter()
+                // Configure Repositories
+                .AddRepository<PersonRepository>()
+                .AddRepository<HomeRepository>());
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)

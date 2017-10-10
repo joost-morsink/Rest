@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 
@@ -18,6 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonHttpConverterOptionsProvider(IContractResolver contractResolver, Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
         {
             var opts = new JsonHttpConverterOptions();
+            opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
             opts.SerializerSettings.ContractResolver = contractResolver;
             Value = configure == null ? opts : configure(opts);
         }

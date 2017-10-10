@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -90,5 +91,35 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>An application builder.</returns>
         public static IApplicationBuilder UseRestForAspNetCore(this IApplicationBuilder app)
             => app.UseMiddleware<RestForAspNetCore>();
+        /// <summary>
+        /// Adds services for RestForAspNetCore to the specified service collection.
+        /// </summary>
+        /// <param name="serviceCollection">The service collection to add RestForAspNetCore to.</param>
+        /// <param name="builder">A Rest Services Builder.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddRestForAspNetCore(this IServiceCollection serviceCollection, Action<IRestServicesBuilder> builder = null)
+        {
+            serviceCollection.AddSingleton<CoreRestRequestHandler>();
+            serviceCollection.AddRestRepository<SchemaRepository>();
+
+            builder?.Invoke(new RestServicesBuilder(serviceCollection));
+            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestHttpPipeline)))
+                serviceCollection.AddSingleton(RestHttpPipeline.Create());
+            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestRequestHandler)))
+                serviceCollection.AddSingleton(sp => RestRequestHandlerBuilder.Create()
+                    .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
+            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestIdentityProvider)))
+                throw new InvalidOperationException("Rest component depends on an IRestIdentityProvider implementation.");
+            return serviceCollection;
+        }
+        
+        private class RestServicesBuilder : IRestServicesBuilder
+        {
+            public RestServicesBuilder(IServiceCollection serviceCollection)
+            {
+                ServiceCollection = serviceCollection;
+            }
+            public IServiceCollection ServiceCollection { get; }
+        }
     }
 }
