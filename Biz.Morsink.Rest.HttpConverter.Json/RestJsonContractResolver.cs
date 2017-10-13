@@ -18,18 +18,23 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class RestJsonContractResolver : CamelCasePropertyNamesContractResolver
     {
         private readonly IJsonSchemaTranslator[] translators;
+        private readonly ITypeRepresentation[] typeRepresentations;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="serviceProvider">A service provider to instantiate dependencies.</param>
-        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators)
+        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators, IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             this.translators = translators.ToArray();
+            this.typeRepresentations = typeRepresentations.ToArray();
         }
         protected override JsonContract CreateContract(Type objectType)
         {
             var contract = base.CreateContract(objectType);
+            foreach (var typeRep in typeRepresentations.Where(tr => tr.IsRepresentable(objectType)))
+                contract.Converter = new TypeRepresentationConverter(objectType, typeRep);
+
             foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
             return contract;
