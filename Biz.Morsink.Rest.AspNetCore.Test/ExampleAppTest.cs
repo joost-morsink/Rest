@@ -34,12 +34,17 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         private const string describedby = nameof(describedby);
         private const string admin = nameof(admin);
         private const string dollarRef = "$ref";
+        private const string count = nameof(count);
+        private const string items = nameof(items);
+        private const string limit = nameof(limit);
+        private const string skip = nameof(skip);
+
         private const string GET = nameof(GET);
         private const string OPTIONS = nameof(OPTIONS);
 
         private static string SchemaFor<T>()
             => "/schema/" + typeof(T).ToString().Replace(".", "%2E");
-                
+
 
         private static ImmutableDictionary<string, string> DefaultHeaders = ImmutableDictionary<string, string>.Empty.Add("Accept", "application/json");
         private static CancellationTokenSource cts;
@@ -117,6 +122,10 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                 ? new Link { Address = parts[0].Substring(1, parts[0].Length - 2), Reltype = parts[1].Substring(4) }
                 : null;
         }
+        private Dictionary<string, string> ParseLinks(IEnumerable<string> links)
+        {
+            return links.Select(l => ParseLink(l)).ToDictionary(x => x.Reltype, x => x.Address);
+        }
         [TestMethod]
         public async Task Http_CheckHome()
         {
@@ -149,7 +158,45 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
             Assert.IsNotNull(desc);
             Assert.AreEqual(SchemaFor<ExampleWebApp.Person>(), desc.Address);
+        }
+        [TestMethod]
+        public async Task Http_CheckPersonCollection()
+        {
 
+            var resp = await Get(client, "/person?q=Joost&limit=10&skip=0");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+
+            var links = ParseLinks(resp.Headers.GetValues("Link"));
+            Assert.IsTrue(links.ContainsKey("first"));
+            Assert.IsTrue(links.ContainsKey("last"));
+
+            var body = await resp.Content.ReadAsStringAsync();
+            var json = JObject.Parse(body);
+            Assert.IsNotNull(json[id]);
+            Assert.IsNotNull(json[count]);
+            Assert.AreEqual(1, json[count].Value<int>());
+            Assert.IsNotNull(json[limit]);
+            Assert.AreEqual(10, json[limit].Value<int>());
+            Assert.IsNotNull(json[skip]);
+            Assert.AreEqual(0, json[skip].Value<int>());
+            Assert.IsNotNull(json[items]);
+            Assert.AreEqual(1, (json[items] as JArray)?.Count);
+        }
+        [TestMethod]
+        public async Task Http_CheckPersonCollectionEmpty()
+        {
+            var resp = await Get(client, "/person?q=x&limit=10&skip=0");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+
+            var body = await resp.Content.ReadAsStringAsync();
+            var json = JObject.Parse(body);
+            Assert.IsNotNull(json[id]);
+            Assert.IsNotNull(json[count]);
+            Assert.AreEqual(0, json[count].Value<int>());
+            Assert.IsNotNull(json[items]);
+            Assert.AreEqual(0, (json[items] as JArray)?.Count);
         }
         [TestMethod]
         public async Task Http_CheckSchema()
