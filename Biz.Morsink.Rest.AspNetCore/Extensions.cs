@@ -45,6 +45,28 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestRepository<R>(lifetime);
             return builder;
         }
+        public static IRestServicesBuilder AddCollection<C, E, S>(this IRestServicesBuilder builder,
+            ServiceLifetime collectionLifetime = ServiceLifetime.Scoped,
+            ServiceLifetime entityLifetime = ServiceLifetime.Scoped,
+            ServiceLifetime sourceLifetime = ServiceLifetime.Scoped)
+            where C : IRestRepository
+            where E : IRestRepository
+        {
+            var ct = typeof(C).GetGeneric(typeof(IRestRepository<>));
+            var et = typeof(E).GetGeneric(typeof(IRestRepository<>));
+            if (ct == null)
+                throw new ArgumentException("Collection type cannot be found.");
+            if (et == null)
+                throw new ArgumentException("Entity type cannot be found.");
+            if (!typeof(IRestResourceCollection<,>).MakeGenericType(ct, et).GetTypeInfo().IsAssignableFrom(typeof(S)))
+                throw new ArgumentException("Source type does not implement the correct IRestResourceCollection.");
+            builder.AddRepository<C>(collectionLifetime)
+                .AddRepository<E>(entityLifetime)
+                .ServiceCollection.Add(new ServiceDescriptor(typeof(IRestResourceCollection<,>).MakeGenericType(ct, et), typeof(S), sourceLifetime));
+
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IDynamicLinkProvider<>).MakeGenericType(ct), typeof(RestCollectionLinks<,>).MakeGenericType(ct, et), ServiceLifetime.Scoped));
+            return builder;
+        }
         /// <summary>
         /// Configure the IRestHttpPipeline.
         /// </summary>

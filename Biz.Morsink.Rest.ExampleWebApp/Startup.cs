@@ -36,11 +36,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
                 // Configure Repositories
-                .AddRepository<PersonRepository>()
-                .AddRepository<PersonCollectionRepository>()
+                .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>())
-                .AddSingleton<IRestResourceCollection<PersonCollection, Person>, PersonSource>()
-                .AddScoped<IDynamicLinkProvider<PersonCollection>, RestCollectionLinks<PersonCollection,Person>>()
                 ;
         }
 
