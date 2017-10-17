@@ -45,6 +45,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestRepository<R>(lifetime);
             return builder;
         }
+        /// <summary>
+        /// This methods adds two repositories (one for a collection, one for an entity), a rest resource collection and a dynamic link provider for the collection type.
+        /// </summary>
+        /// <typeparam name="C">The collection repository type.</typeparam>
+        /// <typeparam name="E">The entity repository type.</typeparam>
+        /// <typeparam name="S">The 'source': A rest resource collection for the collection-entity pair.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="collectionLifetime">The lifetime scope of the collection repository.</param>
+        /// <param name="entityLifetime">The lifetime scope of the entity repository.</param>
+        /// <param name="sourceLifetime">The lifetime scope of the 'source'.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddCollection<C, E, S>(this IRestServicesBuilder builder,
             ServiceLifetime collectionLifetime = ServiceLifetime.Scoped,
             ServiceLifetime entityLifetime = ServiceLifetime.Scoped,

@@ -1,5 +1,4 @@
-﻿using Biz.Morsink.Identity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -7,16 +6,17 @@ namespace Biz.Morsink.Rest
 {
     /// <summary>
     /// Interface that provides traversable links for some resource of type T.
-    /// This interface does not need an actual instance of the resource to determine links.
+    /// This interface needs an actual instance of the resource to determine the links.
+    /// Links may use data from the resource to generate links.
     /// </summary>
     /// <typeparam name="T">The type of resource links are provided for.</typeparam>
-    public interface ILinkProvider<T>
+    public interface IDynamicLinkProvider<T>
     {
         /// <summary>
         /// Gets a list of links for some resource.
         /// </summary>
-        /// <param name="id">The identity value for the resource.</param>
+        /// <param name="resource">The resource.</param>
         /// <returns>A list of links.</returns>
-        IReadOnlyList<Link> GetLinks(IIdentity<T> id);
+        IReadOnlyList<Link> GetLinks(T resource);
     }
 }

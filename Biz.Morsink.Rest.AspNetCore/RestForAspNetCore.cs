@@ -15,7 +15,13 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public class RestForAspNetCore
     {
+        /// <summary>
+        /// Value for the not found HTTP status.
+        /// </summary>
         public const int STATUS_NOTFOUND = 404;
+        /// <summary>
+        /// Value for the internal server error HTTP status.
+        /// </summary>
         public const int STATUS_INTERNALSERVERERROR = 500;
 
         private readonly IRestRequestHandler handler;

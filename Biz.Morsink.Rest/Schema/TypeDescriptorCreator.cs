@@ -21,7 +21,14 @@ namespace Biz.Morsink.Rest.Schema
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
         private IEnumerable<ITypeRepresentation> representations;
+        /// <summary>
+        /// Gets a collection of all the registered types.
+        /// </summary>
         public ICollection<Type> RegisteredTypes => descriptors.Keys;
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="representations">A collection of type representations.</param>
         public TypeDescriptorCreator(IEnumerable<ITypeRepresentation> representations = null)
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
