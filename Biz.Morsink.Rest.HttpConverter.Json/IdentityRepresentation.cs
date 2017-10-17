@@ -4,6 +4,7 @@ using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
 
@@ -18,6 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         private class representation
         {
+            [Required]
             public string Href { get; set; }
         }
 
