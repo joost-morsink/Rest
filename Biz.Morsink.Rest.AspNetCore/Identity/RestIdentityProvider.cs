@@ -212,14 +212,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="repositories">A collection of all registered repositories.</param>
-        public RestIdentityProvider(IEnumerable<IRestRepository> repositories, TypeDescriptorCreator typeDescriptorCreator)
+        public RestIdentityProvider()
         {
             matchTree = new Lazy<RestPathMatchTree>(GetMatchTree);
-            // Prime the schema cache:
-            foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
-                typeDescriptorCreator.GetDescriptor(type);
-            typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
         }
         /// <summary>
         /// Creates an entry builder

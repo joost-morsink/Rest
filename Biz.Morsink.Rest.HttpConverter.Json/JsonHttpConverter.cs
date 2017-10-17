@@ -87,7 +87,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 links.Add($"<{provider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType))}>;rel=describedby");
                 context.Response.Headers["Link"] = new StringValues(links.ToArray());
 
-                var json = JObject.FromObject(rv.Value, ser);
+                var json = JToken.FromObject(rv.Value, ser);
                 var sb = new StringBuilder();
                 {
                     json.WriteTo(new JsonTextWriter(new StringWriter(sb)));

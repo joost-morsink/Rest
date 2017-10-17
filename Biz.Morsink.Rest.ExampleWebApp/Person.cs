@@ -17,7 +17,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="firstName">First Name</param>
         /// <param name="lastName">Last Name</param>
         /// <param name="age">Age</param>
-        public Person(IIdentity<Person> id, string firstName, string lastName, int age)
+        /// <param name="id">Identity for the person</param>
+        public Person(string firstName, string lastName, int age, IIdentity<Person> id = null)
         {
             Id = id;
             FirstName = firstName;

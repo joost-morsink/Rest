@@ -15,10 +15,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <summary>
         /// Constructor.
         /// </summary>
-        public ExampleRestIdentityProvider(IEnumerable<IRestRepository> repositories, TypeDescriptorCreator typeDescriptorCreator) : base(repositories, typeDescriptorCreator)
+        public ExampleRestIdentityProvider()
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
             BuildEntry(typeof(Person)).WithPath("/person/*").Add();
+            BuildEntry(typeof(PersonCollection)).WithPath("/person?*").Add();
             BuildEntry(typeof(Home)).WithPath("/?*").Add();
         }
     }

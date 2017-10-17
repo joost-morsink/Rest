@@ -37,7 +37,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddJsonHttpConverter()
                 // Configure Repositories
                 .AddRepository<PersonRepository>()
-                .AddRepository<HomeRepository>());
+                .AddRepository<PersonCollectionRepository>()
+                .AddRepository<HomeRepository>())
+                .AddSingleton<IRestResourceCollection<PersonCollection, Person>, PersonSource>()
+                .AddScoped<IDynamicLinkProvider<PersonCollection>, RestCollectionLinks<PersonCollection,Person>>()
+                ;
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)

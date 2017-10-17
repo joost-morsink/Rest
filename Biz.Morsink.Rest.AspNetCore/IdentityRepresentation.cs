@@ -8,7 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
 
-namespace Biz.Morsink.Rest.HttpConverter.Json
+namespace Biz.Morsink.Rest.AspNetCore
 {
     /// <summary>
     /// Type representation for Identity values.
