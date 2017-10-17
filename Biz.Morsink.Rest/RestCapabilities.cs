@@ -20,14 +20,14 @@ namespace Biz.Morsink.Rest
         /// Populates the dictionary based on the capabilities of a specified IRestRepository interface.
         /// </summary>
         /// <param name="repo">The repository to provide options for.</param>
-        public RestCapabilities(IRestRepository repo)
+        public RestCapabilities(IRestRepository repo, TypeDescriptorCreator typeDescriptorCreator)
         {
             foreach (var capGroup in repo.GetCapabilities().GroupBy(c => c.Name))
             {
                 this[capGroup.Key] = capGroup.Select(cap => new RequestDescription(
-                     cap.BodyType?.GetDescriptor(),
-                     cap.ParameterType?.GetDescriptor(),
-                     cap.ResultType?.GetDescriptor()
+                     typeDescriptorCreator.GetDescriptor(cap.BodyType),
+                     typeDescriptorCreator.GetDescriptor(cap.ParameterType),
+                     typeDescriptorCreator.GetDescriptor(cap.ResultType)
                 )).ToArray();
             }
         }

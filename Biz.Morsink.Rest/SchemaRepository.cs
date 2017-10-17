@@ -13,6 +13,11 @@ namespace Biz.Morsink.Rest
     /// </summary>
     public class SchemaRepository : RestRepository<TypeDescriptor>, IRestGet<TypeDescriptor, NoParameters>
     {
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
+
+        public SchemaRepository(TypeDescriptorCreator typeDescriptorCreator) {
+            this.typeDescriptorCreator = typeDescriptorCreator;
+        }
         /// <summary>
         /// Gets a TypeDescriptor for some reference.
         /// </summary>
@@ -23,14 +28,14 @@ namespace Biz.Morsink.Rest
         {
             if (id.Value is Type type)
             {
-                var desc = type.GetDescriptor();
+                var desc = typeDescriptorCreator.GetDescriptor(type);
                 return desc == null
                     ? RestResult.NotFound<TypeDescriptor>().ToResponseAsync()
                     : Rest.Value(desc).ToResponseAsync();
             }
             else
             {
-                var desc = TypeDescriptorCreator.GetDescriptorByName(id.Value?.ToString());
+                var desc = typeDescriptorCreator.GetDescriptorByName(id.Value?.ToString());
                 return desc == null
                     ? RestResult.NotFound<TypeDescriptor>().ToResponseAsync()
                     : Rest.Value(desc).ToResponseAsync();

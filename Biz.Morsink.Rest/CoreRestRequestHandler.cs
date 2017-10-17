@@ -2,6 +2,7 @@
 using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
+using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,8 +67,8 @@ namespace Biz.Morsink.Rest
 
                 var lps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(ILinkProvider<>).MakeGenericType(type)));
                 var dlps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(IDynamicLinkProvider<>).MakeGenericType(type)));
-
-                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, converter });
+                var tdc = locator.GetService(typeof(TypeDescriptorCreator));
+                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, tdc, converter });
                 return await (ValueTask<RestResponse>)
                     typeof(RestRequestHandler<>).MakeGenericType(type).GetTypeInfo()
                     .GetDeclaredMethod(nameof(RestRequestHandler<object>.HandleTypedRequest))
@@ -83,21 +84,22 @@ namespace Biz.Morsink.Rest
         where T : class
     {
         private readonly IDataConverter converter;
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly ILinkProvider<T>[] linkProviders;
         private readonly IDynamicLinkProvider<T>[] dynamicLinkProviders;
 
-        public RestRequestHandler(IEnumerable<ILinkProvider<T>> linkProviders, IEnumerable<IDynamicLinkProvider<T>> dynamicLinkProviders, IDataConverter converter = null)
+        public RestRequestHandler(IEnumerable<ILinkProvider<T>> linkProviders, IEnumerable<IDynamicLinkProvider<T>> dynamicLinkProviders, TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
         {
             this.linkProviders = linkProviders.ToArray();
             this.dynamicLinkProviders = dynamicLinkProviders.ToArray();
             this.converter = converter ?? CoreRestRequestHandler.DefaultDataConverter;
-
+            this.typeDescriptorCreator = typeDescriptorCreator;
         }
         public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
         {
             if (request.Capability.ToUpperInvariant() == "OPTIONS")
             {
-                var res = new RestCapabilities(repo);
+                var res = new RestCapabilities(repo, typeDescriptorCreator);
                 return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" })));
             }
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));

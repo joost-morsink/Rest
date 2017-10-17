@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
         public RestIdentityProviderTest()
         {
-            provider = new TestRestIdentityProvider();
+            provider = new TestRestIdentityProvider(null,new TypeDescriptorCreator());
         }
         [TestMethod]
         public void RestIdProv_HappySingle()
@@ -52,7 +53,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
     }
     public class TestRestIdentityProvider : RestIdentityProvider
     {
-        public TestRestIdentityProvider(IEnumerable<IRestRepository> repositories = null) : base(repositories ?? Enumerable.Empty<IRestRepository>())
+        public TestRestIdentityProvider(IEnumerable<IRestRepository> repositories, TypeDescriptorCreator tdc) : base(repositories ?? Enumerable.Empty<IRestRepository>(), tdc)
         {
             BuildEntry(typeof(PersonCollection)).WithPath("/api/person?*").Add();
             BuildEntry(typeof(Person)).WithPath("/api/person/*").Add();

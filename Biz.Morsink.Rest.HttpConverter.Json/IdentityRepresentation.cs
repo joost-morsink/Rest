@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.Schema;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -13,19 +14,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class IdentityRepresentation : ITypeRepresentation
     {
-        private readonly IRestIdentityProvider identityProvider;
+        private readonly Lazy<IRestIdentityProvider> identityProvider;
 
         private class representation
         {
             public string Href { get; set; }
         }
 
-        public IdentityRepresentation(IRestIdentityProvider identityProvider)
+        public IdentityRepresentation(IServiceProvider serviceProvider)
         {
-            this.identityProvider = identityProvider;
+            this.identityProvider = new Lazy<IRestIdentityProvider>(() => serviceProvider.GetService<IRestIdentityProvider>());
         }
         public object GetRepresentable(object rep)
-            => identityProvider.Parse(((representation)rep).Href, true);
+            => identityProvider.Value.Parse(((representation)rep).Href, true);
 
 
         public Type GetRepresentableType(Type type)
@@ -33,7 +34,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         public object GetRepresentation(object obj)
         {
-            var path = identityProvider.ToPath((IIdentity)obj);
+            var path = identityProvider.Value.ToPath((IIdentity)obj);
             return path == null ? null : new representation { Href = path };
         }
 

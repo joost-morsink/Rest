@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Biz.Morsink.Rest.Schema;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -100,6 +101,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         public static IServiceCollection AddRestForAspNetCore(this IServiceCollection serviceCollection, Action<IRestServicesBuilder> builder = null)
         {
             serviceCollection.AddSingleton<CoreRestRequestHandler>();
+            serviceCollection.AddSingleton<TypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
 
             builder?.Invoke(new RestServicesBuilder(serviceCollection));

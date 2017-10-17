@@ -42,8 +42,6 @@ namespace Biz.Morsink.Rest.Schema
                 return PrevisitRecord(r);
             if (t is TypeDescriptor.Reference rf)
                 return VisitReference(rf);
-            if (t is TypeDescriptor.Identity id)
-                return PrevisitIdentity(id);
             if (t is TypeDescriptor.Null nl)
                 return VisitNull(nl);
             if (t is TypeDescriptor.Value v)
@@ -75,17 +73,6 @@ namespace Biz.Morsink.Rest.Schema
         {
             var parts = i.Parts.Select(Visit).ToArray();
             return VisitIntersection(i, parts);
-        }
-        /// <summary>
-        /// Previsit function for Identity types.
-        /// Override if recursive processing is not needed.
-        /// </summary>
-        /// <param name="id">An Identity TypeDescriptor.</param>
-        /// <returns>An object of type R.</returns>
-        private R PrevisitIdentity(TypeDescriptor.Identity id)
-        {
-            var inner = Visit(id.EntityType);
-            return VisitIdentity(id, inner);
         }
         /// <summary>
         /// Previsit function for Record types. 
@@ -178,13 +165,6 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="props">An array of already visited values for the property descriptors.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitRecord(TypeDescriptor.Record r, PropertyDescriptor<R>[] props);
-        /// <summary>
-        /// Visit Identity TypeDescriptors.
-        /// </summary>
-        /// <param name="id">An Identity TypeDescriptor.</param>
-        /// <param name="inner">An already visited value for the entity type of the identity.</param>
-        /// <returns>An object of type R.</returns>
-        protected abstract R VisitIdentity(TypeDescriptor.Identity id, R inner);
         /// <summary>
         /// Visit Reference TypeDescriptors.
         /// </summary>

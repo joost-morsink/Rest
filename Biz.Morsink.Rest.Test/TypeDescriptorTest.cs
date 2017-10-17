@@ -13,7 +13,8 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_Happy()
         {
-            var schema = typeof(Person).GetDescriptor();
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(Person));
             var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
             {
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), TypeDescriptor.Primitive.Numeric.Integral.Instance),
@@ -25,7 +26,8 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_HappyConstructor()
         {
-            var schema = typeof(PersonC).GetDescriptor();
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(PersonC));
             var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.PersonC", new[]
             {
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union("System.Int64?", new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance })),

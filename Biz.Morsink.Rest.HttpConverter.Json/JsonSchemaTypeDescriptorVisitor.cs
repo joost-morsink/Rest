@@ -6,15 +6,23 @@ using System.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
+    /// <summary>
+    /// A visitor to create a Json Schema for a TypeDescriptor.
+    /// </summary>
     public class JsonSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<JObject>
     {
-        public const string DATETIME_REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(.[0-9]+)?)?Z)?$";
         public const string JSON_SCHEMA_VERSION = "http://json-schema.org/draft-04/schema#";
-        public Dictionary<string, string> done;
+        private Dictionary<string, string> done;
         private Dictionary<string, string> todo;
-        public JsonSchemaTypeDescriptorVisitor()
-        {
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A TypeDescriptorCreator to resolve 'references'.</param>
+        public JsonSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator)
+        {
+            this.typeDescriptorCreator = typeDescriptorCreator;
         }
         private string CamelCase(string name)
         {
@@ -25,6 +33,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             else
                 return name;
         }
+        /// <summary>
+        /// This method transforms a TypeDescriptor to a JObject containing the Json schema.
+        /// </summary>
+        /// <param name="descriptor">A TypeDescriptor.</param>
+        /// <returns>The Json schema for the TypeDescriptor.</returns>
         public JObject Transform(TypeDescriptor descriptor)
         {
             todo = new Dictionary<string, string>();
@@ -58,7 +71,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var item = todo.First();
                 todo.Remove(item.Key);
                 done.Add(item.Key, item.Value);
-                defs.Add(new JProperty(item.Value, Visit(TypeDescriptorCreator.GetDescriptorByName(item.Key))));
+                defs.Add(new JProperty(item.Value, Visit(typeDescriptorCreator.GetDescriptorByName(item.Key))));
             }
             result.Add(new JProperty("definitions", defs));
             return result;
@@ -81,14 +94,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         protected override JObject VisitFloat(TypeDescriptor.Primitive.Numeric.Float f)
         {
             return new JObject(new JProperty("type", "number"));
-        }
-
-        protected override JObject VisitIdentity(TypeDescriptor.Identity id, JObject inner)
-        {
-            return new JObject(
-                new JProperty("properties", new JObject(
-                    new JProperty("href", new JObject(
-                        new JProperty("type", "string"))))));
         }
 
         protected override JObject VisitIntegral(TypeDescriptor.Primitive.Numeric.Integral i)

@@ -1,6 +1,6 @@
 ﻿using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.Schema;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,7 +17,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class TypeDescriptorConverter : JsonConverter, IJsonSchemaTranslator<TypeDescriptor>
     {
         private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
-        
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -25,7 +26,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public TypeDescriptorConverter(IServiceProvider serviceProvider)
         {
             this.translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() =>
-            (IEnumerable<IJsonSchemaTranslator>)serviceProvider.GetService(typeof(IEnumerable<IJsonSchemaTranslator>))); 
+            (IEnumerable<IJsonSchemaTranslator>)serviceProvider.GetService(typeof(IEnumerable<IJsonSchemaTranslator>)));
+            this.typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
         }
         public override bool CanConvert(Type objectType)
             => typeof(TypeDescriptor).IsAssignableFrom(objectType);
@@ -57,10 +59,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var typeDescriptor = (TypeDescriptor)value;
-            var specific = translators.Value.FirstOrDefault(t => t.ForType.GetDescriptor()?.Equals(typeDescriptor) == true);
+            var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(typeDescriptor) == true);
             if (specific == null)
             {
-                var visitor = new JsonSchemaTypeDescriptorVisitor();
+                var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
                 var schema = visitor.Transform(typeDescriptor);
                 schema.WriteTo(writer, serializer.Converters.ToArray());
             }
