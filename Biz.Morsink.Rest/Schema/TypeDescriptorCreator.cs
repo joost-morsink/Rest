@@ -142,12 +142,17 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
             {
-                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties).ToArray();
+                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo())
+                    .TakeWhile(x => x != cutoff && x != null)
+                    .SelectMany(x => x.DeclaredProperties)
+                    .GroupBy(x => x.Name)
+                    .Select(x => x.First())
+                    .ToArray();
                 if (!props.All(pi => pi.CanRead && !pi.CanWrite))
                     return null;
                 var properties = from ci in ti.DeclaredConstructors
                                  let ps = ci.GetParameters()
-                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Count()
+                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
                                      && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
                                  from p in ps.Join(props, p => p.Name, p => p.Name,
                                      (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, GetDescriptor(prop.PropertyType, null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),

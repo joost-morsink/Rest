@@ -13,7 +13,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     public class PersonCollection : RestCollection<Person>
     {
 
-        public PersonCollection(IIdentity<PersonCollection> id, IEnumerable<Person> persons, int count, int? limit = null, int skip = 0) : base(id,persons, count, limit, skip)
+        public PersonCollection(IIdentity<PersonCollection> id, IEnumerable<Person> items, int count, int? limit = null, int skip = 0) : base(id, items, count, limit, skip)
         {
         }
         public new IIdentity<PersonCollection> Id => (IIdentity<PersonCollection>)base.Id;
