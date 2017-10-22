@@ -12,7 +12,12 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     /// </summary>
     public class PersonCollection : RestCollection<Person>
     {
-
+        public class Parameters
+        {
+            public int Skip { get; set; }
+            public int? Limit { get; set; }
+            public string Q { get; set; }
+        }
         public PersonCollection(IIdentity<PersonCollection> id, IEnumerable<Person> items, int count, int? limit = null, int skip = 0) : base(id, items, count, limit, skip)
         {
         }

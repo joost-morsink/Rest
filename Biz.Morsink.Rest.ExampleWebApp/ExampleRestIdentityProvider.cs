@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
             BuildEntry(typeof(Person)).WithPath("/person/*").Add();
-            BuildEntry(typeof(PersonCollection)).WithPath("/person?*").Add();
+            BuildEntry(typeof(PersonCollection)).WithPathAndQueryType("/person?*", typeof(PersonCollection.Parameters)).Add();
             BuildEntry(typeof(Home)).WithPath("/?*").Add();
         }
     }

@@ -90,6 +90,26 @@ namespace Biz.Morsink.Rest.AspNetCore
                 this.paths = paths;
             }
             /// <summary>
+            /// Add a path to the entry.
+            /// </summary>
+            /// <param name="path">The rest path to add to the entry.</param>
+            /// <returns>A new EntryBuilder containing the specified path.</returns>
+            public EntryBuilder WithPath(RestPath path)
+                => WithPath(path, allTypes);
+            /// <summary>
+            /// Add a path to the entry.
+            /// </summary>
+            /// <param name="path">The rest path to add to the entry.</param>
+            /// <param name="types">The entity types of the identity value's components.</param>
+            /// <returns>A new EntryBuilder containing the specified path.</returns>
+            public EntryBuilder WithPath(RestPath path, params Type[] types)
+            {
+                types = types.Length == 0 ? allTypes : types;
+                if (path.Arity != types.Length)
+                    throw new ArgumentException("Number of wildcards does not match arity of identity value.");
+                return new EntryBuilder(parent, allTypes, paths.Add((path, types)));
+            }
+            /// <summary>
             /// Adds a path to the entry.
             /// </summary>
             /// <param name="path">The path to add to the entry.</param>
@@ -125,9 +145,14 @@ namespace Biz.Morsink.Rest.AspNetCore
             public EntryBuilder WithPath(string path, params Type[] types)
             {
                 var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
-                if (p.Arity != types.Length)
-                    throw new ArgumentException("Number of wildcards does not match arity of identity value.");
-                return new EntryBuilder(parent, allTypes, paths.Add((p, types)));
+                return WithPath(p, types);
+            }
+            public EntryBuilder WithPathAndQueryType(string path, Type queryType)
+            {
+                var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
+                if (!p.QueryString.IsWildcard)
+                    throw new ArgumentException("Query string must be wildcard.");
+                return WithPath(p.WithQuery(q => q.WithWildcardType(queryType)));
             }
             /// <summary>
             /// Adds the entry to the parent PathIdentityProvider this builder was created from.
@@ -329,6 +354,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                     yield return converter.Convert(x.ComponentValue).To("");
             }
         }
- 
+        public IReadOnlyList<RestPath> GetRestPaths(Type forType)
+            => entries.TryGetValue(forType, out var entry) ? entry.Paths : new RestPath[0];
     }
 }

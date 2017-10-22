@@ -95,10 +95,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <param name="handlerBuilder">The handler configurator.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder ConfigureRequestHandler(this IRestServicesBuilder builder, Func<IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> handlerBuilder)
+        public static IRestServicesBuilder ConfigureRequestHandler(this IRestServicesBuilder builder, Func<IRestRequestHandlerBuilder, IServiceProvider, IRestRequestHandlerBuilder> handlerBuilder)
         {
             builder.ServiceCollection.AddSingleton(sp =>
-                handlerBuilder(RestRequestHandlerBuilder.Create())
+                handlerBuilder(RestRequestHandlerBuilder.Create(), sp)
                 .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
             return builder;
         }

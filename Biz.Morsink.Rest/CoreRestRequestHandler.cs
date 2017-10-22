@@ -61,18 +61,12 @@ namespace Biz.Morsink.Rest
             try
             {
                 var type = request.Address.ForType;
-                var repo = locator.GetService(typeof(IRestRepository<>).MakeGenericType(type)) as IRestRepository;
-                if (repo == null)
-                    return RestResult.NotFound<object>().ToResponse();
 
-                var lps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(ILinkProvider<>).MakeGenericType(type)));
-                var dlps = locator.GetService(typeof(IEnumerable<>).MakeGenericType(typeof(IDynamicLinkProvider<>).MakeGenericType(type)));
-                var tdc = locator.GetService(typeof(TypeDescriptorCreator));
-                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { lps, dlps, tdc, converter });
+                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { locator, converter });
                 return await (ValueTask<RestResponse>)
                     typeof(RestRequestHandler<>).MakeGenericType(type).GetTypeInfo()
                     .GetDeclaredMethod(nameof(RestRequestHandler<object>.HandleTypedRequest))
-                    .Invoke(t, new object[] { request, repo });
+                    .Invoke(t, new object[] { request });
             }
             catch (Exception ex)
             {
@@ -83,25 +77,30 @@ namespace Biz.Morsink.Rest
     internal class RestRequestHandler<T>
         where T : class
     {
+        private X GetService<X>()
+            => (X)serviceLocator.GetService(typeof(X));
+
+        private readonly IServiceProvider serviceLocator;
         private readonly IDataConverter converter;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly ILinkProvider<T>[] linkProviders;
         private readonly IDynamicLinkProvider<T>[] dynamicLinkProviders;
 
-        public RestRequestHandler(IEnumerable<ILinkProvider<T>> linkProviders, IEnumerable<IDynamicLinkProvider<T>> dynamicLinkProviders, TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
+        public RestRequestHandler(IServiceProvider serviceLocator, IDataConverter converter = null)
         {
-            this.linkProviders = linkProviders.ToArray();
-            this.dynamicLinkProviders = dynamicLinkProviders.ToArray();
+            this.serviceLocator = serviceLocator;
+
+            linkProviders = GetService<IEnumerable<ILinkProvider<T>>>().ToArray();
+            dynamicLinkProviders = GetService<IEnumerable<IDynamicLinkProvider<T>>>().ToArray();
             this.converter = converter ?? CoreRestRequestHandler.DefaultDataConverter;
-            this.typeDescriptorCreator = typeDescriptorCreator;
+            typeDescriptorCreator = GetService<TypeDescriptorCreator>();
         }
-        public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request, IRestRepository<T> repo)
+        public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request)
         {
-            if (request.Capability.ToUpperInvariant() == "OPTIONS")
-            {
-                var res = new RestCapabilities(repo, typeDescriptorCreator);
-                return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" })));
-            }
+            var repo = GetService<IRestRepository<T>>();
+            if (repo == null)
+                return RestResult.NotFound<T>().ToResponse();
+   
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
 
             foreach (var cap in capabilities)
@@ -158,5 +157,4 @@ namespace Biz.Morsink.Rest
             return res;
         }
     }
-
 }
