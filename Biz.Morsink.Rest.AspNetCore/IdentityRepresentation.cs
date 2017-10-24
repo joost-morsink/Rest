@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public class IdentityRepresentation : ITypeRepresentation
     {
-        private readonly Lazy<IRestIdentityProvider> identityProvider;
+        private readonly IRestIdentityProvider identityProvider;
 
         private class representation
         {
@@ -26,10 +26,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="serviceProvider">This will be removed in a later version.</param>
-        public IdentityRepresentation(IServiceProvider serviceProvider)
+        /// <param name="identityProvider">The Rest identity provider.</param>
+        public IdentityRepresentation(IRestIdentityProvider identityProvider)
         {
-            this.identityProvider = new Lazy<IRestIdentityProvider>(() => serviceProvider.GetService<IRestIdentityProvider>());
+            this.identityProvider = identityProvider;
         }
         /// <summary>
         /// Gets the IIdentity value correspoding to the Href representation.
@@ -37,7 +37,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="rep">An Href representation.</param>
         /// <returns></returns>
         public object GetRepresentable(object rep)
-            => identityProvider.Value.Parse(((representation)rep).Href, true);
+            => identityProvider.Parse(((representation)rep).Href, true);
 
         /// <summary>
         /// Gets the Href representation type if the type is an IIdentity.
@@ -53,7 +53,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>An Href representation if the specified object is an IIdentity.</returns>
         public object GetRepresentation(object obj)
         {
-            var path = identityProvider.Value.ToPath((IIdentity)obj);
+            var path = identityProvider.ToPath((IIdentity)obj);
             return path == null ? null : new representation { Href = path };
         }
         /// <summary>
