@@ -11,6 +11,28 @@ namespace Biz.Morsink.Rest.Schema
     /// </summary>
     public abstract class TypeDescriptor : IEquatable<TypeDescriptor>
     {
+        public static TypeDescriptor MakeString() => Primitive.String.Instance;
+        public static TypeDescriptor MakeFloat() => Primitive.Numeric.Float.Instance;
+        public static TypeDescriptor MakeIntegral() => Primitive.Numeric.Integral.Instance;
+        public static TypeDescriptor MakeDateTime() => Primitive.DateTime.Instance;
+        public static TypeDescriptor MakeBoolean() => Primitive.Boolean.Instance;
+        public static TypeDescriptor MakeNull() => Null.Instance;
+        public static TypeDescriptor MakeArray(TypeDescriptor elementType) => new Array(elementType);
+        public static TypeDescriptor MakeRecord(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties) => new Record(name, properties);
+        public static TypeDescriptor MakeValue(TypeDescriptor baseType, object innerValue) => new Value(baseType, innerValue);
+        public static TypeDescriptor MakeEmpty() => MakeRecord("", Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
+        public static TypeDescriptor MakeUnion(string name, IEnumerable<TypeDescriptor> options)
+            => options.Any()
+                ? options.Skip(1).Any()
+                    ? new Union(name, options)
+                    : options.First()
+                : MakeEmpty();
+        public static TypeDescriptor MakeIntersection(string name, IEnumerable<TypeDescriptor> parts)
+            => parts.Any()
+                ? parts.Skip(1).Any()
+                    ? new Intersection(name, parts)
+                    : parts.First()
+                : MakeEmpty();
         /// <summary>
         /// Constructor.
         /// </summary>

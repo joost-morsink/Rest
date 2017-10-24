@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.Metadata;
+﻿using Biz.Morsink.Rest.AspNetCore.Utils;
+using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.AspNetCore
 {
     public class OptionsRequestHandler : IRestRequestHandler
     {
@@ -21,16 +22,17 @@ namespace Biz.Morsink.Rest
             this.typeDescriptorCreator = typeDescriptorCreator;
         }
 
-        public async ValueTask<RestResponse> HandleRequest(RestRequest request)
+        public ValueTask<RestResponse> HandleRequest(RestRequest request)
         {
             if (request.Capability.ToUpperInvariant() == "OPTIONS")
             {
                 var repo = (IRestRepository)locator.GetService(typeof(IRestRepository<>).MakeGenericType(request.Address.ForType));
-                var res = new RestCapabilities(repo, typeDescriptorCreator);
-                return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" })));
+                var idprov = (IRestIdentityProvider)locator.GetService(typeof(IRestIdentityProvider));
+                var res = Utilities.MakeCapabilities(idprov, repo, typeDescriptorCreator);
+                return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" }))).ToAsync();
             }
             else
-                return await next(request);
+                return next(request);
         }
     }
 }
