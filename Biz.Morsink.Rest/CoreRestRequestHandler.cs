@@ -102,7 +102,7 @@ namespace Biz.Morsink.Rest
                 return RestResult.NotFound<T>().ToResponse();
    
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
-
+            var failures = new List<RestResponse>();
             foreach (var cap in capabilities)
             {
                 var descriptor = cap.Descriptor;
@@ -128,14 +128,32 @@ namespace Biz.Morsink.Rest
                         else
                             return res;
                     }
+                    else
+                        failures.Add(res);
                 }
                 catch (Exception ex)
                 {
                     return RestResult.Error(descriptor.ResultType, ex).ToResponse();
                 }
             }
-            return RestResult.NotFound<T>().ToResponse();
+            
+            return failures.OrderBy(f => sortOrder(f.UntypedResult.AsFailure().Reason))
+                .FirstOrDefault() ?? RestResult.NotFound<T>().ToResponse();
 
+            int sortOrder(RestFailureReason reason)
+            {
+                switch (reason)
+                {
+                    case RestFailureReason.BadRequest:
+                        return 0;
+                    case RestFailureReason.Error:
+                        return 1;
+                    case RestFailureReason.NotFound:
+                        return 2;
+                    default:
+                        return 3;
+                }
+            }
         }
         private async ValueTask<RestResponse> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
             where R : class

@@ -19,7 +19,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()
-                .UseKestrel()
+                .UseKestrel(options =>
+                {
+                    options.Listen(System.Net.IPAddress.Any, 5000);
+                })
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()

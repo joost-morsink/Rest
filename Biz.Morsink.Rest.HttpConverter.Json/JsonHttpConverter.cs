@@ -49,7 +49,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>The req parameter.</returns>
         public RestRequest ManipulateRequest(RestRequest req, HttpContext context)
         {
-            return req;
+            return new RestRequest(req.Capability, req.Address, req.Parameters, ty =>
+            {
+                using (var ms = new MemoryStream())
+                {
+                    context.Request.Body.CopyTo(ms);
+                    return ParseBody(ty, ms.ToArray());
+                }
+            }, req.Metadata);
         }
         /// <summary>
         /// Json parser.

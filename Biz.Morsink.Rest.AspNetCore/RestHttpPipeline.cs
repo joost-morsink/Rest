@@ -1,5 +1,6 @@
 ﻿using Biz.Morsink.Rest.Metadata;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
@@ -126,6 +127,23 @@ namespace Biz.Morsink.Rest.AspNetCore
                 var response = await next(context, req, conv);
                 response.Metadata.Execute<Capabilities>(caps =>
                     context.Response.Headers["Allow"] = string.Join(",", caps.Methods));// new StringValues(caps.Methods.ToArray())));
+                return response;
+            });
+        /// <summary>
+        /// Adds a middleware component to the RestHttpPipeline that implements metadata for the location header.
+        /// </summary>
+        /// <param name="pipeline">The Rest HTTP pipeline.</param>
+        /// <param name="serviceProvider">A service provider is needed to resolve the Address to a Path.</param>
+        /// <returns>A new Rest HTTP pipeline containing location header middleware.</returns>
+        public static IRestHttpPipeline UseLocationHeader(this IRestHttpPipeline pipeline, IServiceProvider serviceProvider)
+            => pipeline.Use(next => async (context, req, conv) =>
+            {
+                var response = await next(context, req, conv);
+                response.Metadata.Execute<Location>(loc =>
+                {
+                    var idProv = serviceProvider.GetRequiredService<IRestIdentityProvider>();
+                    context.Response.Headers["Location"] = idProv.ToPath(loc.Address);
+                });
                 return response;
             });
     }
