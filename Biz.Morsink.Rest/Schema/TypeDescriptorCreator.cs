@@ -114,7 +114,13 @@ namespace Biz.Morsink.Rest.Schema
         }
         private TypeDescriptor GetArrayDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
-            if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            if (type.GetTypeInfo().ImplementedInterfaces
+                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
+                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
+                    || i == typeof(IDictionary))
+                .Any())
+                return null;
+            else if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
                 var q = from itf in type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
                         let iti = itf.GetTypeInfo()
@@ -130,7 +136,13 @@ namespace Biz.Morsink.Rest.Schema
         private TypeDescriptor GetRecordDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();
-            if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
+            if (ti.ImplementedInterfaces
+                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
+                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
+                    || i == typeof(IDictionary))
+                .Any())
+                return new TypeDescriptor.Record(type.ToString(),Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
+            else if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
             {
                 var props = from p in type.GetTypeInfo().DeclaredProperties
                             where p.CanRead && p.CanWrite
