@@ -79,30 +79,6 @@ namespace Biz.Morsink.Rest.AspNetCore
             return builder;
         }
         /// <summary>
-        /// Configure the IRestHttpPipeline.
-        /// </summary>
-        /// <param name="builder">An IRestServicesBuilder</param>
-        /// <param name="pipeline">The pipeline configurator.</param>
-        /// <returns>The builder.</returns>
-        public static IRestServicesBuilder ConfigurePipeline(this IRestServicesBuilder builder, Func<IRestHttpPipeline, IRestHttpPipeline> pipeline)
-        {
-            builder.ServiceCollection.AddSingleton(pipeline(RestHttpPipeline.Create()));
-            return builder;
-        }
-        /// <summary>
-        /// Configure the IRestRequestHandler
-        /// </summary>
-        /// <param name="builder">An IRestServicesBuilder</param>
-        /// <param name="handlerBuilder">The handler configurator.</param>
-        /// <returns>The builder.</returns>
-        public static IRestServicesBuilder ConfigureRequestHandler(this IRestServicesBuilder builder, Func<IRestRequestHandlerBuilder, IServiceProvider, IRestRequestHandlerBuilder> handlerBuilder)
-        {
-            builder.ServiceCollection.AddSingleton(sp =>
-                handlerBuilder(RestRequestHandlerBuilder.Create(), sp)
-                .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
-            return builder;
-        }
-        /// <summary>
         /// Adds the specified IRestIdentityProvider to the service collection.
         /// </summary>
         /// <typeparam name="T">The concrete type of the identity provider.</typeparam>
@@ -115,5 +91,13 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestIdentityProvider), typeof(T), lifetime));
             return builder;
         }
+        /// <summary>
+        /// Adds the necessary components to support handling of the HTTP Options method.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddOptionsHandler(this IRestServicesBuilder builder)
+            => builder.UsePipeline(bld => bld.UseCapabilityDiscovery())
+                .UseRequestHandler((sp, bld) => bld.Use<OptionsRequestHandler>(sp));
     }
 }

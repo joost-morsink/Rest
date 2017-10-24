@@ -105,7 +105,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                     typeDescriptorCreator.GetDescriptor(type);
                 typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
             }
-            
+
             return app.UseMiddleware<RestForAspNetCore>();
         }
         /// <summary>
@@ -120,24 +120,47 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<TypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
 
-            builder?.Invoke(new RestServicesBuilder(serviceCollection));
-            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestHttpPipeline)))
-                serviceCollection.AddSingleton(RestHttpPipeline.Create());
-            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestRequestHandler)))
-                serviceCollection.AddSingleton(sp => RestRequestHandlerBuilder.Create()
-                    .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
+            var restbuilder = new RestServicesBuilder(serviceCollection);
+            builder?.Invoke(restbuilder);
+            restbuilder.EndConfiguration();
+
             if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestIdentityProvider)))
                 throw new InvalidOperationException("Rest component depends on an IRestIdentityProvider implementation.");
             return serviceCollection;
         }
-        
+
         private class RestServicesBuilder : IRestServicesBuilder
         {
+            public Func<IServiceProvider, IRestHttpPipeline, IRestHttpPipeline> pipelineConfigurator;
+            public Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> requestHandlerConfigurator;
             public RestServicesBuilder(IServiceCollection serviceCollection)
             {
                 ServiceCollection = serviceCollection;
+                pipelineConfigurator = (sp, x) => x;
+                requestHandlerConfigurator = (sp, x) => x;
             }
             public IServiceCollection ServiceCollection { get; }
+
+            public void EndConfiguration()
+            {
+                ServiceCollection.AddSingleton(sp => pipelineConfigurator(sp, RestHttpPipeline.Create()));
+                ServiceCollection.AddSingleton(sp => requestHandlerConfigurator(sp, RestRequestHandlerBuilder.Create())
+                    .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
+            }
+            private Func<T, T> Compose<T>(Func<T, T> f, Func<T, T> g) => x => f(g(x));
+            private Func<X, T, T> Compose<X, T>(Func<X, T, T> f, Func<X, T, T> g) => (x, y) => f(x, g(x, y));
+
+            public IRestServicesBuilder UsePipeline(Func<IServiceProvider, IRestHttpPipeline, IRestHttpPipeline> configurator)
+            {
+                pipelineConfigurator = Compose(configurator, pipelineConfigurator);
+                return this;
+            }
+
+            public IRestServicesBuilder UseRequestHandler(Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> configurator)
+            {
+                requestHandlerConfigurator = Compose(configurator, requestHandlerConfigurator);
+                return this;
+            }
         }
     }
 }
