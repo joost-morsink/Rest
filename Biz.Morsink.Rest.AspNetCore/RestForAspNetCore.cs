@@ -104,6 +104,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
                     typeDescriptorCreator.GetDescriptor(type);
                 typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
+                typeDescriptorCreator.GetDescriptor(typeof(RestCapabilities));
             }
 
             return app.UseMiddleware<RestForAspNetCore>();
