@@ -15,7 +15,13 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public class RestForAspNetCore
     {
+        /// <summary>
+        /// Value for the not found HTTP status.
+        /// </summary>
         public const int STATUS_NOTFOUND = 404;
+        /// <summary>
+        /// Value for the internal server error HTTP status.
+        /// </summary>
         public const int STATUS_INTERNALSERVERERROR = 500;
 
         private readonly IRestRequestHandler handler;
@@ -68,7 +74,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private (RestRequest, IHttpRestConverter) ReadRequest(HttpContext context)
         {
             var request = context.Request;
-            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path),
+            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString),
                 request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v))));
             for (int i = 0; i < converters.Length; i++)
                 if (converters[i].Applies(context))
@@ -91,7 +97,17 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="app">The application builder/</param>
         /// <returns>An application builder.</returns>
         public static IApplicationBuilder UseRestForAspNetCore(this IApplicationBuilder app)
-            => app.UseMiddleware<RestForAspNetCore>();
+        {
+            {   // Prime the schema cache:
+                var repositories = app.ApplicationServices.GetServices<IRestRepository>();
+                var typeDescriptorCreator = app.ApplicationServices.GetRequiredService<TypeDescriptorCreator>();
+                foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
+                    typeDescriptorCreator.GetDescriptor(type);
+                typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
+            }
+            
+            return app.UseMiddleware<RestForAspNetCore>();
+        }
         /// <summary>
         /// Adds services for RestForAspNetCore to the specified service collection.
         /// </summary>

@@ -11,6 +11,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<JObject>
     {
+        /// <summary>
+        /// Gets the url ($ref) for Json schema (draft-04).
+        /// </summary>
         public const string JSON_SCHEMA_VERSION = "http://json-schema.org/draft-04/schema#";
         private Dictionary<string, string> done;
         private Dictionary<string, string> todo;

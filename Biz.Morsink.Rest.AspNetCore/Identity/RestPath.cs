@@ -162,7 +162,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Creates a 'wildcard' querystring.
             /// </summary>
-            public static Query Wildcard => new Query(true);
+            public static Query Wildcard(Type wildcardType = null) => new Query(true, wildcardType);
             /// <summary>
             /// Creates an absent querystring.
             /// </summary>
@@ -187,7 +187,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             public static Query Parse(string queryString)
             {
                 if (queryString == "*")
-                    return Wildcard;
+                    return Wildcard();
                 else if (queryString == "")
                     return Empty;
                 else if (queryString == null)
@@ -204,14 +204,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             }
 
             private readonly bool wildcard;
+            private readonly Type wildcardType;
             private readonly QueryDict values;
             private Query(QueryDict values)
             {
                 this.values = values;
                 wildcard = false;
+                wildcardType = null;
             }
-            private Query(bool wildcard)
+            private Query(bool wildcard, Type wildcardType)
             {
+                this.wildcardType = wildcardType;
                 this.wildcard = wildcard;
                 values = null;
             }
@@ -219,6 +222,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// True if this Query represents a global wildcard.
             /// </summary>
             public bool IsWildcard => wildcard;
+            /// <summary>
+            /// Gets a Type that matches the structure of the expected wildcard.
+            /// </summary>
+            public Type WildcardType => wildcard ? wildcardType : null;
             /// <summary>
             /// True if this Query represents the absence of a Query string.
             /// </summary>
@@ -249,6 +256,13 @@ namespace Biz.Morsink.Rest.AspNetCore
                 else
                     return new Query(this.values.ContainsKey(key) ? this.values.SetItem(key, this.values[key].AddRange(values)) : this.values.SetItem(key, new Values(values)));
             }
+            /// <summary>
+            /// Applies a wildcard structure type to the query string, if it is a wildcard pattern.
+            /// </summary>
+            /// <param name="wildcardType">The structural type.</param>
+            /// <returns>A Query with the type applied if it is a wildcard, <i>this</i> otherwise.</returns>
+            public Query WithWildcardType(Type wildcardType)
+                => IsWildcard ? new Query(true, wildcardType) : this;
             /// <summary>
             /// Gets the Values corresponding to some key.
             /// </summary>
@@ -526,5 +540,20 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A Local RestPath.</returns>
         public RestPath ToLocal()
             => IsLocal ? this : new RestPath(null, segments, query, skip, ForType);
+        /// <summary>
+        /// Creates a new RestPath with the specified query string.
+        /// </summary>
+        /// <param name="q">The new query string.</param>
+        /// <returns>A new RestPath with a new query string.</returns>
+        public RestPath WithQuery(Query q)
+            => new RestPath(pathBase, segments, q, skip, ForType);
+        /// <summary>
+        /// Creates a new RestPath with a manipulated query string.
+        /// </summary>
+        /// <param name="q">The query string manipulator.</param>
+        /// <returns>A new RestPath with a new query string.</returns>
+        public RestPath WithQuery(Func<Query, Query> q)
+            => new RestPath(pathBase, segments, q(query), skip, ForType);
+
     }
 }

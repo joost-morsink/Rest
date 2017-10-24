@@ -1,4 +1,6 @@
 ﻿using Biz.Morsink.Identity;
+using System;
+using System.Collections.Generic;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -6,5 +8,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     {
         IIdentity Parse(string path, bool nullOnFailure = false);
         IIdentity<object> ToGeneralIdentity(IIdentity id);
+        IReadOnlyList<RestPath> GetRestPaths(Type forType);
+
     }
 }

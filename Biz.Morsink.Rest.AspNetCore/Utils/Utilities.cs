@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Schema;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Utils
@@ -74,5 +76,35 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             => ch >= '0' && ch <= '9'
             || ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z'
             || ch == '-' || ch == '_' || ch == '~';
+
+        /// <summary>
+        /// Creates a RestCapabilities structure based on the parameters.
+        /// </summary>
+        /// <param name="idProvider">An IRestIdentityProvider for retrieving QueryString wildcard types.</param>
+        /// <param name="repo">The repository to get the capabilities from.</param>
+        /// <param name="typeDescriptorCreator">A TypeDescriptorCreator for the actual creation of TypeDescriptors.</param>
+        /// <returns></returns>
+        public static RestCapabilities MakeCapabilities(IRestIdentityProvider idProvider, IRestRepository repo, TypeDescriptorCreator typeDescriptorCreator)
+        {
+            var res = new RestCapabilities();
+            var wildcardtype = idProvider.GetRestPaths(repo.EntityType)
+                .Where(rp => rp.QueryString.IsWildcard)
+                .Select(rp => rp.QueryString.WildcardType)
+                .Where(t => t != null)
+                .FirstOrDefault();
+            foreach (var capGroup in repo.GetCapabilities().GroupBy(c => c.Name))
+            {
+                res[capGroup.Key] = capGroup.Select(cap => new RequestDescription(
+                     typeDescriptorCreator.GetDescriptor(cap.BodyType),
+                     capGroup.Key == "GET" && wildcardtype != null
+                        ? cap.ParameterType == typeof(NoParameters)
+                            ? typeDescriptorCreator.GetDescriptor(wildcardtype)
+                            : TypeDescriptor.MakeIntersection("", new[] { typeDescriptorCreator.GetDescriptor(wildcardtype), typeDescriptorCreator.GetDescriptor(cap.ParameterType) })
+                        : typeDescriptorCreator.GetDescriptor(cap.ParameterType),
+                     typeDescriptorCreator.GetDescriptor(cap.ResultType)
+                )).ToArray();
+            }
+            return res;
+        }
     }
 }

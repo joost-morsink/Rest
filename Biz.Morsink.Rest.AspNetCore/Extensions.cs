@@ -46,6 +46,39 @@ namespace Biz.Morsink.Rest.AspNetCore
             return builder;
         }
         /// <summary>
+        /// This methods adds two repositories (one for a collection, one for an entity), a rest resource collection and a dynamic link provider for the collection type.
+        /// </summary>
+        /// <typeparam name="C">The collection repository type.</typeparam>
+        /// <typeparam name="E">The entity repository type.</typeparam>
+        /// <typeparam name="S">The 'source': A rest resource collection for the collection-entity pair.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="collectionLifetime">The lifetime scope of the collection repository.</param>
+        /// <param name="entityLifetime">The lifetime scope of the entity repository.</param>
+        /// <param name="sourceLifetime">The lifetime scope of the 'source'.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddCollection<C, E, S>(this IRestServicesBuilder builder,
+            ServiceLifetime collectionLifetime = ServiceLifetime.Scoped,
+            ServiceLifetime entityLifetime = ServiceLifetime.Scoped,
+            ServiceLifetime sourceLifetime = ServiceLifetime.Scoped)
+            where C : IRestRepository
+            where E : IRestRepository
+        {
+            var ct = typeof(C).GetGeneric(typeof(IRestRepository<>));
+            var et = typeof(E).GetGeneric(typeof(IRestRepository<>));
+            if (ct == null)
+                throw new ArgumentException("Collection type cannot be found.");
+            if (et == null)
+                throw new ArgumentException("Entity type cannot be found.");
+            if (!typeof(IRestResourceCollection<,>).MakeGenericType(ct, et).GetTypeInfo().IsAssignableFrom(typeof(S)))
+                throw new ArgumentException("Source type does not implement the correct IRestResourceCollection.");
+            builder.AddRepository<C>(collectionLifetime)
+                .AddRepository<E>(entityLifetime)
+                .ServiceCollection.Add(new ServiceDescriptor(typeof(IRestResourceCollection<,>).MakeGenericType(ct, et), typeof(S), sourceLifetime));
+
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IDynamicLinkProvider<>).MakeGenericType(ct), typeof(RestCollectionLinks<,>).MakeGenericType(ct, et), ServiceLifetime.Scoped));
+            return builder;
+        }
+        /// <summary>
         /// Configure the IRestHttpPipeline.
         /// </summary>
         /// <param name="builder">An IRestServicesBuilder</param>
@@ -62,10 +95,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <param name="handlerBuilder">The handler configurator.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder ConfigureRequestHandler(this IRestServicesBuilder builder, Func<IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> handlerBuilder)
+        public static IRestServicesBuilder ConfigureRequestHandler(this IRestServicesBuilder builder, Func<IRestRequestHandlerBuilder, IServiceProvider, IRestRequestHandlerBuilder> handlerBuilder)
         {
             builder.ServiceCollection.AddSingleton(sp =>
-                handlerBuilder(RestRequestHandlerBuilder.Create())
+                handlerBuilder(RestRequestHandlerBuilder.Create(), sp)
                 .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
             return builder;
         }

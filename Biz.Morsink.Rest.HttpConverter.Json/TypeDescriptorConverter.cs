@@ -12,7 +12,7 @@ using System.Text;
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
     /// <summary>
-    /// Class for conversion between TypeDescriptors and Json
+    /// Class for conversion between TypeDescriptors and Json.
     /// </summary>
     public class TypeDescriptorConverter : JsonConverter, IJsonSchemaTranslator<TypeDescriptor>
     {
@@ -29,6 +29,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             (IEnumerable<IJsonSchemaTranslator>)serviceProvider.GetService(typeof(IEnumerable<IJsonSchemaTranslator>)));
             this.typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
         }
+        /// <summary>
+        /// This Converter can convert TypeDescriptors.
+        /// </summary>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>True if the object type is assignable to TypeDescriptor.</returns>
         public override bool CanConvert(Type objectType)
             => typeof(TypeDescriptor).IsAssignableFrom(objectType);
         /// <summary>

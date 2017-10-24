@@ -19,7 +19,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <returns>An asynchronous Rest response containing the Home Resource.</returns>
         public ValueTask<RestResponse<Home>> Get(IIdentity<Home> id, NoParameters parameters)
         {
-            return Rest.ValueBuilder(Home.Instance).WithLink(Link.Create("admin", FreeIdentity<Person>.Create(1))).BuildResponseAsync();
+            return Rest.ValueBuilder(Home.Instance)
+                .WithLink(Link.Create("admin", FreeIdentity<Person>.Create(1)))
+                .WithLink(Link.Create("persons",FreeIdentity<PersonCollection>.Create(new Dictionary<string,string>())))
+                .BuildResponseAsync();
         }
     }
 }

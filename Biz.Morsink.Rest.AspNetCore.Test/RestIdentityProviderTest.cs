@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
         public RestIdentityProviderTest()
         {
-            provider = new TestRestIdentityProvider(null,new TypeDescriptorCreator());
+            provider = new TestRestIdentityProvider();
         }
         [TestMethod]
         public void RestIdProv_HappySingle()
@@ -53,7 +53,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
     }
     public class TestRestIdentityProvider : RestIdentityProvider
     {
-        public TestRestIdentityProvider(IEnumerable<IRestRepository> repositories, TypeDescriptorCreator tdc) : base(repositories ?? Enumerable.Empty<IRestRepository>(), tdc)
+        public TestRestIdentityProvider() : base()
         {
             BuildEntry(typeof(PersonCollection)).WithPath("/api/person?*").Add();
             BuildEntry(typeof(Person)).WithPath("/api/person/*").Add();

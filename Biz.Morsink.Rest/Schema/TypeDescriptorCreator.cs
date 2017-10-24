@@ -21,7 +21,14 @@ namespace Biz.Morsink.Rest.Schema
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
         private IEnumerable<ITypeRepresentation> representations;
+        /// <summary>
+        /// Gets a collection of all the registered types.
+        /// </summary>
         public ICollection<Type> RegisteredTypes => descriptors.Keys;
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="representations">A collection of type representations.</param>
         public TypeDescriptorCreator(IEnumerable<ITypeRepresentation> representations = null)
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
@@ -135,12 +142,17 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
             {
-                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties).ToArray();
+                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo())
+                    .TakeWhile(x => x != cutoff && x != null)
+                    .SelectMany(x => x.DeclaredProperties)
+                    .GroupBy(x => x.Name)
+                    .Select(x => x.First())
+                    .ToArray();
                 if (!props.All(pi => pi.CanRead && !pi.CanWrite))
                     return null;
                 var properties = from ci in ti.DeclaredConstructors
                                  let ps = ci.GetParameters()
-                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Count()
+                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
                                      && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
                                  from p in ps.Join(props, p => p.Name, p => p.Name,
                                      (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, GetDescriptor(prop.PropertyType, null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),
