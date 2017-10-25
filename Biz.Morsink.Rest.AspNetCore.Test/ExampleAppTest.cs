@@ -95,20 +95,54 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         {
             client.Dispose();
         }
-        private Task<HttpResponseMessage> Get(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
+        private Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, IReadOnlyDictionary<string, string> headers)
         {
+            var req = new HttpRequestMessage(method, URL + path);
+
             headers = headers ?? DefaultHeaders;
             foreach (var kvp in headers)
-                client.DefaultRequestHeaders.Add(kvp.Key, kvp.Value);
-            return client.GetAsync(URL + path);
-        }
-        private Task<HttpResponseMessage> Options(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
-        {
-            var req = new HttpRequestMessage(HttpMethod.Options, URL + path);
-            headers = headers ?? DefaultHeaders;
-            foreach (var kvp in headers)
-                client.DefaultRequestHeaders.Add(kvp.Key, kvp.Value);
+                req.Headers.Add(kvp.Key, kvp.Value);
+
             return client.SendAsync(req);
+        }
+        private async Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, object body, IReadOnlyDictionary<string, string> headers)
+        {
+            var req = new HttpRequestMessage(method, URL + path);
+
+            headers = headers ?? DefaultHeaders;
+            foreach (var kvp in headers)
+                req.Headers.Add(kvp.Key, kvp.Value);
+
+            using (var ms = new MemoryStream())
+            using (var wri = new StreamWriter(ms))
+            using (var jtw = new JsonTextWriter(wri))
+            {
+                await JObject.FromObject(body).WriteToAsync(jtw);
+                await jtw.FlushAsync();
+                req.Content = new ByteArrayContent(ms.ToArray());
+                return await client.SendAsync(req);
+            }
+        }
+
+        private Task<HttpResponseMessage> Get(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
+            => Send(client, HttpMethod.Get, path, headers);
+
+        private Task<HttpResponseMessage> Post(HttpClient client, string path, object body, IReadOnlyDictionary<string, string> headers = null)
+            => Send(client, HttpMethod.Post, path, body, headers);
+
+        private Task<HttpResponseMessage> Put(HttpClient client, string path, object body, IReadOnlyDictionary<string, string> headers = null)
+            => Send(client, HttpMethod.Put, path, body, headers);
+
+        private Task<HttpResponseMessage> Delete(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
+            => Send(client, HttpMethod.Delete, path, headers);
+
+        private Task<HttpResponseMessage> Options(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
+            => Send(client, HttpMethod.Options, path, headers);
+
+        private async Task<JObject> getJson(HttpResponseMessage resp)
+        {
+            var body = await resp.Content.ReadAsStringAsync();
+            return JObject.Parse(body);
         }
         private class Link
         {
@@ -171,8 +205,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(links.ContainsKey("first"));
             Assert.IsTrue(links.ContainsKey("last"));
 
-            var body = await resp.Content.ReadAsStringAsync();
-            var json = JObject.Parse(body);
+            var json = await getJson(resp);
+
             Assert.IsNotNull(json[id]);
             Assert.IsNotNull(json[count]);
             Assert.AreEqual(1, json[count].Value<int>());
@@ -190,8 +224,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
 
-            var body = await resp.Content.ReadAsStringAsync();
-            var json = JObject.Parse(body);
+            var json = await getJson(resp);
             Assert.IsNotNull(json[id]);
             Assert.IsNotNull(json[count]);
             Assert.AreEqual(0, json[count].Value<int>());
@@ -212,8 +245,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsNotNull(desc);
             Assert.AreEqual(SchemaFor<TypeDescriptor>(), desc.Address);
 
-            var body = await resp.Content.ReadAsStringAsync();
-            var json = JObject.Parse(body);
+            var json = await getJson(resp);
             Assert.IsNotNull(json[properties]);
             Assert.IsNotNull(json[properties][id]);
             Assert.IsNotNull(json[properties][firstName]);
@@ -234,8 +266,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsNotNull(desc);
             Assert.AreEqual(SchemaFor<TypeDescriptor>(), desc.Address);
 
-            var body = await resp.Content.ReadAsStringAsync();
-            var json = JObject.Parse(body);
+            var json = await getJson(resp);
 
             Assert.IsNotNull(json[dollarRef]);
             Assert.AreEqual("http://json-schema.org/draft-04/schema#", json[dollarRef].Value<string>());
@@ -263,6 +294,68 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             var resp = await Get(client, "/Invalid/Address");
             Assert.IsFalse(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task Http_CollectionTest()
+        {
+            var resp = await Get(client, "/person");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            var json = await getJson(resp);
+            foreach (var item in ((JArray)json["items"]))
+            {
+                var addr = item["id"].Value<string>("href");
+                var resp2 = await Delete(client, addr);
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
+                resp2 = await Get(client, addr);
+                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                resp2 = await Delete(client, addr);
+                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+            }
+            resp = await Get(client, "/person");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            json = await getJson(resp);
+
+            Assert.AreEqual(0, json.Value<int>("count"));
+
+            for (int i = 0; i < 13; i++)
+            {
+                var resp2 = await Post(client, "/person", new Person
+                {
+                    FirstName = $"Test #{i}",
+                    LastName = "Test",
+                    Age = i
+                });
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
+                Assert.IsTrue(resp2.Headers.TryGetValues("Location", out var vals));
+                Assert.AreEqual(1, vals.Count());
+                resp2 = await Get(client, vals.First());
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
+
+                json = await getJson(resp2);
+                Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
+                Assert.AreEqual($"Test", json.Value<string>("lastName"));
+
+                json["lastName"] = "Morsink";
+                resp2 = await Put(client, vals.First(), json);
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
+
+                json = await getJson(resp2);
+                Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
+                Assert.AreEqual($"Morsink", json.Value<string>("lastName"));
+
+            }
+        }
+        private class Identity
+        {
+            public string Href { get; set; }
+        }
+        private class Person
+        {
+            public Identity Id { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public int Age { get; set; }
         }
     }
 }

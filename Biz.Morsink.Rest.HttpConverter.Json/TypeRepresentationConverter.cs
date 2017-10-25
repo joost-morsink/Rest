@@ -24,7 +24,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             var representationType = typeRep.GetRepresentationType(objectType);
             var representation = serializer.Deserialize(reader, representationType);
-            return typeRep.GetRepresentable(representation) ?? existingValue;
+            if (representation == null)
+                return null; // Message has property explicitly set to null, so don't default to existingValue
+            else
+                return typeRep.GetRepresentable(representation) ?? existingValue;
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
