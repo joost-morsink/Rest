@@ -110,10 +110,7 @@ namespace Biz.Morsink.Rest.AspNetCore
 
                 // Prime attribute based rest identity provider:
                 var idProv = app.ApplicationServices.GetService<IRestIdentityProvider>() as AttributeBasedRestIdentityProvider;
-                idProv?.Initialize(from repo in repositories
-                                   let repoType = repo.GetType()
-                                   from attr in repoType.GetTypeInfo().GetCustomAttributes<RestPathAttribute>()
-                                   select (attr, repoType));
+                idProv?.Initialize(repositories);
             }
 
             return app.UseMiddleware<RestForAspNetCore>();

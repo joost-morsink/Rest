@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     /// <summary>
     /// A repository for Collections of Persons.
     /// </summary>
+    [RestPath("/person?*", WildcardType = typeof(PersonCollection.Parameters))]
     public class PersonCollectionRepository 
         : RestRepository<PersonCollection>
         , IRestGet<PersonCollection, NoParameters>

@@ -32,7 +32,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRestForAspNetCore(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
-                .AddIdentityProvider<ExampleRestIdentityProvider>()
+                .AddAttributeBasedIdentityProvider()
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
                 // Configure Repositories

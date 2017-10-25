@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Biz.Morsink.Rest.Schema;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,24 +12,22 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
     {
         public AttributeBasedRestIdentityProvider() : base()
         {
-
+            BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
         }
 
-        public void Initialize(IEnumerable<(RestPathAttribute, Type)> attributes)
+        internal void Initialize(IEnumerable<IRestRepository> repositories)
         {
-            foreach (var (attr, type) in attributes)
+            foreach (var repo in repositories)
             {
-                if (attr.WildcardType != null)
-                    BuildEntry(attr.ComponentTypes).WithPathAndQueryType(attr.Path, attr.WildcardType).Add();
-                else
-                    BuildEntry(attr.ComponentTypes).WithPath(attr.Path).Add();
+                foreach(var attr in repo.GetType().GetTypeInfo().GetCustomAttributes<RestPathAttribute>())
+                {
+                    var compTypes = attr.ComponentTypes ?? new Type[] { repo.EntityType };
+                    if (attr.WildcardType != null)
+                        BuildEntry(compTypes).WithPathAndQueryType(attr.Path, attr.WildcardType).Add();
+                    else
+                        BuildEntry(compTypes).WithPath(attr.Path).Add();
+                }
             }
         }
-        public void Initialize(IServiceCollection serviceCollection)
-            => Initialize(from desc in serviceCollection
-                          where typeof(IRestRepository).IsAssignableFrom(desc.ServiceType)
-                          from attr in desc.ImplementationType.GetTypeInfo().GetCustomAttributes<RestPathAttribute>()
-                          select (attr, desc.ImplementationType));
-
     }
 }

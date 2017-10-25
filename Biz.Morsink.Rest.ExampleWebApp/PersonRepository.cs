@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     /// <summary>
     /// A repository for Person entities.
     /// </summary>
+    [RestPath("/person/*")]
     public class PersonRepository 
         : RestRepository<Person>
         , IRestGet<Person, NoParameters>
