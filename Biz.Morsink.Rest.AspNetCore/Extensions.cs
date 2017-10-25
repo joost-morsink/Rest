@@ -85,7 +85,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder.</param>
         /// <param name="lifetime">The lifetime scope to apply to the identity provider.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddIdentityProvider<T>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        public static IRestServicesBuilder AddIdentityProvider<T>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Singleton)
             where T : IRestIdentityProvider
         {
             builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestIdentityProvider), typeof(T), lifetime));
