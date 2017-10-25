@@ -1,10 +1,12 @@
-﻿using Biz.Morsink.Rest.Schema;
+﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.Schema;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -105,6 +107,10 @@ namespace Biz.Morsink.Rest.AspNetCore
                     typeDescriptorCreator.GetDescriptor(type);
                 typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
                 typeDescriptorCreator.GetDescriptor(typeof(RestCapabilities));
+
+                // Prime attribute based rest identity provider:
+                var idProv = app.ApplicationServices.GetService<IRestIdentityProvider>() as AttributeBasedRestIdentityProvider;
+                idProv?.Initialize(repositories);
             }
 
             return app.UseMiddleware<RestForAspNetCore>();

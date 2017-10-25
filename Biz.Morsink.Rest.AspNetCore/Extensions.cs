@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -121,5 +122,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddDefaultServices(this IRestServicesBuilder builder)
             => builder.AddCaching().AddLocationHeader().AddOptionsHandler();
+        public static IRestServicesBuilder AddAttributeBasedIdentityProvider(this IRestServicesBuilder builder)
+        {
+            builder.ServiceCollection.AddSingleton<IRestIdentityProvider, AttributeBasedRestIdentityProvider>();
+            return builder;
+        }
     }
 }

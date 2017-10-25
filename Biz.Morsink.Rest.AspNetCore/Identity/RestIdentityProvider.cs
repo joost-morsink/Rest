@@ -288,7 +288,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="path">The path to parse.</param>
         /// <param name="nullOnFailure">When there is not match found for the Path, this boolean indicates whether to return a null or an IIdentity&lt;object&gt;.</param>
         /// <returns>An IIdentity value for the path.</returns>
-        public IIdentity Parse(string path, bool nullOnFailure = false)
+        public virtual IIdentity Parse(string path, bool nullOnFailure = false)
         {
             var match = matchTree.Value.Walk(RestPath.Parse(path));
             if (match.IsSuccessful)
@@ -307,7 +307,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public IIdentity<object> ToGeneralIdentity(IIdentity id)
+        public virtual IIdentity<object> ToGeneralIdentity(IIdentity id)
         {
             if (id.Provider != this)
                 return ToGeneralIdentity(Translate(id));
@@ -354,7 +354,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                     yield return converter.Convert(x.ComponentValue).To("");
             }
         }
-        public IReadOnlyList<RestPath> GetRestPaths(Type forType)
+        public virtual IReadOnlyList<RestPath> GetRestPaths(Type forType)
             => entries.TryGetValue(forType, out var entry) ? entry.Paths : new RestPath[0];
     }
 }
