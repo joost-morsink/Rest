@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>True if this converter is applicable to the context.</returns>
         public bool Applies(HttpContext context)
         {
-            var accept = context.Request.Headers["Accept"].ToArray();
+            var accept = context.Request.Headers["Accept"].SelectMany(h => h.Split(',').Select(x => x.Trim())).ToArray();
             return accept.Contains("application/json");
         }
         /// <summary>
@@ -49,7 +49,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>The req parameter.</returns>
         public RestRequest ManipulateRequest(RestRequest req, HttpContext context)
         {
-            return req;
+            return new RestRequest(req.Capability, req.Address, req.Parameters, ty =>
+            {
+                using (var ms = new MemoryStream())
+                {
+                    context.Request.Body.CopyTo(ms);
+                    return ParseBody(ty, ms.ToArray());
+                }
+            }, req.Metadata);
         }
         /// <summary>
         /// Json parser.
@@ -60,9 +67,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public object ParseBody(Type t, byte[] body)
         {
             using (var ms = new MemoryStream(body))
+            using (var sr = new StreamReader(ms, Encoding.UTF8))
+            using (var jtr = new JsonTextReader(sr))
             {
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-                return ser.Deserialize(new JsonTextReader(new StreamReader(ms, Encoding.UTF8)), t);
+                return ser.Deserialize(jtr, t);
             }
         }
         /// <summary>

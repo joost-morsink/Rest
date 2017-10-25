@@ -67,7 +67,6 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
     }
     public class Person
     {
-
     }
     public class FriendCollection
     {

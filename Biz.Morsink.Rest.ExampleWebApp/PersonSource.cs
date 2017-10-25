@@ -37,22 +37,27 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             var searchParams = conv.Convert(collectionId.Value).To<SimpleSearchParameters>();
             var skip = collectionParams?.Skip ?? 0;
             var limit = collectionParams?.Limit;
-            var val = data.Values.Where(p => searchParams == null || p.FirstName.Contains(searchParams.Q) || p.LastName.Contains(searchParams.Q))
-                .Skip(skip).Take(limit ?? int.MaxValue).ToArray();
+            var val = data.Values.Where(p => searchParams == null || p.FirstName.Contains(searchParams.Q) || p.LastName.Contains(searchParams.Q)).ToArray();
 
-            return new PersonCollection(collectionId, val, val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0);
+            return new PersonCollection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0);
         }
         public Person Post(Person entity)
         {
             var id = entity.Id?.Value?.ToString();
             if (id == null)
-                entity = new Person(entity.FirstName, entity.LastName, entity.Age, FreeIdentity<Person>.Create(Interlocked.Increment(ref counter).ToString()));
-
+            {
+                string pk;
+                do
+                {
+                    pk = Interlocked.Increment(ref counter).ToString();
+                } while (data.ContainsKey(pk));
+                entity = new Person(entity.FirstName, entity.LastName, entity.Age, FreeIdentity<Person>.Create(pk));
+            }
             return data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => existing);
         }
 
         public Person Put(Person entity)
-            => data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key,existing) => entity);
-        
+            => data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity);
+
     }
 }
