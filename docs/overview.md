@@ -4,12 +4,23 @@ It tries to adhere to the original meaning of the word 'Rest', contrary to what 
 Additionally the Rest services can be served over an HTTP connection by using ASP.Net Core.
 
 ## Architecture
-Two main components form the backbone of a Rest API:
+_(The information below is a short summary, the main article about the architecture can be found [here](./arch.md))_
+
+Two main components form the backbone of a Rest API developed using these libraries:
 * A Rest component that specifies all the interfaces and helper classes needed to implement a Rest service.
 * An ASP.Net Core component that exposes a Rest service implementation over HTTP.
 
-A Rest service is responsible for answering a `RestRequest` with a `RestResponse`. 
-The HTTP component is responsible for translating an `HttpRequest` to a `RestRequest`, routing that request to the proper Rest service, and translating the `RestResponse` back to a `HttpResponse`. 
+An `IRestRequestHandler` is responsible for routing a `RestRequest` to a repository.
+The repository is responsible for answering a `RestRequest` with a `RestResponse`. 
+An `IHttpRestRequestHandler` is responsible for transferring information from the Http context to the `RestRequest`. 
+It is also responsible for transferring information from the `RestResponse` back to the Http context.
+
+Below is an image of a layered view of this process:
+
+![RequestFlow.svg](./images/RequestFlow.svg)
+
+
+# **REVIEW CONTENT BELOW**
 
 ## Identity
 This library uses the Biz.Morsink.Identity library for identifying entities. 
@@ -20,6 +31,7 @@ There is a decoupling between the Rest pipeline and the actual serving of conten
 The following aspects come into play when designing a Rest repository:
 * Identity (covered by the dependency).
 * Home resource
+* Caching
 * Operation (e.g. HTTP methods).
   Operation maps to operation interfaces.
 * Entities and objects versus resources.

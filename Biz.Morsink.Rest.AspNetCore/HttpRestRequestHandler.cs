@@ -14,27 +14,27 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// An HTTP pipeline for Rest requests.
     /// </summary>
-    public class RestHttpPipeline : IRestHttpPipeline
+    public class HttpRestRequestHandler : IHttpRestRequestHandler
     {
         private readonly ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>> middlewares;
 
         /// <summary>
-        /// Creates an empty RestHttpPipeline
+        /// Creates an empty HttpRestRequestHandler
         /// </summary>
-        /// <returns>An empty RestHttpPipeline</returns>
-        public static RestHttpPipeline Create() => new RestHttpPipeline(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>>.Empty);
-        private RestHttpPipeline(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>> middlewares)
+        /// <returns>An empty HttpRestRequestHandler</returns>
+        public static HttpRestRequestHandler Create() => new HttpRestRequestHandler(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>>.Empty);
+        private HttpRestRequestHandler(ImmutableList<Func<RestRequestDelegate, RestRequestDelegate>> middlewares)
         {
             this.middlewares = middlewares;
         }
 
         /// <summary>
-        /// Uses a middleware component on the RestHttpPipeline.
+        /// Uses a middleware component on the HttpRestRequestHandler.
         /// </summary>
         /// <param name="middleware">A function containing the middleware code.</param>
-        /// <returns>A new RestHttpPipeline with the added specified middleware.</returns>
-        public RestHttpPipeline Use(Func<RestRequestDelegate, RestRequestDelegate> middleware)
-            => new RestHttpPipeline(middlewares.Add(middleware));
+        /// <returns>A new HttpRestRequestHandler with the added specified middleware.</returns>
+        public HttpRestRequestHandler Use(Func<RestRequestDelegate, RestRequestDelegate> middleware)
+            => new HttpRestRequestHandler(middlewares.Add(middleware));
 
         /// <summary>
         /// Gets an actual RestRequestDelegate by setting the 'core' Rest request handler.
@@ -49,13 +49,13 @@ namespace Biz.Morsink.Rest.AspNetCore
             return result;
         }
 
-        IRestHttpPipeline IRestHttpPipeline.Use(Func<RestRequestDelegate, RestRequestDelegate> middleware)
+        IHttpRestRequestHandler IHttpRestRequestHandler.Use(Func<RestRequestDelegate, RestRequestDelegate> middleware)
             => Use(middleware);
     }
     /// <summary>
     /// Interface for HTTP pipelines for Rest requests.
     /// </summary>
-    public interface IRestHttpPipeline
+    public interface IHttpRestRequestHandler
     {
         /// <summary>
         /// Gets an actual RestRequestDelegate by setting the 'core' Rest request handler.
@@ -64,11 +64,11 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A RestRequestDelegate that incorporates all the logic for the middleware and the core request handler.</returns>
         RestRequestDelegate GetRequestDelegate(IRestRequestHandler handler);
         /// <summary>
-        /// Uses a middleware component on the IRestHttpPipeline.
+        /// Uses a middleware component on the IHttpRestRequestHandler.
         /// </summary>
         /// <param name="middleware">A function containing the middleware code.</param>
-        /// <returns>A new IRestHttpPipeline with the added specified middleware.</returns>
-        IRestHttpPipeline Use(Func<RestRequestDelegate, RestRequestDelegate> middleware);
+        /// <returns>A new IHttpRestRequestHandler with the added specified middleware.</returns>
+        IHttpRestRequestHandler Use(Func<RestRequestDelegate, RestRequestDelegate> middleware);
     }
     /// <summary>
     /// Delegate type for Rest request handlers.
@@ -81,14 +81,14 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Helper class for extension methods.
     /// </summary>
-    public static class RestHttpPipelineExt
+    public static class HttpRestRequestHandlerExt
     {
         /// <summary>
-        /// Adds a middleware component to the RestHttpPipeline that implements metadata for caching through HTTP headers.
+        /// Adds a middleware component to the IHttpRestRequestHandler that implements metadata for caching through HTTP headers.
         /// </summary>
         /// <param name="pipeline">The Rest HTTP pipeline.</param>
-        /// <returns>A new Rest HTTP pipeline containing the caching middleware.</returns>
-        public static IRestHttpPipeline UseCaching(this IRestHttpPipeline pipeline)
+        /// <returns>A new IHttpRestRequestHandler containing the caching middleware.</returns>
+        public static IHttpRestRequestHandler UseCaching(this IHttpRestRequestHandler pipeline)
             => pipeline.Use(next => async (context, req, conv) =>
             {
                 RestResponse response;
@@ -116,12 +116,12 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return response;
             });
         /// <summary>
-        /// Adds a middleware component to the RestHttpPipeline that implements metadata for capability discovery.
+        /// Adds a middleware component to the IHttpRestRequestHandler that implements metadata for capability discovery.
         /// This mainly applies to OPTIONS requests.
         /// </summary>
         /// <param name="pipeline">The Rest HTTP pipeline.</param>
-        /// <returns>A new Rest HTTP pipeline containing the capability discovery middleware.</returns>
-        public static IRestHttpPipeline UseCapabilityDiscovery(this IRestHttpPipeline pipeline)
+        /// <returns>A new IHttpRestRequestHandler containing the capability discovery middleware.</returns>
+        public static IHttpRestRequestHandler UseCapabilityDiscovery(this IHttpRestRequestHandler pipeline)
             => pipeline.Use(next => async (context, req, conv) =>
             {
                 var response = await next(context, req, conv);
@@ -130,12 +130,12 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return response;
             });
         /// <summary>
-        /// Adds a middleware component to the RestHttpPipeline that implements metadata for the location header.
+        /// Adds a middleware component to the IHttpRestRequestHandler that implements metadata for the location header.
         /// </summary>
         /// <param name="pipeline">The Rest HTTP pipeline.</param>
         /// <param name="serviceProvider">A service provider is needed to resolve the Address to a Path.</param>
-        /// <returns>A new Rest HTTP pipeline containing location header middleware.</returns>
-        public static IRestHttpPipeline UseLocationHeader(this IRestHttpPipeline pipeline, IServiceProvider serviceProvider)
+        /// <returns>A new IHttpRestRequestHandler containing location header middleware.</returns>
+        public static IHttpRestRequestHandler UseLocationHeader(this IHttpRestRequestHandler pipeline, IServiceProvider serviceProvider)
             => pipeline.Use(next => async (context, req, conv) =>
             {
                 var response = await next(context, req, conv);

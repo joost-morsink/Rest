@@ -18,15 +18,6 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 {
     public class Startup
     {
-        public IRestRequestHandlerBuilder ConfigureRestRequestHandler(IRestRequestHandlerBuilder builder)
-        {
-            return builder;
-        }
-        public IRestHttpPipeline ConfigurePipeline(IRestHttpPipeline pipeline)
-        {
-            return pipeline.UseCapabilityDiscovery();
-        }
-
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRestForAspNetCore(bld => bld

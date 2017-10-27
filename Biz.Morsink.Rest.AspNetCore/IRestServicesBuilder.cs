@@ -15,11 +15,11 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         IServiceCollection ServiceCollection { get; }
         /// <summary>
-        /// Adds components to the Rest HTTP pipeline.
+        /// Adds components to the Rest HTTP request pipeline.
         /// </summary>
         /// <param name="configurator">A configurator function for the Rest HTTP pipeline</param>
         /// <returns>The builder.</returns>
-        IRestServicesBuilder UsePipeline(Func<IServiceProvider, IRestHttpPipeline, IRestHttpPipeline> configurator);
+        IRestServicesBuilder UseHttpRequestHandler(Func<IServiceProvider, IHttpRestRequestHandler, IHttpRestRequestHandler> configurator);
         /// <summary>
         /// Adds components to the Rest request handler pipeline.
         /// </summary>
@@ -43,8 +43,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder.</param>
         /// <param name="configurator">A configurator function for the Rest HTTP pipeline</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder UsePipeline(this IRestServicesBuilder builder, Func<IRestHttpPipeline, IRestHttpPipeline> configurator)
-            => builder.UsePipeline((sp, x) => configurator(x));
+        public static IRestServicesBuilder UseHttpRequestHandler(this IRestServicesBuilder builder, Func<IHttpRestRequestHandler, IHttpRestRequestHandler> configurator)
+            => builder.UseHttpRequestHandler((sp, x) => configurator(x));
         /// <summary>
         /// Adds components to the Rest request handler pipeline.
         /// </summary>

@@ -98,7 +98,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder.</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddOptionsHandler(this IRestServicesBuilder builder)
-            => builder.UsePipeline(bld => bld.UseCapabilityDiscovery())
+            => builder.UseHttpRequestHandler(bld => bld.UseCapabilityDiscovery())
                 .UseRequestHandler((sp, bld) => bld.Use<OptionsRequestHandler>(sp));
         /// <summary>
         /// Adds the necessary components to support handling of Caching metadata/headers.
@@ -106,14 +106,14 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddCaching(this IRestServicesBuilder builder)
-            => builder.UsePipeline(bld => bld.UseCaching());
+            => builder.UseHttpRequestHandler(bld => bld.UseCaching());
         /// <summary>
         /// Adds the necessary components to support handling of the Location metadatum/header.
         /// </summary>
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddLocationHeader(this IRestServicesBuilder builder)
-            => builder.UsePipeline((sp, bld) => bld.UseLocationHeader(sp));
+            => builder.UseHttpRequestHandler((sp, bld) => bld.UseLocationHeader(sp));
         /// <summary>
         /// Shortcut method for inserting various default services.
         /// Currently, OptionsHandler, Caching and Location are included.

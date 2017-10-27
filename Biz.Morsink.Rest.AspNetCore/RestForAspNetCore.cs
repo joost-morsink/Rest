@@ -35,16 +35,16 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Constructor.
         /// </summary>
         /// <param name="next">The next request delegate in the pipeline.</param>
-        /// <param name="handler">A Rest request handler.</param>
-        /// <param name="pipeline">A Rest HTTP pipeline.</param>
+        /// <param name="restHandler">A Rest request handler.</param>
+        /// <param name="httpHandler">A Rest HTTP pipeline.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="converters">A collection of applicable Rest converters for HTTP.</param>
-        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler handler, IRestHttpPipeline pipeline, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters)
+        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters)
         {
-            this.handler = handler;
+            this.handler = restHandler;
             this.converters = converters.ToArray();
             this.identityProvider = identityProvider;
-            this.restRequestDelegate = pipeline.GetRequestDelegate(handler);
+            this.restRequestDelegate = httpHandler.GetRequestDelegate(restHandler);
         }
         /// <summary>
         /// This method implements the RequestDelegate for the Rest middleware component.
@@ -138,34 +138,34 @@ namespace Biz.Morsink.Rest.AspNetCore
 
         private class RestServicesBuilder : IRestServicesBuilder
         {
-            public Func<IServiceProvider, IRestHttpPipeline, IRestHttpPipeline> pipelineConfigurator;
-            public Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> requestHandlerConfigurator;
+            public Func<IServiceProvider, IHttpRestRequestHandler, IHttpRestRequestHandler> httpHandlerConfigurator;
+            public Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> restHandlerConfigurator;
             public RestServicesBuilder(IServiceCollection serviceCollection)
             {
                 ServiceCollection = serviceCollection;
-                pipelineConfigurator = (sp, x) => x;
-                requestHandlerConfigurator = (sp, x) => x;
+                httpHandlerConfigurator = (sp, x) => x;
+                restHandlerConfigurator = (sp, x) => x;
             }
             public IServiceCollection ServiceCollection { get; }
 
             public void EndConfiguration()
             {
-                ServiceCollection.AddSingleton(sp => pipelineConfigurator(sp, RestHttpPipeline.Create()));
-                ServiceCollection.AddSingleton(sp => requestHandlerConfigurator(sp, RestRequestHandlerBuilder.Create())
+                ServiceCollection.AddSingleton(sp => httpHandlerConfigurator(sp, HttpRestRequestHandler.Create()));
+                ServiceCollection.AddSingleton(sp => restHandlerConfigurator(sp, RestRequestHandlerBuilder.Create())
                     .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
             }
             private Func<T, T> Compose<T>(Func<T, T> f, Func<T, T> g) => x => f(g(x));
             private Func<X, T, T> Compose<X, T>(Func<X, T, T> f, Func<X, T, T> g) => (x, y) => f(x, g(x, y));
 
-            public IRestServicesBuilder UsePipeline(Func<IServiceProvider, IRestHttpPipeline, IRestHttpPipeline> configurator)
+            public IRestServicesBuilder UseHttpRequestHandler(Func<IServiceProvider, IHttpRestRequestHandler, IHttpRestRequestHandler> configurator)
             {
-                pipelineConfigurator = Compose(configurator, pipelineConfigurator);
+                httpHandlerConfigurator = Compose(configurator, httpHandlerConfigurator);
                 return this;
             }
 
             public IRestServicesBuilder UseRequestHandler(Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> configurator)
             {
-                requestHandlerConfigurator = Compose(configurator, requestHandlerConfigurator);
+                restHandlerConfigurator = Compose(configurator, restHandlerConfigurator);
                 return this;
             }
         }
