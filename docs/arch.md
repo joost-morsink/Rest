@@ -50,7 +50,7 @@ Caching metadata can be added to every response, allowing for a caching middlewa
 Metadata is propagated to the layer above, so it can be implemented per the protocol required.
 
 #### Layered
-This constraint is an external constraint and can be satisfied by proper implementation.
+This constraint is an external constraint and can be satisfied by proper infrastructural implementation.
 
 #### Code on demand
 This constraint is dependent on the specific protocol used to expose the Rest service and can be satisfied by the consuming library.
@@ -86,6 +86,75 @@ This constraint is satisfied by two concepts:
   This only determines part of the Rest request, but the other information might be dynamic. 
   However, type information should be known about the capability, which can be retrieved using CapabilityDescriptors for the operation.
 
+### Request Pipeline
+The Rest Request pipeline is defined by a single method signature, found in an interface as well as a delegate:
+
+```csharp
+delegate ValueTask<RestResponse> RestRequestHandlerDelegate(RestRequest request);
+interface IRestRequestHandler
+{
+    ValueTask<RestResponse> HandleRequest(RestRequest request);
+}
+```
+
+A `RestRequest` contains all data needed to process the request. 
+The return value indicates possible asynchrony through the `ValueTask<>` [functor](https://en.wikipedia.org/wiki/Functor).
+The `RestResponse` type is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success and failure.
+
+The main implementation of this interface is the `CoreRestRequestHandler`.
+This component tries to resolve the RestRequest to an instance of an `IRestRepository` through a `IServiceProvider` instance.
+
+The `IRestRepository` supports capability discovery through the `GetCapabilities` method.
+The capability descriptors returned are able to create a delegate to be called by the `CoreRestRequestHandler`.
+The actual Rest operation implementing method can then take over an execute its logic.
+
+The `IRestRequestHandlerBuilder` interface can be used to create a pipeline of partial handlers, to which the `CoreRestRequestHandler` can be the most inner handler.
+
+### Capabilities
+Rest capabilities can be specified and implemented freely.
+But, since the most RESTful architectures have been implemented using HTTP, the main HTTP method have been specified as Rest capabilities. 
+They are:
+
+| Interface   | Method | Safe | Idempotent |
+| ----------- | ------ | ---- | ---------- |
+| IRestGet    | GET    | Yes  | Yes        |
+| IRestPut    | PUT    | No   | Yes        |
+| IRestPost   | POST   | No   | No         |
+| IRestDelete | DELETE | No   | Yes        |
+
+#### IRestGet
+A Get is the operation to use when retrieving resources. 
+It is a method with a resource address and optionally parameters, but no body.
+A request can always be made multiple times without having any side effect on the service.
+In other words, making the request multiple times has the same effect as not making it at all.
+
+The response body type corresponds with the entity type specified by the address (identity of the resource).
+
+#### IRestPut
+A Put is the operation to use to update a resource with a new version using the resource's representation.
+It is a method with a resource address an optionally parameters.
+The body type corresponds with the entity specified by the address (identity of the resource).
+The operation is idempotent, which means making the request multiple times has the same effect as making it once.
+
+The response body type corresponds with the entity type specified by the address (identity of the resource).
+The response itself should be a representation of the resource as it is after the operation succeeded.
+
+#### IRestPost
+A Post is the operation to use when adding new resources, or making a request that represents a 'call' of some sorts to a resource.
+It is a method with a resource address an optionally parameters, it also has a body (the message to post).
+The operation may have side effects.
+Making the request multiple times may have undesired side-effects.
+
+The response type can be any type.
+
+#### IRestDelete
+A Delete is the operation to use to delete a resource.
+It is a method with a resource address and optionally parameters.
+The operation is idempotent, which means making the request multiple times has the same effect as making it once.
+This does not mean the response is the same on all requests (After deletion, the resource might 'not be found').
+
+The response type can be any type.
+
 ### Extensibility
 Obviously this library needs to be used in-process, as it does not define any network functions. 
 With the Biz.Morsink.Rest.AspNetCore library, the Rest functionality can be exposed over HTTP. 
@@ -101,3 +170,61 @@ Key extensibility points are:
 
 ## ASP.Net core
 
+### Architectural constraints
+
+#### Client-server
+HTTP is a Client-server protocol.
+
+#### Cacheable
+Caching metadata is supported through HTTP headers.
+
+#### Layered
+As the implementation protocol is HTTP there is enough proof of layered architecture present on present-day internet.
+
+#### Code on demand
+Multiple options exists, but all of them should be implementable by extensions on this library.
+The most obvious option is to allow javascript to be passed along to the client when a request is made for text/html. 
+This is of course also the most platform independent way of doing so.
+
+Extensions could however implement any type of code on demand distribution.
+
+#### Uniform interface
+##### Resource identification
+HTTP uses paths to address resources. 
+Translation between paths and identity values is made through a `IRestIdentityProvider`.
+
+##### Resource manipulation through representations
+Representation can be done in any serialization format, because HTTP is agnostic to the type of message that is sent.
+Representation is handled by implementations of the `IRestHttpConverter` interface.
+JSON and XML are popular serialization formats, and both have an implementation of that interface present in the solution. 
+More specific usage of a serialization format could be implemented to support extra RESTful features.
+
+##### Self-descriptive messages
+Descriptiveness is dependent upon serialization format.
+Both JSON and XML have a definition of schema, which can be used to make the messages self-descriptive. 
+Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message can be given.
+A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IRestHttpConverter`.
+
+##### Hypermedia as the engine of application state
+* The `Home` resource should map to the root path of the api: `/`.
+* `Link`s should be paths, combined with method and optionally parameter and body schema information.
+
+Links can be passed along with the resources using the standard `Link` HTTP header.
+
+### Dependency injection
+The Rest library is setup with dependency injection in mind, but it does not explicitly use any specific technology.
+ASP.Net Core has some machinery setup to deal with dependency injection, including using the IoC container of your choice. 
+The Rest for ASP.Net core library only uses the generic interface of dependency injection and should be compatible with any IoC container a service implementor could choose.
+Because the `Lazy<>` functor is not supported by the ASP.Net Core IoC container out of the box, a `IServiceProvider` reference may be used to break circular dependency chains.
+
+### Request Pipeline
+The library needs to hook into the ASP.Net request pipeline to handle HTTP requests.
+This may be accomplished by using the `UseRest` And `AddRest` extension methods.
+
+The HTTP request is inspected with the purpose of resolving to a `IRestHttpConverter` implementation, which is accompanied with the `HttpContext` and a starter `RestRequest` for further manipulation in a `IHttpRestRequestHandler`. 
+This is another pipeline component in which everything about the HttpRequest that is needed in a Rest context is transformed into the RestRequest. 
+The end of this pipeline is the start of the `IRestRequestHandler`.
+After the `IRestRequestHandler` is done processing the message, the response is fed through the pipeline again, and in the end the response is written to the `HttpResponse` using the `IRestHttpConverter`.
+
+### Extensibility
+Extensibility is accomplished mainly through implementation of serialization formats (implementation of `IRestHttpConverter`).

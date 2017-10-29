@@ -20,7 +20,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRestForAspNetCore(bld => bld
+            services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
                 .AddAttributeBasedIdentityProvider()
@@ -40,7 +40,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseRestForAspNetCore();
+            app.UseRest();
             app.Run(async context =>
             {
                 context.Response.StatusCode = 400;

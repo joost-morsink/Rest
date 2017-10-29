@@ -98,7 +98,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="app">The application builder/</param>
         /// <returns>An application builder.</returns>
-        public static IApplicationBuilder UseRestForAspNetCore(this IApplicationBuilder app)
+        public static IApplicationBuilder UseRest(this IApplicationBuilder app)
         {
             {   // Prime the schema cache:
                 var repositories = app.ApplicationServices.GetServices<IRestRepository>();
@@ -121,7 +121,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="serviceCollection">The service collection to add RestForAspNetCore to.</param>
         /// <param name="builder">A Rest Services Builder.</param>
         /// <returns>The service collection.</returns>
-        public static IServiceCollection AddRestForAspNetCore(this IServiceCollection serviceCollection, Action<IRestServicesBuilder> builder = null)
+        public static IServiceCollection AddRest(this IServiceCollection serviceCollection, Action<IRestServicesBuilder> builder = null)
         {
             serviceCollection.AddSingleton<CoreRestRequestHandler>();
             serviceCollection.AddSingleton<TypeDescriptorCreator>();
