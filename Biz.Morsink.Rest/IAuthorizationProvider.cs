@@ -18,6 +18,6 @@ namespace Biz.Morsink.Rest
         /// <param name="id">A resource identity value.</param>
         /// <param name="capability">The capability to be performed on the resource.</param>
         /// <returns>True if the principal is allowed to perform the capability on the resource.</returns>
-        bool IsAllowed(ClaimsPrincipal principal, IIdentity id, Type capability);
+        bool IsAllowed(ClaimsPrincipal principal, IIdentity id, string capability);
     }
 }

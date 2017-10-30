@@ -3,6 +3,7 @@ using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -85,6 +86,8 @@ namespace Biz.Morsink.Rest
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly ILinkProvider<T>[] linkProviders;
         private readonly IDynamicLinkProvider<T>[] dynamicLinkProviders;
+        private readonly IAuthorizationProvider authorizationProvider;
+        private readonly IUser user;
 
         public RestRequestHandler(IServiceProvider serviceLocator, IDataConverter converter = null)
         {
@@ -92,6 +95,8 @@ namespace Biz.Morsink.Rest
 
             linkProviders = GetService<IEnumerable<ILinkProvider<T>>>().ToArray();
             dynamicLinkProviders = GetService<IEnumerable<IDynamicLinkProvider<T>>>().ToArray();
+            authorizationProvider = GetService<IAuthorizationProvider>();
+            user = GetService<IUser>();
             this.converter = converter ?? CoreRestRequestHandler.DefaultDataConverter;
             typeDescriptorCreator = GetService<TypeDescriptorCreator>();
         }
@@ -123,7 +128,8 @@ namespace Biz.Morsink.Rest
                             return res.Select(r => r.Select(v =>
                                     v.Manipulate(rv => rv.Links
                                         .Concat(linkProviders.SelectMany(lp => lp.GetLinks((IIdentity<T>)request.Address)))
-                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value))))));
+                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value)))
+                                        .Where(l => l.IsAllowedBy(authorizationProvider, user)))));
                         }
                         else
                             return res;

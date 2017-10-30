@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,6 +19,14 @@ namespace Biz.Morsink.Rest.AspNetCore
     public class RestForAspNetCore
     {
         /// <summary>
+        /// Value for the not authenticated HTTP status.
+        /// </summary>
+        public const int STATUS_NOTAUTHENTICATED = 401;
+        /// <summary>
+        /// Value for the forbidden HTTP status.
+        /// </summary>
+        public const int STATUS_FORBIDDEN = 403;
+        /// <summary>
         /// Value for the not found HTTP status.
         /// </summary>
         public const int STATUS_NOTFOUND = 404;
@@ -30,6 +39,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly IHttpRestConverter[] converters;
         private readonly IRestIdentityProvider identityProvider;
         private readonly RestRequestDelegate restRequestDelegate;
+        private readonly IAuthorizationProvider authorizationProvider;
 
         /// <summary>
         /// Constructor.
@@ -39,12 +49,13 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="httpHandler">A Rest HTTP pipeline.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="converters">A collection of applicable Rest converters for HTTP.</param>
-        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters)
+        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider)
         {
             this.handler = restHandler;
             this.converters = converters.ToArray();
             this.identityProvider = identityProvider;
             this.restRequestDelegate = httpHandler.GetRequestDelegate(restHandler);
+            this.authorizationProvider = authorizationProvider;
         }
         /// <summary>
         /// This method implements the RequestDelegate for the Rest middleware component.
@@ -63,8 +74,16 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
                 else
                 {
-                    var resp = await restRequestDelegate(context, req, conv);
-                    await WriteResponse(conv, context, resp);
+                    if(authorizationProvider.IsAllowed(context.User, req.Address, req.Capability))
+                    {
+                        var resp = await restRequestDelegate(context, req, conv);
+                        await WriteResponse(conv, context, resp);
+                    }
+                    else
+                    {
+                        // TODO: The following status assignment is very simplistic and should be refactored at a later stage.
+                        context.Response.StatusCode = context.User.Identity.IsAuthenticated ? STATUS_FORBIDDEN : STATUS_NOTAUTHENTICATED;
+                    }
                 }
             }
             catch
@@ -117,6 +136,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         }
         /// <summary>
         /// Adds services for RestForAspNetCore to the specified service collection.
+        /// RestForAspNetCore depends on the IHttpContextAccessor implementation for its security implementation,
+        /// and registers the HttpContextAccessor class as implementation.
         /// </summary>
         /// <param name="serviceCollection">The service collection to add RestForAspNetCore to.</param>
         /// <param name="builder">A Rest Services Builder.</param>
@@ -126,11 +147,15 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<CoreRestRequestHandler>();
             serviceCollection.AddSingleton<TypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
+            serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            serviceCollection.AddTransient<IUser, AspNetCoreUser>();
 
             var restbuilder = new RestServicesBuilder(serviceCollection);
             builder?.Invoke(restbuilder);
             restbuilder.EndConfiguration();
 
+            if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IAuthorizationProvider)))
+                serviceCollection.AddScoped<IAuthorizationProvider, AlwaysAllowAuthorizationProvider>();
             if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IRestIdentityProvider)))
                 throw new InvalidOperationException("Rest component depends on an IRestIdentityProvider implementation.");
             return serviceCollection;
