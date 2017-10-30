@@ -105,7 +105,7 @@ namespace Biz.Morsink.Rest
         /// <param name="item">An instance of metadata to include in the response.</param>
         /// <returns>A new RestResponse with added metadata.</returns>
         public RestResponse<T> WithMetadata<X>(X item)
-            => new RestResponse<T>(Result, Metadata.Add(item));
+            => new RestResponse<T>(Result, Metadata.Set(item));
         /// <summary>
         /// Wraps the response in a ValueTask,.
         /// </summary>

@@ -103,14 +103,20 @@ namespace Biz.Morsink.Rest.AspNetCore
                 {
                     if (!cache.StoreAllowed)
                         context.Response.Headers["Cache-Control"] = "no-store";
-                    else if (!cache.CacheAllowed)
-                        context.Response.Headers["Cache-Control"] = "no-cache";
                     else
                     {
+                        var lst = new List<string>();
+                        if (!cache.CacheAllowed)
+                            lst.Add("no-cache");
                         if (cache.Token != null)
                             context.Response.Headers["ETag"] = cache.Token;
                         if (cache.Validity > TimeSpan.Zero)
-                            context.Response.Headers["Cache-Control"] = $"{(cache.CachePrivate ? "private," : "")}max-age={(int)cache.Validity.TotalSeconds}";
+                        {
+                            if (cache.CachePrivate)
+                                lst.Add("private");
+                            lst.Add($"max-age={(int)cache.Validity.TotalSeconds}");
+                        }
+                        context.Response.Headers["Cache-Control"] = string.Join(", ", lst);
                     }
                 }
                 return response;

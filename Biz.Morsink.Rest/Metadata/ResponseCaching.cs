@@ -31,5 +31,14 @@ namespace Biz.Morsink.Rest.Metadata
         /// This token may be used to revalidate a resource server-side or to conditionally execute requests.
         /// </summary>
         public string Token { get; set; }
+        public ResponseCaching Copy()
+            => new ResponseCaching
+            {
+                CacheAllowed = CacheAllowed,
+                CachePrivate = CachePrivate,
+                StoreAllowed = StoreAllowed,
+                Validity = Validity,
+                Token = Token
+            };
     }
 }

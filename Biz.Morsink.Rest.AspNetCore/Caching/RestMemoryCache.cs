@@ -22,9 +22,9 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
                 OriginalResponse = response;
                 Expiry = expiry;
             }
-            public RestRequest OriginalRequest { get; }
-            public RestResponse OriginalResponse { get; }
-            public DateTime Expiry { get; }
+            public RestRequest OriginalRequest { get; set; }
+            public RestResponse OriginalResponse { get; set;  }
+            public DateTime Expiry { get; set; }
             public bool Matches(RestRequest req)
                 => OriginalRequest.Capability == req.Capability
                 && OriginalRequest.Parameters == req.Parameters;
@@ -61,7 +61,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
                 else // Check cache validity?
                 {
                     if (HasResponseCaching(entry.OriginalResponse, out var caching))
-                        caching.Validity = entry.Expiry - DateTime.UtcNow;
+                    {
+                        var cachingCopy = caching.Copy();
+                        cachingCopy.Validity = entry.Expiry - DateTime.UtcNow;
+                        entry.OriginalResponse =  entry.OriginalResponse.AddMetadata(cachingCopy);
+                    }
                     return new ValueTask<CacheResult>(new CacheResult(entry.OriginalResponse));
                 }
             }
@@ -115,6 +119,6 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         /// <returns></returns>
         protected virtual bool IsCacheable(RestRequest request, RestResponse response, ResponseCaching caching)
             => request.Capability == "GET"
-                && caching.CacheAllowed && caching.StoreAllowed && !caching.CachePrivate;
+                && caching.StoreAllowed && !caching.CachePrivate;
     }
 }

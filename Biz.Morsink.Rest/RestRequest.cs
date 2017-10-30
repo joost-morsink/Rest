@@ -79,6 +79,6 @@ namespace Biz.Morsink.Rest
         /// <param name="data">An instance of metadata to include in the request.</param>
         /// <returns>A new RestRequest with added metadata.</returns>
         public RestRequest AddMetadata<X>(X data)
-            => new RestRequest(Capability, Address, Parameters, BodyParser, Metadata.Add(data));
+            => new RestRequest(Capability, Address, Parameters, BodyParser, Metadata.Set(data));
     }
 }
