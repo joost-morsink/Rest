@@ -74,7 +74,7 @@ Internally the type of a message is converted to a `TypeDescriptor` instance tha
 Obviously there may be inconsistencies between the C#/.Net type system and a formal mathematical one, but these will be mitigated on a case-by-case basis.
 
 ##### Hypermedia as the engine of application state
-HATEOAS as it is often abbreviated is the constraint that the entire application can be navigated by hypermedia.
+HATEOAS as it is often abbreviated, is the constraint that the entire application can be navigated by hypermedia links.
 This means there must be a path to every resource in the service. 
 This constraint is satisfied by two concepts:
 * The `Home` resource. 
@@ -99,9 +99,12 @@ interface IRestRequestHandler
 
 A `RestRequest` contains all data needed to process the request. 
 The return value indicates possible asynchrony through the `ValueTask<>` [functor](https://en.wikipedia.org/wiki/Functor).
-The `RestResponse` type is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success and failure.
+The response side is a three layered value, each with its own aspects and containment of the layer below:
+* `RestResponse` is the top layer, containing metadata for the response
+* `RestResult` is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success and failure.
+* `RestValue` represents the actual underlying value in a response, optionally containing links and embedded objects.
 
-The main implementation of this interface is the `CoreRestRequestHandler`.
+The main implementation of the `IRestRequestHandler` interface is the `CoreRestRequestHandler`.
 This component tries to resolve the RestRequest to an instance of an `IRestRepository` through a `IServiceProvider` instance.
 
 The `IRestRepository` supports capability discovery through the `GetCapabilities` method.
@@ -169,6 +172,15 @@ Key extensibility points are:
 * `IAuthorizationProvider`, by implementation in a security library.
 
 ## ASP.Net core
+The Biz.Morsink.Rest.AspNetCore is a library that provides a binding between ASP.Net Core 2.0 and the Rest library.
+It adds the following important concepts that are specific to ASP.Net Core:
+* `IRestIdentityProvider`.
+  Extends `IIdentityProvider` with specific methods for parsing paths and converting identity values to paths. 
+* `IHttpRestRequestHandler`.
+  Defines the pipeline interface for the translation of an `HttpRequest` to a `RestRequest`, as well as the translation of the `RestResponse` to the `HttpResponse`.
+* `IRestHttpConverter`.
+  Defines the way serialization formats need to be implemented.
+  At the time of writing a JsonHttpConverter library takes care of a general JSON serialization format.
 
 ### Architectural constraints
 

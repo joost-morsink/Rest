@@ -19,7 +19,6 @@ Below is an image of a layered view of this process:
 
 ![RequestFlow.svg](./images/RequestFlow.svg)
 
-
 # **REVIEW CONTENT BELOW**
 
 ## Identity
