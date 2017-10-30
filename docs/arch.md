@@ -46,7 +46,7 @@ A consumer of the library could 'cheat' by implementing their own state system, 
 
 #### Cacheable
 Caching metadata can be added to every response, allowing for a caching middleware component to handle caching.
-**At the time of writing, this component still needs to be developed**
+**At the time of writing, this component is in development.**
 Metadata is propagated to the layer above, so it can be implemented per the protocol required.
 
 #### Layered

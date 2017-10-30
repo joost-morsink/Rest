@@ -94,12 +94,12 @@ namespace Biz.Morsink.Rest.AspNetCore
                 RestResponse response;
                 if (context.Request.Headers.ContainsKey("If-None-Match"))
                 {
-                    var reqCache = new RequestCache { Token = context.Request.Headers["If-None-Match"][0] };
+                    var reqCache = new RequestCaching { Token = context.Request.Headers["If-None-Match"][0] };
                     response = await next(context, req.AddMetadata(reqCache), conv);
                 }
                 else
                     response = await next(context, req, conv);
-                if (response.Metadata.TryGet<ResponseCache>(out var cache))
+                if (response.Metadata.TryGet<ResponseCaching>(out var cache))
                 {
                     if (!cache.StoreAllowed)
                         context.Response.Headers["Cache-Control"] = "no-store";

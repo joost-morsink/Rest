@@ -7,7 +7,7 @@ namespace Biz.Morsink.Rest.Metadata
     /// <summary>
     /// Metadata class concerning request caching.
     /// </summary>
-    public class RequestCache
+    public class RequestCaching
     {
         /// <summary>
         /// Contains a token that identifies the version of the cached resource at the client

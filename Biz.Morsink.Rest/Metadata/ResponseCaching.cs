@@ -7,7 +7,7 @@ namespace Biz.Morsink.Rest.Metadata
     /// <summary>
     /// Metadata class concerning caching information in a response.
     /// </summary>
-    public class ResponseCache
+    public class ResponseCaching
     {
         /// <summary>
         /// True if the client is allowed to store a cached result.
