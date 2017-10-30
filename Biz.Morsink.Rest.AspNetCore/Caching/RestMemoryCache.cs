@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         #region Helper classes
         private class CacheEntry
         {
-            public CacheEntry(RestRequest request, RestResponse response,DateTime expiry)
+            public CacheEntry(RestRequest request, RestResponse response, DateTime expiry)
             {
                 OriginalRequest = request;
                 OriginalResponse = response;
@@ -54,7 +54,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
             {
                 var now = DateTime.UtcNow;
                 entries.RemoveAll(e => e.Expiry < now);
-                
+
                 var entry = entries.FirstOrDefault(e => e.Matches(request));
                 if (entry == null)
                     return new ValueTask<CacheResult>(new CacheResult());

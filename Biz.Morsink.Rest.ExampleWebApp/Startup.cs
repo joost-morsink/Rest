@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.HttpConverter.Json;
 using Newtonsoft.Json;
-using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.AspNetCore.Caching;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
 
@@ -24,12 +24,14 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure the basics
                 .AddDefaultServices()
                 .AddAttributeBasedIdentityProvider()
+                .AddCache<RestMemoryCache>()
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
                 // Configure Repositories
                 .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
-                .AddRepository<HomeRepository>())
-                ;
+                .AddRepository<HomeRepository>()
+                );
+            services.AddMemoryCache();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)

@@ -138,7 +138,8 @@ namespace Biz.Morsink.Rest
         /// <param name="right">The right-hand side of the equality comparison.</param>
         /// <returns>True if the two RestParameterCollections are equal.</returns>
         public static bool operator ==(RestParameterCollection left, RestParameterCollection right)
-            => left.Equals(right);
+            => ReferenceEquals(left, right)
+            || !ReferenceEquals(left, null) && left.Equals(right);
         /// <summary>
         /// Operator for inequality on RestParameterCollections.
         /// </summary>
@@ -146,6 +147,6 @@ namespace Biz.Morsink.Rest
         /// <param name="right">The right-hand side of the inequality comparison.</param>
         /// <returns>True if the two RestParameterCollections are not equal.</returns>
         public static bool operator !=(RestParameterCollection left, RestParameterCollection right)
-            => !left.Equals(right);
+            => !(left == right);
     }
 }

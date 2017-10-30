@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Biz.Morsink.Identity;
 using System.Threading.Tasks;
+using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest
 {
@@ -13,6 +14,13 @@ namespace Biz.Morsink.Rest
     /// </summary>
     public class SchemaRepository : RestRepository<TypeDescriptor>, IRestGet<TypeDescriptor, NoParameters>
     {
+        private static readonly ResponseCaching CACHING = new ResponseCaching
+        {
+            CacheAllowed = true,
+            StoreAllowed = true,
+            CachePrivate = false,
+            Validity = TimeSpan.FromDays(1.0)
+        };
         private readonly TypeDescriptorCreator typeDescriptorCreator;
 
         public SchemaRepository(TypeDescriptorCreator typeDescriptorCreator) {
@@ -29,16 +37,18 @@ namespace Biz.Morsink.Rest
             if (id.Value is Type type)
             {
                 var desc = typeDescriptorCreator.GetDescriptor(type);
-                return desc == null
-                    ? RestResult.NotFound<TypeDescriptor>().ToResponseAsync()
-                    : Rest.Value(desc).ToResponseAsync();
+                return (desc == null
+                    ? RestResult.NotFound<TypeDescriptor>().ToResponse()
+                    : Rest.Value(desc).ToResponse())
+                    .WithMetadata(CACHING).ToAsync();
             }
             else
             {
                 var desc = typeDescriptorCreator.GetDescriptorByName(id.Value?.ToString());
-                return desc == null
-                    ? RestResult.NotFound<TypeDescriptor>().ToResponseAsync()
-                    : Rest.Value(desc).ToResponseAsync();
+                return (desc == null
+                    ? RestResult.NotFound<TypeDescriptor>().ToResponse()
+                    : Rest.Value(desc).ToResponse())
+                    .WithMetadata(CACHING).ToAsync();
             }
         }
     }
