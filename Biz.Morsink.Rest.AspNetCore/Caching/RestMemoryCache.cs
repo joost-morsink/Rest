@@ -59,7 +59,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
                 if (entry == null)
                     return new ValueTask<CacheResult>(new CacheResult());
                 else // Check cache validity?
+                {
+                    if (HasResponseCaching(entry.OriginalResponse, out var caching))
+                        caching.Validity = entry.Expiry - DateTime.UtcNow;
                     return new ValueTask<CacheResult>(new CacheResult(entry.OriginalResponse));
+                }
             }
         }
         /// <summary>
@@ -78,7 +82,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
                 && IsCacheable(request, response, caching))
             {
                 lst.RemoveAll(ce => ce.Matches(request));
-                lst.Add(new CacheEntry(request, response, DateTime.Now + caching.Validity));
+                lst.Add(new CacheEntry(request, response, DateTime.UtcNow + caching.Validity));
                 return new ValueTask<int>(1);
             }
             else
