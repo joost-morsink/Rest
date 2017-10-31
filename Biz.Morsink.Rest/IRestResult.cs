@@ -27,6 +27,8 @@ namespace Biz.Morsink.Rest
         /// True if the Rest result is a success value.
         /// </summary>
         bool IsSuccess { get; }
+        bool IsFailure { get; }
+        bool IsRedirect { get; }
         /// <summary>
         /// Tries to cast this Rest result into a Rest success.
         /// </summary>
@@ -37,5 +39,6 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <returns>An IRestFailure instance if the Rest result is a failure, null otherwise.</returns>
         IRestFailure AsFailure();
+        IRestRedirect AsRedirect();
     }
 }

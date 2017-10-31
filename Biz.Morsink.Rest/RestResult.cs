@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.Utils;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -72,8 +73,14 @@ namespace Biz.Morsink.Rest
         /// <returns>The current instance as a Failure if it is, null otherwise.</returns>
         public Failure AsFailure() => this as Failure;
         IRestFailure IRestResult.AsFailure() => this as IRestFailure;
-        bool IRestResult.IsSuccess => this is Success;
 
+
+        public Redirect AsRedirect() => this as Redirect;
+        IRestRedirect IRestResult.AsRedirect() => this as IRestRedirect;
+
+        bool IRestResult.IsSuccess => this is Success;
+        bool IRestResult.IsFailure => this is Failure;
+        bool IRestResult.IsRedirect => this is Redirect;
         /// <summary>
         /// Wraps this result into a RestResponse, optionally adding metadata.
         /// </summary>
@@ -170,7 +177,7 @@ namespace Biz.Morsink.Rest
                 public object Data => RestValue.Value;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
-                
+
                 /// <summary>
                 /// Changes the underlying successful value type for the Failure.
                 /// </summary>
@@ -255,6 +262,58 @@ namespace Biz.Morsink.Rest
             /// </summary>
             public abstract RestFailureReason Reason { get; }
         }
+        public abstract class Redirect : RestResult<T>, IRestRedirect
+        {
+            protected Redirect(IIdentity target)
+            {
+                Target = target;
+            }
+            public abstract RestRedirectType Type { get; }
+            public IIdentity Target { get; }
+
+            public abstract RestResult<U> Select<U>() where U : class;
+
+
+
+            public class Permanent : Redirect, IHasRestValue<object>
+            {
+                public Permanent(IIdentity target, RestValue<object> value) : base(target)
+                {
+                    RestValue = value;
+                }
+                public override RestRedirectType Type => RestRedirectType.Permanent;
+
+                public RestValue<object> RestValue { get; }
+
+                IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.Permanent(Target, RestValue);
+            }
+            public class Temporary : Redirect, IHasRestValue<object>
+            {
+                public Temporary(IIdentity target, RestValue<object> value) : base(target)
+                {
+                    RestValue = value;
+                }
+                public override RestRedirectType Type => RestRedirectType.Temporary;
+
+                public RestValue<object> RestValue { get; }
+
+                IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.Temporary(Target, RestValue);
+            }
+            public class NotNecessary : Redirect
+            {
+                public NotNecessary(IIdentity target = null) : base(target) { }
+                public override RestRedirectType Type => RestRedirectType.NotNecessary;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.NotNecessary(Target);
+            }
+        }
         /// <summary>
         /// Implementation of the Linq Select method.
         /// </summary>
@@ -270,6 +329,8 @@ namespace Biz.Morsink.Rest
                     return new RestResult<U>.Success(f(success.RestValue));
                 case Failure failure:
                     return failure.Select<U>();
+                case Redirect redirect:
+                    return redirect.Select<U>();
                 default:
                     throw new NotSupportedException();
             }
