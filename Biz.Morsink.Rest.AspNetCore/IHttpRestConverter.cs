@@ -37,6 +37,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="response">The RestResponse that must be serialized over HTTP.</param>
         /// <param name="context">The HttpContext for the request.</param>
         /// <returns>A Task describing the asynchronous progress of the serialization.</returns>
-        Task SerializeResponse(RestResponse response, HttpContext context);
+        Task WriteResponse(RestResponse response, HttpContext context);
     }
 }

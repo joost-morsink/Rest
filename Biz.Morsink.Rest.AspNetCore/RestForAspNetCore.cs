@@ -104,7 +104,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         }
         private Task WriteResponse(IHttpRestConverter converter, HttpContext context, RestResponse response)
         {
-            return converter.SerializeResponse(response, context);
+            return converter.WriteResponse(response, context);
         }
     }
     /// <summary>

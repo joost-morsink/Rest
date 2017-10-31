@@ -80,7 +80,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="response">The response to serialize.</param>
         /// <param name="context">The HttpContext for the request.</param>
         /// <returns>A Task describing the asynchronous progress of the serialization.</returns>
-        public async Task SerializeResponse(RestResponse response, HttpContext context)
+        public async Task WriteResponse(RestResponse response, HttpContext context)
         {
             context.Response.Headers["Content-Type"] = "application/json";
             if (!response.IsSuccess)

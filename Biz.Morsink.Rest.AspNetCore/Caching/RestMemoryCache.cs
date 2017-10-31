@@ -31,14 +31,14 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         }
         #endregion
 
-        private readonly IMemoryCache memoryCache;
+        private readonly IMemoryCache cache;
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="memoryCache">The underlying memory cache.</param>
-        public RestMemoryCache(IMemoryCache memoryCache)
+        /// <param name="cache">The underlying memory cache.</param>
+        public RestMemoryCache(IMemoryCache cache)
         {
-            this.memoryCache = memoryCache;
+            this.cache = cache;
         }
         /// <summary>
         /// Tries to gets a response from the cache.
@@ -47,7 +47,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         /// <returns>An asynchronous CacheResult.</returns>
         public ValueTask<CacheResult> GetCachedResult(RestRequest request)
         {
-            var entries = memoryCache.Get<List<CacheEntry>>(request.Address);
+            var entries = cache.Get<List<CacheEntry>>(request.Address);
             if (entries == null)
                 return new ValueTask<CacheResult>(new CacheResult());
             else
@@ -78,7 +78,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         /// <returns>An asynchronous value indicating the number of entries affected.</returns>
         public ValueTask<int> SetCachedResult(RestRequest request, RestResponse response)
         {
-            var lst = memoryCache.GetOrCreate(request.Address, ce =>
+            var lst = cache.GetOrCreate(request.Address, ce =>
             {
                 return new List<CacheEntry>();
             });
@@ -99,7 +99,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         /// <returns>An asynchronous value indicating the number of entries affected.</returns>
         public ValueTask<int> ClearCachedResult(RestRequest request)
         {
-            memoryCache.Remove(request.Address);
+            cache.Remove(request.Address);
             return new ValueTask<int>(1);
         }
         /// <summary>
