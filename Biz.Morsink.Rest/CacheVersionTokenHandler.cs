@@ -44,7 +44,7 @@ namespace Biz.Morsink.Rest
                     {
                         var token = tokenProvider.GetTokenFor(restValue.Value);
                         if (request.Metadata.TryGet<VersionToken>(out var requestToken) && requestToken.Token == token)
-                            return null; // TODO:redirect
+                            return resp.Select(r => r.MakeNotNecessary()); // TODO:redirect
                         else
                             return resp.AddMetadata(new VersionToken { Token = token });
                     }
