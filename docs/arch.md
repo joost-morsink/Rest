@@ -7,7 +7,7 @@ The first is a library that supports creating RESTful interfaces, in a protocol-
 The second library supports using this library with ASP.Net core 2.0.
 We will discuss the architectures of both projects separately, as well as any extensibilty options.
 
-## Rest
+## Rest {#Rest}
 
 ### Architectural constraints
 Rest is an architectural style for services that have the following properties (ref: [Architectural constraints](https://en.wikipedia.org/wiki/Representational_state_transfer#Architectural_constraints))
@@ -174,7 +174,7 @@ Key extensibility points are:
 * `ILinkProvider` and `IDynamicLinkProvider`, by implementation in services libraries.
 * `IAuthorizationProvider`, by implementation in a security library.
 
-## ASP.Net core
+## ASP.Net core {#ASP}
 The Biz.Morsink.Rest.AspNetCore is a library that provides a binding between ASP.Net Core 2.0 and the Rest library.
 It adds the following important concepts that are specific to ASP.Net Core:
 * `IRestIdentityProvider`.
@@ -218,7 +218,7 @@ More specific usage of a serialization format could be implemented to support ex
 Descriptiveness is dependent upon serialization format.
 Both JSON and XML have a definition of schema, which can be used to make the messages self-descriptive. 
 Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message can be given.
-A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IRestHttpConverter`.
+A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IRestHttpConverter`. (See [HTTP Converters](./httpConv.md))
 
 ##### Hypermedia as the engine of application state
 * The `Home` resource should map to the root path of the api: `/`.
@@ -250,3 +250,4 @@ After the `IRestRequestHandler` is done processing the message, the response is 
 
 ### Extensibility
 Extensibility is accomplished mainly through implementation of serialization formats (implementation of `IRestHttpConverter`).
+
