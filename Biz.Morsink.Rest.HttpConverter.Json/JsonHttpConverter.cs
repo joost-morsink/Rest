@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -85,6 +86,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             context.Response.Headers["Content-Type"] = "application/json";
             if (!response.IsSuccess)
                 setFailureStatusCode(response, context);
+
+            if (context.Request.Method == "POST" && response.Metadata.TryGet<Location>(out var loc))
+                context.Response.StatusCode = 201;
 
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;

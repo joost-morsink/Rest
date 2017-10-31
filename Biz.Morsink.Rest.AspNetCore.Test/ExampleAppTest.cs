@@ -327,6 +327,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                     Age = i
                 });
                 Assert.IsTrue(resp2.IsSuccessStatusCode);
+                Assert.AreEqual(HttpStatusCode.Created, resp2.StatusCode);
+
                 Assert.IsTrue(resp2.Headers.TryGetValues("Location", out var vals));
                 Assert.AreEqual(1, vals.Count());
                 resp2 = await Get(client, vals.First());
