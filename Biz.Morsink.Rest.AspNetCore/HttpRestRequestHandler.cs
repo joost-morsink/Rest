@@ -94,8 +94,9 @@ namespace Biz.Morsink.Rest.AspNetCore
                 RestResponse response;
                 if (context.Request.Headers.ContainsKey("If-None-Match"))
                 {
-                    var reqCache = new RequestCaching { Token = context.Request.Headers["If-None-Match"][0] };
-                    response = await next(context, req.AddMetadata(reqCache), conv);
+                    var token = context.Request.Headers["If-None-Match"][0];
+                    var versionToken = new VersionToken { Token = token.Substring(1, token.Length - 2) };
+                    response = await next(context, req.AddMetadata(versionToken), conv);
                 }
                 else
                     response = await next(context, req, conv);
@@ -108,8 +109,6 @@ namespace Biz.Morsink.Rest.AspNetCore
                         var lst = new List<string>();
                         if (!cache.CacheAllowed)
                             lst.Add("no-cache");
-                        if (cache.Token != null)
-                            context.Response.Headers["ETag"] = cache.Token;
                         if (cache.Validity > TimeSpan.Zero)
                         {
                             if (cache.CachePrivate)
@@ -119,6 +118,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                         context.Response.Headers["Cache-Control"] = string.Join(", ", lst);
                     }
                 }
+                response.Metadata.Execute<VersionToken>(vt => context.Response.Headers["ETag"] = string.Concat("\"", vt.Token, "\""));
                 return response;
             });
         /// <summary>

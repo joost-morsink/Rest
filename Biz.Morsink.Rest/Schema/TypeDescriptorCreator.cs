@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Schema
 {
@@ -154,7 +155,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
             {
-                var props = Iterate(ti, x => x.BaseType?.GetTypeInfo())
+                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
                     .TakeWhile(x => x != cutoff && x != null)
                     .SelectMany(x => x.DeclaredProperties)
                     .GroupBy(x => x.Name)
@@ -180,7 +181,7 @@ namespace Biz.Morsink.Rest.Schema
             var ti = type.GetTypeInfo();
             var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);
             return parameterlessConstructors.Any()
-                && !Iterate(ti, x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
+                && !ti.Iterate(x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
                 ? new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
                 : null;
         }
@@ -199,15 +200,6 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
                 return null;
-        }
-        private static IEnumerable<T> Iterate<T>(T seed, Func<T, T> next)
-        {
-            while (true)
-            {
-                yield return seed;
-                seed = next(seed);
-            }
-
         }
     }
 }

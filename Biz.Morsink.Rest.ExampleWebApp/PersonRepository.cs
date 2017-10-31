@@ -26,7 +26,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             Validity = TimeSpan.FromMinutes(10.0)
         };
         private readonly IRestResourceCollection<PersonCollection, Person> resources;
-
+        
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -56,7 +56,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             var p = resources.Get(id);
             if (p != null)
-                return Rest.Value(p).ToResponse().WithMetadata(CACHING).ToAsync();
+            {
+                return Rest.Value(p).ToResponse()
+                    .WithMetadata(CACHING)
+                    .ToAsync();
+            }
             else
                 return RestResult.NotFound<Person>().ToResponse().WithMetadata(CACHING).ToAsync();
         }

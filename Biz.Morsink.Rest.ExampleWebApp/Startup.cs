@@ -31,6 +31,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>()
                 );
+            services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }
 

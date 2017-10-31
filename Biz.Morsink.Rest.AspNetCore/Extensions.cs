@@ -106,7 +106,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddCaching(this IRestServicesBuilder builder)
-            => builder.UseHttpRequestHandler(bld => bld.UseCaching());
+            => builder
+                .UseHttpRequestHandler(bld => bld.UseCaching())
+                .UseRequestHandler((sp,bld) => bld.Use<CacheVersionTokenHandler>(sp));
         /// <summary>
         /// Adds the necessary components to support handling of Caching metadata/headers, as well as a cache implementation.
         /// </summary>
