@@ -37,10 +37,17 @@ namespace Biz.Morsink.Rest
                 var resp = await next(request);
                 if (resp.IsSuccess)
                 {
+                  
                     var restValue = resp.UntypedResult.AsSuccess().RestValue;
                     var tokenProvider = (ITokenProvider)serviceProvider.GetService(typeof(ITokenProvider<>).MakeGenericType(restValue.ValueType));
                     if (tokenProvider != null)
-                        return resp.AddMetadata(new VersionToken { Token = tokenProvider.GetTokenFor(restValue.Value) });
+                    {
+                        var token = tokenProvider.GetTokenFor(restValue.Value);
+                        if (request.Metadata.TryGet<VersionToken>(out var requestToken) && requestToken.Token == token)
+                            return resp.Select(r => r.MakeNotNecessary()); // TODO:redirect
+                        else
+                            return resp.AddMetadata(new VersionToken { Token = token });
+                    }
                     else
                         return resp;
                 }

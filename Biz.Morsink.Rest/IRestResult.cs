@@ -28,6 +28,14 @@ namespace Biz.Morsink.Rest
         /// </summary>
         bool IsSuccess { get; }
         /// <summary>
+        /// True if the Rest result is a failure.
+        /// </summary>
+        bool IsFailure { get; }
+        /// <summary>
+        /// True if the Rest result is a redirect.
+        /// </summary>
+        bool IsRedirect { get; }
+        /// <summary>
         /// Tries to cast this Rest result into a Rest success.
         /// </summary>
         /// <returns>An IRestSuccess instance if the Rest result is successful, null otherwise.</returns>
@@ -37,5 +45,16 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <returns>An IRestFailure instance if the Rest result is a failure, null otherwise.</returns>
         IRestFailure AsFailure();
+        /// <summary>
+        /// Tries to cast this Rest result into a Rest redirect.
+        /// </summary>
+        /// <returns>An IRestRedirect instance if the Rest result is a redirect, null otherwise.</returns>
+        IRestRedirect AsRedirect();
+        /// <summary>
+        /// Makes this result into a redirect result of type NotNecessary.
+        /// Used if Version tokens match.
+        /// </summary>
+        /// <returns>An IRestRedirect instance of type NotNecessary.</returns>
+        IRestRedirect MakeNotNecessary();
     }
 }

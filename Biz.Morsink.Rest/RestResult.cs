@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.Utils;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -72,8 +73,14 @@ namespace Biz.Morsink.Rest
         /// <returns>The current instance as a Failure if it is, null otherwise.</returns>
         public Failure AsFailure() => this as Failure;
         IRestFailure IRestResult.AsFailure() => this as IRestFailure;
-        bool IRestResult.IsSuccess => this is Success;
 
+
+        public Redirect AsRedirect() => this as Redirect;
+        IRestRedirect IRestResult.AsRedirect() => this as IRestRedirect;
+
+        bool IRestResult.IsSuccess => this is Success;
+        bool IRestResult.IsFailure => this is Failure;
+        bool IRestResult.IsRedirect => this is Redirect;
         /// <summary>
         /// Wraps this result into a RestResponse, optionally adding metadata.
         /// </summary>
@@ -170,7 +177,7 @@ namespace Biz.Morsink.Rest
                 public object Data => RestValue.Value;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
-                
+
                 /// <summary>
                 /// Changes the underlying successful value type for the Failure.
                 /// </summary>
@@ -256,6 +263,110 @@ namespace Biz.Morsink.Rest
             public abstract RestFailureReason Reason { get; }
         }
         /// <summary>
+        /// This abstract base class represents Rest redirects.
+        /// </summary>
+        public abstract class Redirect : RestResult<T>, IRestRedirect
+        {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="target">The target of the redirect. (optional for NotNecessary)</param>
+            protected Redirect(IIdentity target)
+            {
+                Target = target;
+            }
+            /// <summary>
+            /// Gets the type of redirect.
+            /// </summary>
+            public abstract RestRedirectType Type { get; }
+            /// <summary>
+            /// Gets the target of the redirect.
+            /// </summary>
+            public IIdentity Target { get; }
+            /// <summary>
+            /// This abstract method can be used to transform the underlying successful value type into another.
+            /// Changing the type is trivial, because redirect results do not contain any actual data of the successful value type.
+            /// Therefore an instance of Func&lt;T, U&gt; is not necessary.
+            /// </summary>
+            /// <typeparam name="U">The new underlying successful value type.</typeparam>
+            /// <returns>A new redirect with a different underlying successful value type.</returns
+            public abstract RestResult<U> Select<U>() where U : class;
+            /// <summary>
+            /// This class represents permanent redirects. 
+            /// The target of the redirect may be cached for future references by the client.
+            /// </summary>
+            public class Permanent : Redirect, IHasRestValue<object>
+            {
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="target">The target of the redirect.</param>
+                /// <param name="value">An optional underlying Rest value.</param>
+                public Permanent(IIdentity target, RestValue<object> value) : base(target)
+                {
+                    if (target == null)
+                        throw new ArgumentNullException(nameof(target));
+                    RestValue = value;
+                }
+                public override RestRedirectType Type => RestRedirectType.Permanent;
+
+                /// <summary>
+                /// Gets an optional underlying Rest value for the redirect.
+                /// </summary>
+                public RestValue<object> RestValue { get; }
+
+                IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.Permanent(Target, RestValue);
+            }
+            /// <summary>
+            /// This class represents temporary redirects.
+            /// The target of the redirect can only be used once in this context.
+            /// </summary>
+            public class Temporary : Redirect, IHasRestValue<object>
+            {
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="target">The target of the redirect.</param>
+                /// <param name="value">An optional underlying Rest value.</param>
+                public Temporary(IIdentity target, RestValue<object> value) : base(target)
+                {
+                    if (target == null)
+                        throw new ArgumentNullException(nameof(target));
+                    RestValue = value;
+                }
+                public override RestRedirectType Type => RestRedirectType.Temporary;
+
+                /// <summary>
+                /// Gets an optional underlying Rest value for the redirect.
+                /// </summary>
+                public RestValue<object> RestValue { get; }
+
+                IRestValue IHasRestValue.RestValue => RestValue;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.Temporary(Target, RestValue);
+            }
+            /// <summary>
+            /// This class represents that a response is not necessary and is mathematically a redirect to void.
+            /// The client is supposed to already have the information the response would give.
+            /// </summary>
+            public class NotNecessary : Redirect
+            {
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="target">The target of the redirect.</param>
+                public NotNecessary(IIdentity target = null) : base(target) { }
+                public override RestRedirectType Type => RestRedirectType.NotNecessary;
+
+                public override RestResult<U> Select<U>()
+                    => new RestResult<U>.Redirect.NotNecessary(Target);
+            }
+        }
+        /// <summary>
         /// Implementation of the Linq Select method.
         /// </summary>
         /// <typeparam name="U">The new underlying successful value type.</typeparam>
@@ -270,6 +381,8 @@ namespace Biz.Morsink.Rest
                     return new RestResult<U>.Success(f(success.RestValue));
                 case Failure failure:
                     return failure.Select<U>();
+                case Redirect redirect:
+                    return redirect.Select<U>();
                 default:
                     throw new NotSupportedException();
             }
@@ -277,5 +390,15 @@ namespace Biz.Morsink.Rest
         }
         IRestResult IRestResult.Select(Func<IRestValue, IRestValue> f)
             => Select(rv => (RestValue<T>)f(rv));
+
+        /// <summary>
+        /// Makes this result into a redirect result of type NotNecessary.
+        /// Used if Version tokens match.
+        /// </summary>
+        /// <returns>A Redirect.NotNecessary instance.</returns>
+        public Redirect.NotNecessary MakeNotNecessary()
+            => new Redirect.NotNecessary();
+        IRestRedirect IRestResult.MakeNotNecessary()
+            => MakeNotNecessary();
     }
 }
