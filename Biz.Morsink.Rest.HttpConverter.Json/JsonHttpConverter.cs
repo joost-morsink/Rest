@@ -85,7 +85,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             context.Response.Headers["Content-Type"] = "application/json";
             if (!response.IsSuccess)
-                setFailureStatusCode(response, context);
+                ManipulateHttpContext(response, context);
 
             if (context.Request.Method == "POST" && response.Metadata.TryGet<Location>(out var loc))
                 context.Response.StatusCode = 201;
@@ -111,20 +111,36 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             }
         }
 
-        private static void setFailureStatusCode(RestResponse response, HttpContext context)
+        private void ManipulateHttpContext(RestResponse response, HttpContext context)
         {
-            switch (response.UntypedResult.AsFailure().Reason)
-            {
-                case RestFailureReason.BadRequest:
-                    context.Response.StatusCode = 400;
-                    break;
-                case RestFailureReason.NotFound:
-                    context.Response.StatusCode = 404;
-                    break;
-                case RestFailureReason.Error:
-                    context.Response.StatusCode = 500;
-                    break;
-            }
+            if (response.UntypedResult is IRestFailure failure)
+                switch (failure.Reason)
+                {
+                    case RestFailureReason.BadRequest:
+                        context.Response.StatusCode = 400;
+                        break;
+                    case RestFailureReason.NotFound:
+                        context.Response.StatusCode = 404;
+                        break;
+                    case RestFailureReason.Error:
+                        context.Response.StatusCode = 500;
+                        break;
+                }
+            else if (response.UntypedResult is IRestRedirect redirect)
+                switch (redirect.Type)
+                {
+                    case RestRedirectType.NotNecessary:
+                        context.Response.StatusCode = 304;
+                        break;
+                    case RestRedirectType.Permanent:
+                        context.Response.Headers["Location"] = provider.ToPath(redirect.Target);
+                        context.Response.StatusCode = 308;
+                        break;
+                    case RestRedirectType.Temporary:
+                        context.Response.Headers["Location"] = provider.ToPath(redirect.Target);
+                        context.Response.StatusCode = 307;
+                        break;
+                }
         }
     }
 }

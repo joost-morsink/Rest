@@ -106,7 +106,25 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddCaching(this IRestServicesBuilder builder)
-            => builder.UseHttpRequestHandler(bld => bld.UseCaching());
+            => builder
+                .UseHttpRequestHandler(bld => bld.UseCaching())
+                .UseRequestHandler((sp,bld) => bld.Use<CacheVersionTokenHandler>(sp));
+        /// <summary>
+        /// Adds the necessary components to support handling of Caching metadata/headers, as well as a cache implementation.
+        /// </summary>
+        /// <typeparam name="C">The type of the cache.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder</param>
+        /// <param name="lifetime">The lifetime scope for the cache.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddCache<C>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Transient)
+            where C : IRestCache
+        {
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestCache), typeof(C), lifetime));
+           
+            return builder.AddCaching()
+                .UseRequestHandler((sp, bld) => bld.Use<CacheRequestHandler>(sp));
+        }
+                
         /// <summary>
         /// Adds the necessary components to support handling of the Location metadatum/header.
         /// </summary>

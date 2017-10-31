@@ -7,7 +7,7 @@ namespace Biz.Morsink.Rest.Metadata
     /// <summary>
     /// Metadata class concerning caching information in a response.
     /// </summary>
-    public class ResponseCache
+    public class ResponseCaching
     {
         /// <summary>
         /// True if the client is allowed to store a cached result.
@@ -27,9 +27,16 @@ namespace Biz.Morsink.Rest.Metadata
         /// </summary>
         public TimeSpan Validity { get; set; }
         /// <summary>
-        /// A token identifying the version of the resource. 
-        /// This token may be used to revalidate a resource server-side or to conditionally execute requests.
+        /// Make a copy of the current object
         /// </summary>
-        public string Token { get; set; }
+        /// <returns></returns>
+        public ResponseCaching Copy()
+            => new ResponseCaching
+            {
+                CacheAllowed = CacheAllowed,
+                CachePrivate = CachePrivate,
+                StoreAllowed = StoreAllowed,
+                Validity = Validity
+            };
     }
 }

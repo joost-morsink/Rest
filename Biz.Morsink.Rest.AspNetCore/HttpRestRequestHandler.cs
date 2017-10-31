@@ -94,25 +94,31 @@ namespace Biz.Morsink.Rest.AspNetCore
                 RestResponse response;
                 if (context.Request.Headers.ContainsKey("If-None-Match"))
                 {
-                    var reqCache = new RequestCache { Token = context.Request.Headers["If-None-Match"][0] };
-                    response = await next(context, req.AddMetadata(reqCache), conv);
+                    var token = context.Request.Headers["If-None-Match"][0];
+                    var versionToken = new VersionToken { Token = token.Substring(1, token.Length - 2) };
+                    response = await next(context, req.AddMetadata(versionToken), conv);
                 }
                 else
                     response = await next(context, req, conv);
-                if (response.Metadata.TryGet<ResponseCache>(out var cache))
+                if (response.Metadata.TryGet<ResponseCaching>(out var cache))
                 {
                     if (!cache.StoreAllowed)
                         context.Response.Headers["Cache-Control"] = "no-store";
-                    else if (!cache.CacheAllowed)
-                        context.Response.Headers["Cache-Control"] = "no-cache";
                     else
                     {
-                        if (cache.Token != null)
-                            context.Response.Headers["ETag"] = cache.Token;
+                        var lst = new List<string>();
+                        if (!cache.CacheAllowed)
+                            lst.Add("no-cache");
                         if (cache.Validity > TimeSpan.Zero)
-                            context.Response.Headers["Cache-Control"] = $"{(cache.CachePrivate ? "private," : "")}max-age={(int)cache.Validity.TotalSeconds}";
+                        {
+                            if (cache.CachePrivate)
+                                lst.Add("private");
+                            lst.Add($"max-age={(int)cache.Validity.TotalSeconds}");
+                        }
+                        context.Response.Headers["Cache-Control"] = string.Join(", ", lst);
                     }
                 }
+                response.Metadata.Execute<VersionToken>(vt => context.Response.Headers["ETag"] = string.Concat("\"", vt.Token, "\""));
                 return response;
             });
         /// <summary>

@@ -34,6 +34,15 @@ namespace Biz.Morsink.Rest.Utils
 
         private static string getCapabilityString(Type capability)
             => capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
+
+        internal static IEnumerable<T> Iterate<T>(this T seed, Func<T,T> next)
+        {
+            while (true)
+            {
+                yield return seed;
+                seed = next(seed);
+            }
+        }
             
     }
 }

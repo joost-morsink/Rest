@@ -21,13 +21,13 @@ namespace Biz.Morsink.Rest.Utils
             this.objects = objects;
         }
         /// <summary>
-        /// Adds an object for some type.
+        /// Sets an object for some type.
         /// </summary>
         /// <typeparam name="T">The type key of the value.</typeparam>
         /// <param name="obj">The value to store.</param>
         /// <returns>A new TypeKeyedDictionary with the modification as specified by this function call.</returns>
-        public TypeKeyedDictionary Add<T>(T obj)
-            => new TypeKeyedDictionary(objects.Add(typeof(T), obj));
+        public TypeKeyedDictionary Set<T>(T obj)
+            => new TypeKeyedDictionary(objects.SetItem(typeof(T), obj));
         /// <summary>
         /// Tries to get the value for a key T.
         /// </summary>

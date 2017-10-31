@@ -2,13 +2,14 @@
 using System.Collections.Immutable;
 using System.Linq;
 using Biz.Morsink.Rest.Utils;
+using System;
 
 namespace Biz.Morsink.Rest
 {
     /// <summary>
     /// A (untyped) collection class for Rest parameters.
     /// </summary>
-    public class RestParameterCollection
+    public class RestParameterCollection : IEquatable<RestParameterCollection>
     {
         private static KeyValuePair<string, string>[] EMPTY = new KeyValuePair<string, string>[0];
         /// <summary>
@@ -102,5 +103,50 @@ namespace Biz.Morsink.Rest
         /// <returns></returns>
         public IReadOnlyDictionary<string, string> AsDictionary()
             => firstDict = firstDict ?? parameters.GroupBy(p => p.Key).ToImmutableDictionary(p => p.Key, p => p.First().Value);
+
+        /// <summary>
+        /// Implements value equality for the RestParameterCollection.
+        /// </summary>
+        /// <param name="obj">The RestParameterCollection to compare to for equality.</param>
+        /// <returns>True if the parameter is equal to this.</returns>
+        public override bool Equals(object obj)
+            => Equals(obj as RestParameterCollection);
+        public override int GetHashCode()
+            => parameters
+                .OrderBy(p => p.Key)
+                .ThenBy(p => p.Value)
+                .Select(p => p.Key.GetHashCode() ^ p.Value.GetHashCode())
+                .Aggregate((x, y) => x ^ y);
+        /// <summary>
+        /// Implements value equality for the RestParameterCollection.
+        /// </summary>
+        /// <param name="other">The RestParameterCollection to compare to for equality.</param>
+        /// <returns>True if the parameter is equal to this.</returns>
+        public bool Equals(RestParameterCollection other)
+            => other != null
+            && parameters
+                .OrderBy(p => p.Key)
+                .ThenBy(p => p.Value)
+                .SequenceEqual(
+                    other.parameters
+                    .OrderBy(p => p.Key)
+                    .ThenBy(p => p.Value));
+        /// <summary>
+        /// Operator for equality on RestParameterCollections.
+        /// </summary>
+        /// <param name="left">The left-hand side of the equality comparison.</param>
+        /// <param name="right">The right-hand side of the equality comparison.</param>
+        /// <returns>True if the two RestParameterCollections are equal.</returns>
+        public static bool operator ==(RestParameterCollection left, RestParameterCollection right)
+            => ReferenceEquals(left, right)
+            || !ReferenceEquals(left, null) && left.Equals(right);
+        /// <summary>
+        /// Operator for inequality on RestParameterCollections.
+        /// </summary>
+        /// <param name="left">The left-hand side of the inequality comparison.</param>
+        /// <param name="right">The right-hand side of the inequality comparison.</param>
+        /// <returns>True if the two RestParameterCollections are not equal.</returns>
+        public static bool operator !=(RestParameterCollection left, RestParameterCollection right)
+            => !(left == right);
     }
 }

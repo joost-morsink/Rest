@@ -46,7 +46,7 @@ A consumer of the library could 'cheat' by implementing their own state system, 
 
 #### Cacheable
 Caching metadata can be added to every response, allowing for a caching middleware component to handle caching.
-**At the time of writing, this component still needs to be developed**
+**At the time of writing, this component is in development.**
 Metadata is propagated to the layer above, so it can be implemented per the protocol required.
 
 #### Layered
@@ -85,6 +85,9 @@ This constraint is satisfied by two concepts:
   `Link`s are references of a certain type (`Reltype`) to resources (`Address`), paired with a operation (`Capability`).
   This only determines part of the Rest request, but the other information might be dynamic. 
   However, type information should be known about the capability, which can be retrieved using CapabilityDescriptors for the operation.
+
+Every address also optionally supports the OPTIONS capability. 
+This type of request returns a value with TypeDescriptors for every aspect of every supported capability on the resource.
 
 ### Request Pipeline
 The Rest Request pipeline is defined by a single method signature, found in an interface as well as a delegate:
@@ -222,6 +225,13 @@ A translation between `TypeDescriptor`s and schema's is an essential element of 
 * `Link`s should be paths, combined with method and optionally parameter and body schema information.
 
 Links can be passed along with the resources using the standard `Link` HTTP header.
+
+The OPTIONS capability can be accessed using the OPTIONS method, which not only returns all the allowed verbs on the resource, but also contains a body with schema information about all the capabilities.
+
+The only _out of band_ information needed to discover the entire service is:
+* Knowledge of the HTTP protocol (generic).
+* Knowledge of some standard headers of the HTTP protocol.
+* Knowledge of a supported serialization format.
 
 ### Dependency injection
 The Rest library is setup with dependency injection in mind, but it does not explicitly use any specific technology.

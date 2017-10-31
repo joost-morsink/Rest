@@ -348,6 +348,40 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
             }
         }
+        [TestMethod]
+        public async Task Http_ETagTest()
+        {
+            var resp = await Post(client, "/person", new Person
+            {
+                FirstName = "Joost",
+                LastName = "Morsink",
+                Age = 38
+            });
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Location", out var location) && location.Any());
+            var loc = location.First();
+
+            resp = await Get(client, loc);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("ETag", out var etag) && etag.Any());
+            var json = await getJson(resp);
+
+            resp = await Get(client, loc, DefaultHeaders.Add("If-None-Match", etag.First()));
+            Assert.AreEqual(HttpStatusCode.NotModified, resp.StatusCode);
+
+            resp = await Put(client, loc, new Person
+            {
+                Id = new Identity { Href = loc },
+                FirstName = "Joost",
+                LastName = "Morsink",
+                Age = 138
+            });
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+
+            resp = await Get(client, loc, DefaultHeaders.Add("If-None-Match", etag.First()));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+
+        }
         private class Identity
         {
             public string Href { get; set; }

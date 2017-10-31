@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -17,8 +18,15 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         , IRestPut<Person, NoParameters>
         , IRestDelete<Person, NoParameters>
     {
+        private static readonly ResponseCaching CACHING = new ResponseCaching
+        {
+            CacheAllowed = false,
+            StoreAllowed = true,
+            CachePrivate = true,
+            Validity = TimeSpan.FromMinutes(10.0)
+        };
         private readonly IRestResourceCollection<PersonCollection, Person> resources;
-
+        
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -48,9 +56,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             var p = resources.Get(id);
             if (p != null)
-                return Rest.Value(p).ToResponseAsync();
+            {
+                return Rest.Value(p).ToResponse()
+                    .WithMetadata(CACHING)
+                    .ToAsync();
+            }
             else
-                return RestResult.NotFound<Person>().ToResponseAsync();
+                return RestResult.NotFound<Person>().ToResponse().WithMetadata(CACHING).ToAsync();
         }
         /// <summary>
         /// Put implementation for Person.

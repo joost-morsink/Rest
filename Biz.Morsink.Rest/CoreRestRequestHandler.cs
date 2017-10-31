@@ -121,7 +121,7 @@ namespace Biz.Morsink.Rest
                             .GetDeclaredMethod(nameof(Handle))
                             .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
                     var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { request, cap });
-                    if (res.IsSuccess)
+                    if (!res.UntypedResult.IsFailure)
                     {
                         if (cap.Descriptor.Name == "GET")
                         {
