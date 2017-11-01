@@ -5,12 +5,13 @@ The solution contains two main library projects:
 
 The first is a library that supports creating RESTful interfaces, in a protocol-agnostic way.
 The second library supports using this library with ASP.Net core 2.0.
-We will discuss the architectures of both projects separately, as well as any extensibilty options.
+We will discuss the architectures of both projects separately, as well as any extensibility options.
 
 ## Rest {#Rest}
 
 ### Architectural constraints
-Rest is an architectural style for services that have the following properties (ref: [Architectural constraints](https://en.wikipedia.org/wiki/Representational_state_transfer#Architectural_constraints))
+Rest is an architectural style for services that have the following properties (ref: [Architectural constraints](https://en.wikipedia.org/wiki/Representational_state_transfer#Architectural_constraints)):
+
 * Client-Server (Request-Response)
 * Stateless
 * Cacheable
@@ -22,7 +23,7 @@ Rest is an architectural style for services that have the following properties (
   * Self-descriptive messages 
   * Hypermedia as the engine of application state
 
-Before we can discuss these architectural styles we state the structure of a RestRequest in this library:
+Before we can discuss these properties or constraints we state the structure of a RestRequest in this library:
 
 ```csharp
 class RestRequest
@@ -46,7 +47,8 @@ A consumer of the library could 'cheat' by implementing their own state system, 
 
 #### Cacheable
 Caching metadata can be added to every response, allowing for a caching middleware component to handle caching.
-**At the time of writing, this component is in development.**
+`CacheRequestHandler` is a protocol agnostic cache middleware component, which means it caches Rest responses, but not the actual serialized data.
+Because of this, it is not as efficient as a cache on serialized values, but it is _applicable_ to multiple serialization formats.
 Metadata is propagated to the layer above, so it can be implemented per the protocol required.
 
 #### Layered
@@ -58,19 +60,19 @@ This constraint is dependent on the specific protocol used to expose the Rest se
 #### Uniform interface
 ##### Resource identification
 The `Address` identifies a resource uniquely.
-For this property, the Identity library is used to ease manipulation of these values.
+The Identity library is used to ease manipulation of these values.
 
 ##### Resource manipulation through representations
-This constraint basically boils down to two distinct elements:
+This constraint basically boils down to two distinct components:
 * Representation: Everything is an object in C#, so all entities/resources are represented by a (typed) object.
 * Manipulation: This is just a type of `Capability`.
 
 ##### Self-descriptive messages
 Responses that contain a resource, contain a typed object.
 The type of the object is a description for the object, making the object self-descriptive.
-Of course some translation needs to be made when the object itself is translated to a more specific format.
+Of course some translation needs to be done when the object itself is translated to a more specific format.
 
-Internally the type of a message is converted to a `TypeDescriptor` instance that tries to describe the datatype in a formal way.
+Internally the type of a message is converted to a `TypeDescriptor` (see: [Type Descriptors](./typeDesc.md)) instance that tries to describe the datatype in a formal way.
 Obviously there may be inconsistencies between the C#/.Net type system and a formal mathematical one, but these will be mitigated on a case-by-case basis.
 
 ##### Hypermedia as the engine of application state
@@ -103,8 +105,8 @@ interface IRestRequestHandler
 A `RestRequest` contains all data needed to process the request. 
 The return value indicates possible asynchrony through the `ValueTask<>` [functor](https://en.wikipedia.org/wiki/Functor).
 The response side is a three layered value, each with its own aspects and containment of the layer below:
-* `RestResponse` is the top layer, containing metadata for the response
-* `RestResult` is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success and failure.
+* `RestResponse` is the top layer, containing metadata for the response.
+* `RestResult` is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success, failure and redirect.
 * `RestValue` represents the actual underlying value in a response, optionally containing links and embedded objects.
 
 The main implementation of the `IRestRequestHandler` interface is the `CoreRestRequestHandler`.
@@ -112,13 +114,13 @@ This component tries to resolve the RestRequest to an instance of an `IRestRepos
 
 The `IRestRepository` supports capability discovery through the `GetCapabilities` method.
 The capability descriptors returned are able to create a delegate to be called by the `CoreRestRequestHandler`.
-The actual Rest operation implementing method can then take over an execute its logic.
+The actual Rest operation implementing method can then take over and execute its logic.
 
 The `IRestRequestHandlerBuilder` interface can be used to create a pipeline of partial handlers, to which the `CoreRestRequestHandler` can be the most inner handler.
 
 ### Capabilities
 Rest capabilities can be specified and implemented freely.
-But, since the most RESTful architectures have been implemented using HTTP, the main HTTP method have been specified as Rest capabilities. 
+But, since the most RESTful architectures have been implemented using HTTP, the main HTTP methods have been specified as Rest capabilities. 
 They are:
 
 | Interface   | Method | Safe | Idempotent |
@@ -128,38 +130,7 @@ They are:
 | IRestPost   | POST   | No   | No         |
 | IRestDelete | DELETE | No   | Yes        |
 
-#### IRestGet
-A Get is the operation to use when retrieving resources. 
-It is a method with a resource address and optionally parameters, but no body.
-A request can always be made multiple times without having any side effect on the service.
-In other words, making the request multiple times has the same effect as not making it at all.
-
-The response body type corresponds with the entity type specified by the address (identity of the resource).
-
-#### IRestPut
-A Put is the operation to use to update a resource with a new version using the resource's representation.
-It is a method with a resource address an optionally parameters.
-The body type corresponds with the entity specified by the address (identity of the resource).
-The operation is idempotent, which means making the request multiple times has the same effect as making it once.
-
-The response body type corresponds with the entity type specified by the address (identity of the resource).
-The response itself should be a representation of the resource as it is after the operation succeeded.
-
-#### IRestPost
-A Post is the operation to use when adding new resources, or making a request that represents a 'call' of some sorts to a resource.
-It is a method with a resource address an optionally parameters, it also has a body (the message to post).
-The operation may have side effects.
-Making the request multiple times may have undesired side-effects.
-
-The response type can be any type.
-
-#### IRestDelete
-A Delete is the operation to use to delete a resource.
-It is a method with a resource address and optionally parameters.
-The operation is idempotent, which means making the request multiple times has the same effect as making it once.
-This does not mean the response is the same on all requests (After deletion, the resource might 'not be found').
-
-The response type can be any type.
+A more detail description of these capabilities can be found in the [Capabilities](capabilities.md) chapter.
 
 ### Extensibility
 Obviously this library needs to be used in-process, as it does not define any network functions. 

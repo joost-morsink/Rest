@@ -1,9 +1,9 @@
 # HTTP converters
-An Http converter is a component that takes on the responsibility to connect the ASP.Net Core pipeline to the Rest pipeline, by implementing the `IRestHttpConverter` interface.
+An Http converter is a component that takes on the responsibility to connect the ASP.Net Core pipeline to the Rest pipeline, by implementing the `IHttpRestConverter` interface.
 The interface looks as follows:
 
 ```csharp
-interface IRestHttpConverter
+interface IHttpRestConverter
 {
     bool Applies(HttpContext context);
     RestRequest ManipulateRequest(RestRequest req, HttpContext context);
