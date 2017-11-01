@@ -33,6 +33,24 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(typeof(R).GetGeneric(typeof(IRestRepository<>))), typeof(R), lifetime));
             return serviceCollection;
         }
+
+        public static IRestServicesBuilder AddStructure<S>(this IRestServicesBuilder builder,ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S:IAspRestStructure,new()
+        {
+            var str = new S();
+            builder.ServiceCollection.Add(new ServiceDescriptor(str.RootType, str.RootType, lifetime));
+            foreach (var mapping in str.PathMappings)
+                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestPathMapping), mapping));
+
+            foreach(var repo in str.Repositories)
+            {
+                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository), 
+                    sp => repo.Item2(sp.GetService(str.RootType)), lifetime));
+                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(repo.Item1),
+                    sp => repo.Item2(sp.GetService(str.RootType)), lifetime));
+            }
+            return builder;
+        }
         /// <summary>
         /// This method adds a repository to the service collection as IRestRepository and IRestRepository&lt;T&gt;.
         /// </summary>

@@ -28,6 +28,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
                 // Configure Repositories
+                //WORK IN PROGRESS.AddStructure<PersonStructure.Structure>()
                 .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>()
                 );
