@@ -146,7 +146,7 @@ Key extensibility points are:
 * `IAuthorizationProvider`, by implementation in a security library.
 
 ## ASP.Net core {#ASP}
-The Biz.Morsink.Rest.AspNetCore is a library that provides a binding between ASP.Net Core 2.0 and the Rest library.
+The Biz.Morsink.Rest.AspNetCore project is a library that provides a binding between ASP.Net Core 2.0 and the Rest library.
 It adds the following important concepts that are specific to ASP.Net Core:
 * `IRestIdentityProvider`.
   Extends `IIdentityProvider` with specific methods for parsing paths and converting identity values to paths. 
@@ -172,6 +172,9 @@ Multiple options exists, but all of them should be implementable by extensions o
 The most obvious option is to allow javascript to be passed along to the client when a request is made for text/html. 
 This is of course also the most platform independent way of doing so.
 
+Another option is to specifically use JSON and JavaScript in a combination so the client will know how to handle specific aspects of a certain resource type (like, for instance, validation).
+The client would then need a JavaScript runtime environment (or interpreter) to execute this code against (manipulated) resources.
+
 Extensions could however implement any type of code on demand distribution.
 
 #### Uniform interface
@@ -196,6 +199,8 @@ A translation between `TypeDescriptor`s and schema's is an essential element of 
 * `Link`s should be paths, combined with method and optionally parameter and body schema information.
 
 Links can be passed along with the resources using the standard `Link` HTTP header.
+A `Reltype` must be specified for each link in the `Link` header.
+It is advised to use [IANA link relation types](https://www.iana.org/assignments/link-relations/link-relations.xhtml) as much as possible.
 
 The OPTIONS capability can be accessed using the OPTIONS method, which not only returns all the allowed verbs on the resource, but also contains a body with schema information about all the capabilities.
 
@@ -207,7 +212,7 @@ The only _out of band_ information needed to discover the entire service is:
 ### Dependency injection
 The Rest library is setup with dependency injection in mind, but it does not explicitly use any specific technology.
 ASP.Net Core has some machinery setup to deal with dependency injection, including using the IoC container of your choice. 
-The Rest for ASP.Net core library only uses the generic interface of dependency injection and should be compatible with any IoC container a service implementor could choose.
+The Rest for ASP.Net core library only uses the generic interface of dependency injection and should be compatible with any compatible IoC container a service implementor could choose.
 Because the `Lazy<>` functor is not supported by the ASP.Net Core IoC container out of the box, a `IServiceProvider` reference may be used to break circular dependency chains.
 
 ### Request Pipeline
