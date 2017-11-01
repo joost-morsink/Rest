@@ -12,7 +12,7 @@ namespace Biz.Morsink.Rest
     /// This base class provides a cache for the repository's capabilities and registers all statically implemented capabilities in the cache.
     /// </summary>
     /// <typeparam name="T">The resource type for the repository.</typeparam>
-    public abstract class RestRepository<T> : IRestRepository<T>
+    public abstract class RestRepository<T> : IRestRepository<T>, IRestRequestContainer
     {
         private static readonly TypeInfo CAPABILITY_TYPEINFO = typeof(IRestCapability<T>).GetTypeInfo();
 
@@ -91,6 +91,12 @@ namespace Biz.Morsink.Rest
         /// This information can be used to populate schema information
         /// </summary>
         IEnumerable<Type> IRestRepository.SchemaTypes => GetSchemaTypes();
+
+        /// <summary>
+        /// Gets the raw Rest request this repository instance was constructed for.
+        /// </summary>
+        public RestRequest Request { get; set; }
+
         /// <summary>
         /// Default implementation for schematypes. 
         /// Returns all the relevant types used by Rest capability interfaces.

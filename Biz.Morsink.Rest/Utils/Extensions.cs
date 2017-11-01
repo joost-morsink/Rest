@@ -43,6 +43,5 @@ namespace Biz.Morsink.Rest.Utils
                 seed = next(seed);
             }
         }
-            
     }
 }

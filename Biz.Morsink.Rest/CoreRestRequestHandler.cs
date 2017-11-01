@@ -105,7 +105,9 @@ namespace Biz.Morsink.Rest
             var repo = GetService<IRestRepository<T>>();
             if (repo == null)
                 return RestResult.NotFound<T>().ToResponse();
-   
+            if (repo is IRestRequestContainer container)
+                container.Request = request;
+
             var capabilities = repo.GetCapabilities(new RestCapabilityDescriptorKey(request.Capability, typeof(T)));
             var failures = new List<RestResponse>();
             foreach (var cap in capabilities)
