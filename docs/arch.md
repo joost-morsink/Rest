@@ -181,7 +181,7 @@ It adds the following important concepts that are specific to ASP.Net Core:
   Extends `IIdentityProvider` with specific methods for parsing paths and converting identity values to paths. 
 * `IHttpRestRequestHandler`.
   Defines the pipeline interface for the translation of an `HttpRequest` to a `RestRequest`, as well as the translation of the `RestResponse` to the `HttpResponse`.
-* `IRestHttpConverter`.
+* `IHttpRestConverter`.
   Defines the way serialization formats need to be implemented.
   At the time of writing a JsonHttpConverter library takes care of a general JSON serialization format.
 
@@ -210,7 +210,7 @@ Translation between paths and identity values is made through a `IRestIdentityPr
 
 ##### Resource manipulation through representations
 Representation can be done in any serialization format, because HTTP is agnostic to the type of message that is sent.
-Representation is handled by implementations of the `IRestHttpConverter` interface.
+Representation is handled by implementations of the `IHttpRestConverter` interface.
 JSON and XML are popular serialization formats, and both have an implementation of that interface present in the solution. 
 More specific usage of a serialization format could be implemented to support extra RESTful features.
 
@@ -218,7 +218,7 @@ More specific usage of a serialization format could be implemented to support ex
 Descriptiveness is dependent upon serialization format.
 Both JSON and XML have a definition of schema, which can be used to make the messages self-descriptive. 
 Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message can be given.
-A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IRestHttpConverter`. (See [HTTP Converters](./httpConv.md))
+A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IHttpRestConverter`. (See [HTTP Converters](./httpConv.md))
 
 ##### Hypermedia as the engine of application state
 * The `Home` resource should map to the root path of the api: `/`.
@@ -243,11 +243,11 @@ Because the `Lazy<>` functor is not supported by the ASP.Net Core IoC container 
 The library needs to hook into the ASP.Net request pipeline to handle HTTP requests.
 This may be accomplished by using the `UseRest` And `AddRest` extension methods.
 
-The HTTP request is inspected with the purpose of resolving to a `IRestHttpConverter` implementation, which is accompanied with the `HttpContext` and a starter `RestRequest` for further manipulation in a `IHttpRestRequestHandler`. 
+The HTTP request is inspected with the purpose of resolving to a `IHttpRestConverter` implementation, which is accompanied with the `HttpContext` and a starter `RestRequest` for further manipulation in a `IHttpRestRequestHandler`. 
 This is another pipeline component in which everything about the HttpRequest that is needed in a Rest context is transformed into the RestRequest. 
 The end of this pipeline is the start of the `IRestRequestHandler`.
-After the `IRestRequestHandler` is done processing the message, the response is fed through the pipeline again, and in the end the response is written to the `HttpResponse` using the `IRestHttpConverter`.
+After the `IRestRequestHandler` is done processing the message, the response is fed through the pipeline again, and in the end the response is written to the `HttpResponse` using the `IHttpRestConverter`.
 
 ### Extensibility
-Extensibility is accomplished mainly through implementation of serialization formats (implementation of `IRestHttpConverter`).
+Extensibility is accomplished mainly through implementation of serialization formats (implementation of `IHttpRestConverter`).
 

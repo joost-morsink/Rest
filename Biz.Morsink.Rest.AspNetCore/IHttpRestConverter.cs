@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Determines if the converter applies to the given HttpContext.
         /// </summary>
-        /// <param name="context">The HttpContext associated with the Http Request.</param>
+        /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>True if this converter is applicable to the context.</returns>
         bool Applies(HttpContext context);
         /// <summary>
