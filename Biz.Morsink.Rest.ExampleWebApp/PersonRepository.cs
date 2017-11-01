@@ -41,10 +41,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="target">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest response that indicates whether the deletion succeeded or failed.</returns>
-        public ValueTask<RestResponse<object>> Delete(IIdentity<Person> target, NoParameters parameters)
-            => resources.Delete(target)
-                ? Rest.Value(new object()).ToResponseAsync()
-                : RestResult.NotFound<object>().ToResponseAsync();
+        public async ValueTask<RestResponse<object>> Delete(IIdentity<Person> target, NoParameters parameters)
+            => await resources.Delete(target)
+                ? Rest.Value(new object()).ToResponse()
+                : RestResult.NotFound<object>().ToResponse();
 
         /// <summary>
         /// Get implementation for Person.
@@ -52,17 +52,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="id">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest response that may contain a Person entity.</returns>
-        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters parameters)
+        public async ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters parameters)
         {
-            var p = resources.Get(id);
+            var p = await resources.Get(id);
             if (p != null)
-            {
-                return Rest.Value(p).ToResponse()
-                    .WithMetadata(CACHING)
-                    .ToAsync();
-            }
+                return Rest.Value(p).ToResponse().WithMetadata(CACHING);
             else
-                return RestResult.NotFound<Person>().ToResponse().WithMetadata(CACHING).ToAsync();
+                return RestResult.NotFound<Person>().ToResponse().WithMetadata(CACHING);
         }
         /// <summary>
         /// Put implementation for Person.
@@ -71,9 +67,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="parameters">No parameters.</param>
         /// <param name="entity">The entity to put to the backing store.</param>
         /// <returns>An asynchronous Rest response that may contain the updated Person entity.</returns>
-        public ValueTask<RestResponse<Person>> Put(IIdentity<Person> target, NoParameters parameters, Person entity)
+        public async ValueTask<RestResponse<Person>> Put(IIdentity<Person> target, NoParameters parameters, Person entity)
             => entity.Id == null || target.Equals(entity.Id)
-                ? Rest.Value(resources.Put(entity)).ToResponseAsync()
-                : RestResult.BadRequest<Person>(new object()).ToResponseAsync();
+                ? Rest.Value(await resources.Put(entity)).ToResponse()
+                : RestResult.BadRequest<Person>(new object()).ToResponse();
     }
 }

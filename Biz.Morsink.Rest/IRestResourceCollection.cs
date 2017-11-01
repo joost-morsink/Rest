@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
@@ -17,25 +18,25 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <param name="collectionId">The collection slice's identity value.</param>
         /// <returns></returns>
-        C GetCollection(IIdentity<C> collectionId);
+        Task<C> GetCollection(IIdentity<C> collectionId);
         /// <summary>
         /// Gets an entity from the collection.
         /// </summary>
         /// <param name="entityId">The identity value of the entity.</param>
         /// <returns></returns>
-        E Get(IIdentity<E> entityId);
+        Task<E> Get(IIdentity<E> entityId);
         /// <summary>
         /// Stores an entity in the collection.
         /// </summary>
         /// <param name="entity">The entity to store.</param>
         /// <returns>The entity as it is contained in the collection after the store operation.</returns>
-        E Put(E entity);
+        Task<E> Put(E entity);
         /// <summary>
         /// Stores a new entity to the collection.
         /// </summary>
         /// <param name="entity">The entity to store.</param>
         /// <returns>The entity as it is contained in the collection after the store operation.</returns>
-        E Post(E entity);
+        Task<E> Post(E entity);
         /// <summary>
         /// Deletes an entity from the collection.
         /// </summary>
@@ -44,6 +45,6 @@ namespace Biz.Morsink.Rest
         /// True if the entity was successfully removed, false otherwise. 
         /// Failure may be due to the entity not being found.
         /// </returns>
-        bool Delete(IIdentity<E> entityId);
+        Task<bool> Delete(IIdentity<E> entityId);
     }
 }
