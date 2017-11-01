@@ -140,9 +140,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddDefaultServices(this IRestServicesBuilder builder)
             => builder.AddCaching().AddLocationHeader().AddOptionsHandler();
-        public static IRestServicesBuilder AddAttributeBasedIdentityProvider(this IRestServicesBuilder builder)
+        public static IRestServicesBuilder AddDefaultIdentityProvider(this IRestServicesBuilder builder)
         {
-            builder.ServiceCollection.AddSingleton<IRestIdentityProvider, AttributeBasedRestIdentityProvider>();
+            builder.ServiceCollection.AddSingleton<IRestIdentityProvider, DefaultAspRestIdentityProvider>();
             return builder;
         }
     }

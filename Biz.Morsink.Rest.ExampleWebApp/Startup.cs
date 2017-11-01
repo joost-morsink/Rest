@@ -23,7 +23,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
-                .AddAttributeBasedIdentityProvider()
+                .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
