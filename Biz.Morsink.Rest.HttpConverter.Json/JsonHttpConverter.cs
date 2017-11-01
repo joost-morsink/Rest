@@ -50,14 +50,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>The req parameter.</returns>
         public RestRequest ManipulateRequest(RestRequest req, HttpContext context)
         {
-            return new RestRequest(req.Capability, req.Address, req.Parameters, ty =>
+            Lazy<byte[]> body = new Lazy<byte[]>(() =>
             {
                 using (var ms = new MemoryStream())
                 {
                     context.Request.Body.CopyTo(ms);
-                    return ParseBody(ty, ms.ToArray());
+                    return ms.ToArray();
                 }
-            }, req.Metadata);
+            });
+            return new RestRequest(req.Capability, req.Address, req.Parameters, ty => ParseBody(ty, body.Value), req.Metadata);
         }
         /// <summary>
         /// Json parser.

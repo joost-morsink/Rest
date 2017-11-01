@@ -167,8 +167,8 @@ namespace Biz.Morsink.Rest
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
             var action = (Func<IIdentity<T>, P, E, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
-            var body = (E)request.BodyParser(typeof(E));
-            var res = await action(request.Address as IIdentity<T>, param, body);
+            var req = request.ParseBody<E>();
+            var res = await action(request.Address as IIdentity<T>, param, req.Body);
             return res;
         }
         private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)

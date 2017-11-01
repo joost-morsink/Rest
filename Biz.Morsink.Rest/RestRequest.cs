@@ -7,10 +7,12 @@ using System.Linq;
 namespace Biz.Morsink.Rest
 {
     /// <summary>
-    /// This class represents a Rest request
+    /// This class represents a Rest request, where parsing is delayed until the requested type is known.
     /// </summary>
     public class RestRequest
     {
+        private readonly Func<Type, object> bodyParser;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -24,7 +26,7 @@ namespace Biz.Morsink.Rest
             Capability = capability;
             Address = address;
             Parameters = parameters ?? RestParameterCollection.Empty;
-            BodyParser = bodyParser ?? (ty => new object());
+            this.bodyParser = bodyParser ?? (ty => new object());
             Metadata = metadata ?? TypeKeyedDictionary.Empty;
         }
         /// <summary>
@@ -59,10 +61,6 @@ namespace Biz.Morsink.Rest
         /// </summary>
         public IIdentity Address { get; }
         /// <summary>
-        /// Gets the body parser.
-        /// </summary>
-        public Func<Type, object> BodyParser { get; }
-        /// <summary>
         /// Gets the parameters for the Rest request. 
         /// The concept of parameters map to query string parameters.
         /// </summary>
@@ -79,6 +77,57 @@ namespace Biz.Morsink.Rest
         /// <param name="data">An instance of metadata to include in the request.</param>
         /// <returns>A new RestRequest with added metadata.</returns>
         public RestRequest AddMetadata<X>(X data)
-            => new RestRequest(Capability, Address, Parameters, BodyParser, Metadata.Set(data));
+            => new RestRequest(Capability, Address, Parameters, bodyParser, Metadata.Set(data));
+
+        /// <summary>
+        /// Parses the raw body into an object of type E.
+        /// </summary>
+        /// <typeparam name="E">The desired body type.</typeparam>
+        /// <returns>A typed RestRequest</returns>
+        public virtual RestRequest<E> ParseBody<E>()
+        {
+            var e = (E)bodyParser(typeof(E));
+            return new RestRequest<E>(Capability, Address, Parameters, e, bodyParser, Metadata);
+        }
+        /// <summary>
+        /// Virtual member containing the body object, if it was parsed.
+        /// </summary>
+        public virtual object UntypedBody => null;
+    }
+    /// <summary>
+    /// This class represents a Rest request
+    /// </summary>
+    /// <typeparam name="E">The body type of the request.</typeparam>
+    public class RestRequest<E> : RestRequest
+    {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="capability">The requested capability.</param>
+        /// <param name="address">An resource identity value is used to 'address' the capability on some resource.</param>
+        /// <param name="parameters">Parameters for the request.</param>
+        /// <param name="bodyParser">A function that is capable of parsing the body, given the body type is known.</param>
+        /// <param name="metadata">Metadata for the Rest request.</param>
+        public RestRequest(string capability, IIdentity address, RestParameterCollection parameters, E body, Func<Type, object> bodyParser, TypeKeyedDictionary metadata)
+            : base(capability, address, parameters, bodyParser, metadata)
+        {
+            Body = body;
+        }
+        /// <summary>
+        /// Gets the typed body of the request.
+        /// </summary>
+        public E Body { get; }
+        /// <summary>
+        /// Gets the untyped body of the request.
+        /// </summary>
+        public override object UntypedBody => Body;
+
+        /// <summary>
+        /// Parses the raw body into an object of type F.
+        /// </summary>
+        /// <typeparam name="F">The desired body type.</typeparam>
+        /// <returns>A typed RestRequest</returns>
+        public override RestRequest<F> ParseBody<F>()
+            => typeof(F) == typeof(E) ? this as RestRequest<F> : base.ParseBody<F>();
     }
 }
