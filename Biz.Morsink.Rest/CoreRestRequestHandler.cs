@@ -40,16 +40,14 @@ namespace Biz.Morsink.Rest
                 new FromStringRepresentationConverter().Restrict((from, to) => from != typeof(Version)), // Version could conflict with numeric types' syntaxes.
                 new DynamicConverter());
         private readonly IDataConverter converter;
-        private readonly IServiceProvider locator;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="locator">A service locator to resolve repositories.</param>
         /// <param name="converter">An optional DataConverter for use within the handler.</param>
-        public CoreRestRequestHandler(IServiceProvider locator, IDataConverter converter = null)
+        public CoreRestRequestHandler(IDataConverter converter = null)
         {
-            this.locator = locator;
             this.converter = converter ?? DefaultDataConverter;
         }
         /// <summary>
@@ -63,7 +61,13 @@ namespace Biz.Morsink.Rest
             {
                 var type = request.Address.ForType;
 
-                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[] { locator, converter });
+                var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[]
+                {
+                    request.Metadata.TryGet<IServiceProvider>(out var locator)
+                        ? locator
+                        : throw new ArgumentException("RestRequest does not carry IServiceProvider"),
+                    converter
+                });
                 return await (ValueTask<RestResponse>)
                     typeof(RestRequestHandler<>).MakeGenericType(type).GetTypeInfo()
                     .GetDeclaredMethod(nameof(RestRequestHandler<object>.HandleTypedRequest))
@@ -144,7 +148,7 @@ namespace Biz.Morsink.Rest
                     return RestResult.Error(descriptor.ResultType, ex).ToResponse();
                 }
             }
-            
+
             return failures.OrderBy(f => sortOrder(f.UntypedResult.AsFailure().Reason))
                 .FirstOrDefault() ?? RestResult.NotFound<T>().ToResponse();
 
