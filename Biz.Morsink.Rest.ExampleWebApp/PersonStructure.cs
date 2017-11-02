@@ -70,7 +70,6 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             public override string BasePath => "/person";
             public override Type WildcardType => typeof(PersonCollection.Parameters);
-            public override Type RootType => typeof(PersonStructure);
         }
     }
 

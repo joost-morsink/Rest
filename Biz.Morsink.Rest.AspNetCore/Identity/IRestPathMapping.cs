@@ -5,7 +5,7 @@ using System.Text;
 namespace Biz.Morsink.Rest.AspNetCore.Identity
 {
     /// <summary>
-    /// Represents mapping of a resource type to a Rest path
+    /// Represents mapping of a resource type to a Rest path.
     /// </summary>
     public interface IRestPathMapping
     {

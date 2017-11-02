@@ -33,23 +33,29 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(typeof(R).GetGeneric(typeof(IRestRepository<>))), typeof(R), lifetime));
             return serviceCollection;
         }
-
-        public static IRestServicesBuilder AddStructure<S>(this IRestServicesBuilder builder,ServiceLifetime lifetime = ServiceLifetime.Scoped)
-            where S:IAspRestStructure,new()
+        /// <summary>
+        /// Adds a Rest structure to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The structure type.</typeparam>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <param name="lifetime">The lifetime scope of the root type.</param>
+        /// <returns>The service collection with added registrations.</returns>
+        public static IServiceCollection AddRestStructure<S>(this IServiceCollection serviceCollection, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S : IRestStructure, new()
+            => serviceCollection.AddRestStructure(new S(), lifetime);
+        /// <summary>
+        /// Adds a Rest structure to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The structure type.</typeparam>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <param name="structure">The structure.</param>
+        /// <param name="lifetime">The lifetime scope of the root type.</param>
+        /// <returns>The service collection with added registrations.</returns>
+        public static IServiceCollection AddRestStructure<S>(this IServiceCollection serviceCollection, S structure, ServiceLifetime lifetime=ServiceLifetime.Scoped)
+            where S: IRestStructure
         {
-            var str = new S();
-            builder.ServiceCollection.Add(new ServiceDescriptor(str.RootType, str.RootType, lifetime));
-            foreach (var mapping in str.PathMappings)
-                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestPathMapping), mapping));
-
-            foreach(var repo in str.Repositories)
-            {
-                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository), 
-                    sp => repo.Item2(sp.GetService(str.RootType)), lifetime));
-                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(repo.Item1),
-                    sp => repo.Item2(sp.GetService(str.RootType)), lifetime));
-            }
-            return builder;
+            structure.RegisterComponents(serviceCollection, lifetime);
+            return serviceCollection;
         }
         /// <summary>
         /// This method adds a repository to the service collection as IRestRepository and IRestRepository&lt;T&gt;.
@@ -64,6 +70,32 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestRepository<R>(lifetime);
             return builder;
         }
+
+        /// <summary>
+        /// Adds a structure to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The structure type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="lifetime">The lifetime scope of the root type.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddStructure<S>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S : IRestStructure, new()
+            => builder.AddStructure(new S(), lifetime);
+        /// <summary>
+        /// Adds a structure to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The structure type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="structure">The structure.</param>
+        /// <param name="lifetime">The lifetime scope of the root type.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddStructure<S>(this IRestServicesBuilder builder, S structure, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S: IRestStructure
+        {
+            builder.ServiceCollection.AddRestStructure<S>(structure, lifetime);
+            return builder;
+        }
+
         /// <summary>
         /// This methods adds two repositories (one for a collection, one for an entity), a rest resource collection and a dynamic link provider for the collection type.
         /// </summary>
@@ -126,7 +158,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         public static IRestServicesBuilder AddCaching(this IRestServicesBuilder builder)
             => builder
                 .UseHttpRequestHandler(bld => bld.UseCaching())
-                .UseRequestHandler((sp,bld) => bld.Use<CacheVersionTokenHandler>(sp));
+                .UseRequestHandler((sp, bld) => bld.Use<CacheVersionTokenHandler>(sp));
         /// <summary>
         /// Adds the necessary components to support handling of Caching metadata/headers, as well as a cache implementation.
         /// </summary>
@@ -138,11 +170,11 @@ namespace Biz.Morsink.Rest.AspNetCore
             where C : IRestCache
         {
             builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestCache), typeof(C), lifetime));
-           
+
             return builder.AddCaching()
                 .UseRequestHandler((sp, bld) => bld.Use<CacheRequestHandler>(sp));
         }
-                
+
         /// <summary>
         /// Adds the necessary components to support handling of the Location metadatum/header.
         /// </summary>

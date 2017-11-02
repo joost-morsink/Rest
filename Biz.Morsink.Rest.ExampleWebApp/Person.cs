@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     /// <summary>
     /// A Person Entity.
     /// </summary>
-    public class Person
+    public class Person : IHasIdentity<Person>
     {
         /// <summary>
         /// Constructor.
@@ -39,5 +39,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// Gets the age.
         /// </summary>
         public int Age { get; }
+
+        IIdentity IHasIdentity.Id => Id;
     }
 }
