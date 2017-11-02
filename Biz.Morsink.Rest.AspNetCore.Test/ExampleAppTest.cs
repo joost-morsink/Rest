@@ -232,6 +232,17 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(0, (json[items] as JArray)?.Count);
         }
         [TestMethod]
+        public async Task Http_CheckPersonCollectionInvalidParams()
+        {
+            var resp = await Get(client, "/person?limit=0");
+            Assert.IsFalse(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
+
+            resp = await Get(client, "/person?skip=-1");
+            Assert.IsFalse(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
+        }
+        [TestMethod]
         public async Task Http_CheckSchema()
         {
             var resp = await Get(client, SchemaFor<ExampleWebApp.Person>());

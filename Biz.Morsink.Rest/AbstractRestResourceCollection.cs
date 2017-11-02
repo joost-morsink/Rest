@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
+using Biz.Morsink.DataConvert;
 
 namespace Biz.Morsink.Rest
 {
@@ -59,7 +60,14 @@ namespace Biz.Morsink.Rest
                 }
 
                 async ValueTask<RestResponse<C>> IRestGet<C, NoParameters>.Get(IIdentity<C> id, NoParameters parameters)
-                    => Rest.Value(await repo.Source.GetCollection(id)).ToResponse();
+                {
+                    var conv = id.Provider.GetConverter(typeof(C), false).Convert(id.Value);
+                    var cp = conv.To<CollectionParameters>();
+                    if (cp.Limit <= 0 || cp.Skip < 0)
+                        return RestResult.BadRequest<C>(new object()).ToResponse();
+                    else
+                        return Rest.Value(await repo.Source.GetCollection(id)).ToResponse();
+                }
             }
             /// <summary>
             /// Default 'POST' implementation.

@@ -53,7 +53,7 @@ namespace Biz.Morsink.Rest
             var conv = resource.Id.Provider.GetConverter(typeof(T), false).Convert(resource.Id.Value);
             var dict = conv.To<Dictionary<string, string>>().ToImmutableDictionary();
             var cp = conv.To<CollectionParameters>();
-            if (cp.Limit.HasValue)
+            if (cp.Limit.HasValue && cp.Limit.Value > 0)
             {
                 res.Add(Link.Create(first, FreeIdentity<T>.Create(
                     dict.SetItem(limit, cp.Limit.Value.ToString())
