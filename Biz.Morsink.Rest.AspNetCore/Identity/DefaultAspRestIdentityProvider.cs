@@ -8,14 +8,14 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Identity
 {
-    class AttributeBasedRestIdentityProvider : RestIdentityProvider
+    class DefaultAspRestIdentityProvider : RestIdentityProvider
     {
-        public AttributeBasedRestIdentityProvider() : base()
+        public DefaultAspRestIdentityProvider() : base()
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
         }
 
-        internal void Initialize(IEnumerable<IRestRepository> repositories)
+        internal void Initialize(IEnumerable<IRestRepository> repositories, IEnumerable<IRestPathMapping> pathMappings)
         {
             foreach (var repo in repositories)
             {
@@ -27,6 +27,13 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
                     else
                         BuildEntry(compTypes).WithPath(attr.Path).Add();
                 }
+            }
+            foreach (var mapping in pathMappings)
+            {
+                if (mapping.WildcardType != null)
+                    BuildEntry(mapping.ComponentTypes).WithPathAndQueryType(mapping.RestPath, mapping.WildcardType).Add();
+                else
+                    BuildEntry(mapping.ComponentTypes).WithPath(mapping.RestPath).Add();
             }
         }
     }

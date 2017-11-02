@@ -158,6 +158,7 @@ namespace Biz.Morsink.Rest.Schema
                 var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
                     .TakeWhile(x => x != cutoff && x != null)
                     .SelectMany(x => x.DeclaredProperties)
+                    .Where(p => p.CanRead && p.GetMethod.IsPublic)
                     .GroupBy(x => x.Name)
                     .Select(x => x.First())
                     .ToArray();

@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using Biz.Morsink.Rest.AspNetCore;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
-using Biz.Morsink.Rest.AspNetCore;
+using System.Collections.Concurrent;
+using System.Threading;
 using Biz.Morsink.DataConvert;
+
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
-    public class PersonSource : IRestResourceCollection<PersonCollection, Person>
+    public class PersonStructure : AbstractRestCollectionStructure<PersonCollection, Person>
     {
         private int counter = 1;
 
@@ -18,19 +20,19 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         };
         private readonly IRestIdentityProvider idProv;
 
-        public PersonSource(IRestIdentityProvider idProv)
+        public PersonStructure(IRestIdentityProvider idProv)
         {
             this.idProv = idProv;
         }
 
-        public Task<bool> Delete(IIdentity<Person> entityId)
+        public override Task<bool> Delete(IIdentity<Person> entityId)
             => Task.FromResult(data.TryRemove(entityId.Value?.ToString(), out var _));
 
 
-        public Task<Person> Get(IIdentity<Person> entityId)
+        public override Task<Person> Get(IIdentity<Person> entityId)
             => Task.FromResult(data.TryGetValue(entityId.Value?.ToString(), out var p) ? p : null);
 
-        public Task<PersonCollection> GetCollection(IIdentity<PersonCollection> collectionId)
+        public override Task<PersonCollection> GetCollection(IIdentity<PersonCollection> collectionId)
         {
             var conv = idProv.GetConverter(typeof(PersonCollection), false);
             var collectionParams = conv.Convert(collectionId.Value).To<CollectionParameters>();
@@ -41,7 +43,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
             return Task.FromResult(new PersonCollection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0));
         }
-        public Task<Person> Post(Person entity)
+        public override Task<Person> Post(Person entity)
         {
             var id = entity.Id?.Value?.ToString();
             if (id == null)
@@ -56,8 +58,19 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             return Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => existing));
         }
 
-        public Task<Person> Put(Person entity)
+        public override Task<Person> Put(Person entity)
             => Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity));
 
+
+
+        protected override AbstractStructure GetStructure()
+            => new Structure();
+
+        public class Structure : AbstractStructure
+        {
+            public override string BasePath => "/person";
+            public override Type WildcardType => typeof(PersonCollection.Parameters);
+        }
     }
+
 }

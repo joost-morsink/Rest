@@ -128,8 +128,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                 typeDescriptorCreator.GetDescriptor(typeof(RestCapabilities));
 
                 // Prime attribute based rest identity provider:
-                var idProv = app.ApplicationServices.GetService<IRestIdentityProvider>() as AttributeBasedRestIdentityProvider;
-                idProv?.Initialize(repositories);
+                var idProv = app.ApplicationServices.GetService<IRestIdentityProvider>() as DefaultAspRestIdentityProvider;
+                idProv?.Initialize(repositories, app.ApplicationServices.GetServices<IRestPathMapping>());
             }
 
             return app.UseMiddleware<RestForAspNetCore>();

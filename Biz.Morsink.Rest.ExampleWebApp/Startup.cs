@@ -23,12 +23,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
-                .AddAttributeBasedIdentityProvider()
+                .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 // Configure HttpConverters
                 .AddJsonHttpConverter()
                 // Configure Repositories
-                .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
+                .AddStructure<PersonStructure.Structure>()
+                // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>()
                 );
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();

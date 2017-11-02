@@ -32,8 +32,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="id">The criteria for searching the PersonCollection.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>A Rest response containing the search results.</returns>
-        public ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id, NoParameters parameters)
-            => Rest.Value(resources.GetCollection(id)).ToResponseAsync();
+        public async ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id, NoParameters parameters)
+            => Rest.Value(await resources.GetCollection(id)).ToResponse();
 
         /// <summary>
         /// Post implementation of a Person to a PersonCollection.
@@ -42,10 +42,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="parameters">No parameters.</param>
         /// <param name="entity">The entity to put to the backing store.</param>
         /// <returns>An asynchronous Rest response that may contain the posted Person entity.</returns>
-        public ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, NoParameters parameters, Person entity)
+        public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, NoParameters parameters, Person entity)
         {
-            var ent = resources.Post(entity);
-            return Rest.Value(ent).ToResponse().WithMetadata(new Location { Address = ent.Id }).ToAsync();
+            var ent = await resources.Post(entity);
+            return Rest.Value(ent).ToResponse().WithMetadata(new Location { Address = ent.Id });
         }
     }
 }
