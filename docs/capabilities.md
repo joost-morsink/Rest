@@ -19,11 +19,20 @@ The response itself should be a representation of the resource as it is after th
 
 ## Post
 A Post is the operation to use when adding new resources, or making a request that represents a 'call' of some sorts to a resource.
-It is a method with a resource address an optionally parameters, it also has a body (the message to post).
+It is a method with a resource address and optionally parameters, it also has a body (the message to post).
 The operation may have side effects.
 Making the request multiple times may have undesired side-effects.
 
 The response type can be any type.
+
+## Patch
+A patch is an operation that supports processing instructions on a resource.
+The concrete format of these instructions depend on the implementation.
+It is a method with a resource address, parameters and also a body containing the instructions.
+The operation may have side effects.
+Making the request multiple times may have undesired side-effects, depending on the semantics of the instructions provided.
+
+The response should contain the modified resource.
 
 ## Delete 
 Delete is the operation to use to delete a resource.

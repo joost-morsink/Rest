@@ -78,10 +78,11 @@ An operation interface should not be equal to an HTTP method, but there should b
 When dealing with entities, often there is a preference for specifying 'CRUD' operations. 
 However, CRUD deals too much with the implementation of the backend layer, whereas the HTTP methods deal more with what kind of guarantees are tied to the different methods.
 For this reason, we at least need to specify the following interfaces:
-* IRestGet<T>
-* IRestPut<T>
-* IRestPost<T>
-* IRestDelete<T>
+* IRestGet
+* IRestPut
+* IRestPost
+* IRestPatch
+* IRestDelete
 These interfaces should have the same constraints as the corresponding HTTP methods:
 
 | Interface   | Method | Safe | Idempotent |
@@ -89,6 +90,7 @@ These interfaces should have the same constraints as the corresponding HTTP meth
 | IRestGet    | GET    | Yes  | Yes        |
 | IRestPut    | PUT    | No   | Yes        |
 | IRestPost   | POST   | No   | No         |
+| IRestPatch  | PATCH  | No   | No         |
 | IRestDelete | DELETE | No   | Yes        |
 
 ### Entities, objects, resources
