@@ -45,6 +45,12 @@ namespace Biz.Morsink.Rest
         /// <returns>A failed Rest result indicating an error occurred during processing.</returns>
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
             => new RestResult<T>.Failure.Error(ex);
+        /// <summary>
+        /// Creates a pending result indicating the response is not yet available.
+        /// </summary>
+        /// <typeparam name="T">The type of the (absent) underlying value.</typeparam>
+        /// <param name="job">A RestJob describing the pending response.</param>
+        /// <returns>A pending Rest result.</returns>
         public static RestResult<T>.Pending Pending<T>(RestJob job) where T : class
             => new RestResult<T>.Pending(job);
         /// <summary>
@@ -70,15 +76,21 @@ namespace Biz.Morsink.Rest
         public Success AsSuccess() => this as Success;
         IRestSuccess IRestResult.AsSuccess() => this as IRestSuccess;
         /// <summary>
-        /// Triews to cast the result to a Failure result.
+        /// Tries to cast the result to a Failure result.
         /// </summary>
         /// <returns>The current instance as a Failure if it is, null otherwise.</returns>
         public Failure AsFailure() => this as Failure;
         IRestFailure IRestResult.AsFailure() => this as IRestFailure;
-
+        /// <summary>
+        /// Tries to cast the result to a Redirect result.
+        /// </summary>
+        /// <returns>The current instance as a Redirect if it is, null otherwise.</returns>
         public Redirect AsRedirect() => this as Redirect;
         IRestRedirect IRestResult.AsRedirect() => this as IRestRedirect;
-
+        /// <summary>
+        /// Tries to cast the result to a Pending result.
+        /// </summary>
+        /// <returns>The current instance as a Pending if it is, null otherwise.</returns>
         public Pending AsPending() => this as Pending;
         IRestPending IRestResult.AsPending() => this as IRestPending;
 
@@ -372,13 +384,22 @@ namespace Biz.Morsink.Rest
                     => new RestResult<U>.Redirect.NotNecessary(Target);
             }
         }
+        /// <summary>
+        /// This class represents pending Rest results.
+        /// </summary>
         public class Pending : RestResult<T>, IRestPending
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="job">The RestJob describing the pending response.</param>
             public Pending(RestJob job) : base()
             {
                 Job = job;
             }
-
+            /// <summary>
+            /// Gets a RestJob describing the pending response.
+            /// </summary>
             public RestJob Job { get; }
 
             public RestResult<U> Select<U>()
