@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Biz.Morsink.Rest.AspNetCore.Caching;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -25,6 +26,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddDefaultServices()
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
+                .AddJobs()
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 // Configure Repositories

@@ -29,7 +29,8 @@ namespace Biz.Morsink.Rest
     /// <summary>
     /// Extension methods for the RestRequest handler builder.
     /// </summary>
-    public static class RestRequestHandlerBuilderExt {
+    public static class RestRequestHandlerBuilderExt
+    {
         /// <summary>
         /// Uses an object of type T as a middleware component.
         /// The locator parameter is used to construct T's dependencies.
@@ -38,15 +39,23 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of middleware component.</typeparam>
         /// <param name="builder">The builder to add the middleware component to.</param>
         /// <param name="locator">A service locator to resolve all the middleware's dependencies.</param>
+        /// <param name="fixedParameters">Fixed parameters for the constructor of the middleware component.</param>
         /// <returns>A new builder using the middleware component.</returns>
-        public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceProvider locator)
+        public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceProvider locator, params object[] fixedParameters)
             where T : IRestRequestHandler
-            =>  builder.Use(next =>
-                {
-                    var ctor = typeof(T).GetTypeInfo().DeclaredConstructors.First();
-                    var parameters = ctor.GetParameters().Select(p => p.ParameterType == typeof(RestRequestHandlerDelegate) ? next : locator.GetService(p.ParameterType)).ToArray();
-                    return ((IRestRequestHandler)Activator.CreateInstance(typeof(T), parameters)).HandleRequest;
-                });
-        
+            => builder.Use(next =>
+               {
+                   var ctor = typeof(T).GetTypeInfo().DeclaredConstructors.First();
+                   var ctorParams = ctor.GetParameters();
+                   var parameters = ctorParams.TakeWhile(p => p.ParameterType == typeof(RestRequestHandlerDelegate)).Select(p => (object)next)
+                       .Concat(ctorParams.SkipWhile(p => p.ParameterType == typeof(RestRequestHandlerDelegate)).Select(
+                           (p, idx) => idx < fixedParameters.Length
+                               ? fixedParameters[idx]
+                               : locator.GetService(p.ParameterType)))
+                           .ToArray();
+
+                   return ((IRestRequestHandler)Activator.CreateInstance(typeof(T), parameters)).HandleRequest;
+               });
+
     }
 }

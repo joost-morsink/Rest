@@ -36,6 +36,10 @@ namespace Biz.Morsink.Rest
         /// </summary>
         bool IsRedirect { get; }
         /// <summary>
+        /// True if the Rest result is still pending.
+        /// </summary>
+        bool IsPending { get; }
+        /// <summary>
         /// Tries to cast this Rest result into a Rest success.
         /// </summary>
         /// <returns>An IRestSuccess instance if the Rest result is successful, null otherwise.</returns>
@@ -50,6 +54,10 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <returns>An IRestRedirect instance if the Rest result is a redirect, null otherwise.</returns>
         IRestRedirect AsRedirect();
+        /// <summary>
+        /// Tries to cast this Rest reslut into a Rest pending.
+        /// </summary>
+        IRestPending AsPending();
         /// <summary>
         /// Makes this result into a redirect result of type NotNecessary.
         /// Used if Version tokens match.

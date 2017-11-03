@@ -69,8 +69,14 @@ namespace Biz.Morsink.Rest.AspNetCore
             if (!response.IsSuccess)
                 ManipulateHttpContext(response, context);
 
-            if (context.Request.Method == "POST" && response.Metadata.TryGet<Location>(out var loc))
+            if (response.IsSuccess && response.Metadata.TryGet<CreatedResource>(out var loc))
                 context.Response.StatusCode = 201;
+
+            if (response.UntypedResult.IsPending)
+            {
+                context.Response.StatusCode = 202;
+                context.Response.Headers["Location"] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
+            }
 
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)

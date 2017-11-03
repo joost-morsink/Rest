@@ -46,6 +46,14 @@ namespace Biz.Morsink.Rest
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
             => new RestResult<T>.Failure.Error(ex);
         /// <summary>
+        /// Creates a pending result indicating the response is not yet available.
+        /// </summary>
+        /// <typeparam name="T">The type of the (absent) underlying value.</typeparam>
+        /// <param name="job">A RestJob describing the pending response.</param>
+        /// <returns>A pending Rest result.</returns>
+        public static RestResult<T>.Pending Pending<T>(RestJob job) where T : class
+            => new RestResult<T>.Pending(job);
+        /// <summary>
         /// Creates a failed Rest result indicating an unexpected error occurred during processing of the request.
         /// </summary>
         /// <param name="type">The type of the (absent) underlying value.</param>
@@ -68,19 +76,29 @@ namespace Biz.Morsink.Rest
         public Success AsSuccess() => this as Success;
         IRestSuccess IRestResult.AsSuccess() => this as IRestSuccess;
         /// <summary>
-        /// Triews to cast the result to a Failure result.
+        /// Tries to cast the result to a Failure result.
         /// </summary>
         /// <returns>The current instance as a Failure if it is, null otherwise.</returns>
         public Failure AsFailure() => this as Failure;
         IRestFailure IRestResult.AsFailure() => this as IRestFailure;
-
-
+        /// <summary>
+        /// Tries to cast the result to a Redirect result.
+        /// </summary>
+        /// <returns>The current instance as a Redirect if it is, null otherwise.</returns>
         public Redirect AsRedirect() => this as Redirect;
         IRestRedirect IRestResult.AsRedirect() => this as IRestRedirect;
+        /// <summary>
+        /// Tries to cast the result to a Pending result.
+        /// </summary>
+        /// <returns>The current instance as a Pending if it is, null otherwise.</returns>
+        public Pending AsPending() => this as Pending;
+        IRestPending IRestResult.AsPending() => this as IRestPending;
 
         bool IRestResult.IsSuccess => this is Success;
         bool IRestResult.IsFailure => this is Failure;
         bool IRestResult.IsRedirect => this is Redirect;
+        bool IRestResult.IsPending => this is Pending;
+
         /// <summary>
         /// Wraps this result into a RestResponse, optionally adding metadata.
         /// </summary>
@@ -367,6 +385,28 @@ namespace Biz.Morsink.Rest
             }
         }
         /// <summary>
+        /// This class represents pending Rest results.
+        /// </summary>
+        public class Pending : RestResult<T>, IRestPending
+        {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="job">The RestJob describing the pending response.</param>
+            public Pending(RestJob job) : base()
+            {
+                Job = job;
+            }
+            /// <summary>
+            /// Gets a RestJob describing the pending response.
+            /// </summary>
+            public RestJob Job { get; }
+
+            public RestResult<U> Select<U>()
+                where U : class
+                => new RestResult<U>.Pending(Job);
+        }
+        /// <summary>
         /// Implementation of the Linq Select method.
         /// </summary>
         /// <typeparam name="U">The new underlying successful value type.</typeparam>
@@ -383,6 +423,8 @@ namespace Biz.Morsink.Rest
                     return failure.Select<U>();
                 case Redirect redirect:
                     return redirect.Select<U>();
+                case Pending pending:
+                    return pending.Select<U>();
                 default:
                     throw new NotSupportedException();
             }

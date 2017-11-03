@@ -7,12 +7,47 @@ using Biz.Morsink.Identity;
 using System.Collections.Concurrent;
 using System.Threading;
 using Biz.Morsink.DataConvert;
+using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     public class PersonStructure : AbstractRestCollectionStructure<PersonCollection, Person>
     {
         private int counter = 1;
+
+        public class PersonCollectionRepository : CollectionRepository
+        {
+            public class DelayParameter
+            {
+                public int Delay { get; set; }
+            }
+            public PersonCollectionRepository(PersonStructure structure) : base(structure) { }
+
+            protected override void RegisterCapabilities()
+            {
+                Register(new Get(this));
+                Register(new Post(this));
+            }
+            public new class Post : IRestPost<PersonCollection, DelayParameter, Person, Person>
+            {
+                private readonly PersonCollectionRepository repo;
+
+                public Post(PersonCollectionRepository repo)
+                {
+                    this.repo = repo;
+                }
+
+                async ValueTask<RestResponse<Person>> IRestPost<PersonCollection, DelayParameter, Person, Person>.Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person entity)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(parameters.Delay));
+                    var res = await repo.Source.Post(entity);
+                    if (res == null)
+                        return RestResult.BadRequest<Person>(new object()).ToResponse();
+                    else
+                        return Rest.Value(res).ToResponse().WithMetadata(new CreatedResource { Address = res.Id });
+                }
+            }
+        }
 
         private ConcurrentDictionary<string, Person> data = new ConcurrentDictionary<string, Person>
         {
@@ -62,6 +97,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             => Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity));
 
 
+        public override CollectionRepository GetCollectionRepository() => new PersonCollectionRepository(this);
 
         protected override AbstractStructure GetStructure()
             => new Structure();

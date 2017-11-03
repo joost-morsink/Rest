@@ -21,19 +21,20 @@ It also implements the non-generic `IRestValue` interface, and the interfaces `I
 
 ## RestResult
 `RestResult`s indicate status of the response.
-There are three main categories of results:
+There are four main categories of results:
 
 * **Successful** results carry the data that was requested.
 * **Failure** results of different types map to different error situations.
   Depending on the failure type, data about the failure is contained in the result.
 * **Redirection** results indicate that the client needs to look elsewhere.
+* **Pending** results indicate longer running processes, that are still pending completion.
 
 The types that carry a Rest value are adorned with the `IHasRestValue<>` interface.
 
 A `RestResult<T>` is also immutable, but a class.
 It implements the non-generic `IRestResult` interface.
-Its nested and derived classes `Success`, `Failure` and `Redirect` correspond to the categories of results mentioned above.
-They implement the `IRestSuccess<T>`, `IRestFailure` and `IRestRedirect` interfaces respectively.
+Its nested and derived classes `Success`, `Failure`, `Redirect` and `Pending` correspond to the categories of results mentioned above.
+They implement the `IRestSuccess<T>`, `IRestFailure`, `IRestRedirect` and `IRestPending` interfaces respectively.
 
 ## RestResponse
 `RestResponse`s contain a `RestResult` and optional metadata (see [Metadata](metadata.md))

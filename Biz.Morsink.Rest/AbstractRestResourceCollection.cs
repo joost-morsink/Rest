@@ -91,7 +91,7 @@ namespace Biz.Morsink.Rest
                     if (res == null)
                         return RestResult.BadRequest<E>(null).ToResponse();
                     else if (res is IHasIdentity<E> hid)
-                        return Rest.Value(res).ToResponse().WithMetadata(new Location { Address = hid.Id });
+                        return Rest.Value(res).ToResponse().WithMetadata(new CreatedResource { Address = hid.Id });
                     else
                         return Rest.Value(res).ToResponse();
                 }
