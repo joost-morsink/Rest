@@ -39,6 +39,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of middleware component.</typeparam>
         /// <param name="builder">The builder to add the middleware component to.</param>
         /// <param name="locator">A service locator to resolve all the middleware's dependencies.</param>
+        /// <param name="fixedParameters">Fixed parameters for the constructor of the middleware component.</param>
         /// <returns>A new builder using the middleware component.</returns>
         public static IRestRequestHandlerBuilder Use<T>(this IRestRequestHandlerBuilder builder, IServiceProvider locator, params object[] fixedParameters)
             where T : IRestRequestHandler

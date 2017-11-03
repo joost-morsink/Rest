@@ -8,8 +8,16 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
+    /// <summary>
+    /// A ITypeRepresentation implementation for RestJobs.
+    /// RestJob contains a 'Task&lt;RestResponse&gt;'-typed property, and Tasks are not meant to serialize.
+    /// Because a RestJob is only serialized and never deserialized, the representation only contains general information about the RestJob.
+    /// </summary>
     public class RestJobRepresentation : ITypeRepresentation
     {
+        /// <summary>
+        /// Representation type
+        /// </summary>
         private class representation
         {
             [Required]
@@ -17,7 +25,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             [Required]
             public bool IsFinished { get; set; }
         }
-
+        
         public object GetRepresentable(object rep)
         {
             throw new NotImplementedException();

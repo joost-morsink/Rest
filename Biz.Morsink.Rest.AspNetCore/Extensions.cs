@@ -71,13 +71,37 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestRepository<R>(lifetime);
             return builder;
         }
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="mapping">The mapping.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, IRestPathMapping mapping)
         {
             builder.ServiceCollection.AddSingleton(mapping);
             return builder;
         }
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The type the mapping is for.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="componentTypes">The component types of the identity value.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddPathMapping<T>(this IRestServicesBuilder builder, string path, Type[] componentTypes = null, Type wildcardType = null)
             => builder.AddPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardType));
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="type">The type the mapping is for.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="componentTypes">The component types of the identity value.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, Type type, string path, Type[] componentTypes = null, Type wildcardType = null)
             => builder.AddPathMapping(new RestPathMapping(type, path, componentTypes, wildcardType));
 
@@ -200,25 +224,54 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddDefaultServices(this IRestServicesBuilder builder)
             => builder.AddCaching().AddLocationHeader().AddOptionsHandler();
+        /// <summary>
+        /// Adds a default identity provider to the service collection.
+        /// The default provider is able to inspect Rest repositories for attributes and it uses IRestPathMappings.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder implementation.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddDefaultIdentityProvider(this IRestServicesBuilder builder)
         {
             builder.ServiceCollection.AddSingleton<IRestIdentityProvider, DefaultAspRestIdentityProvider>();
             return builder;
         }
+        /// <summary>
+        /// Adds a Rest job store to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The type of the job store.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder implementation.</param>
+        /// <param name="lifetime">The lifetime scope of the store.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddJobStore<S>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
             builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestJobStore), typeof(S), lifetime));
             return builder;
         }
+        /// <summary>
+        /// Adds a Rest job store to the service collection.
+        /// </summary>
+        /// <typeparam name="S">The type of the job store.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder implementation.</param>
+        /// <param name="factory">A factory method that constructs the store.</param>
+        /// <param name="lifetime">The lifetime scope of the store.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddJobStore<S>(this IRestServicesBuilder builder, Func<IServiceProvider, S> factory, ServiceLifetime lifetime = ServiceLifetime.Scoped)
             where S : class
         {
             builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestJobStore), factory, lifetime));
             return builder;
         }
+        /// <summary>
+        /// Adds RestJobs as a complete structure to the service collection and registers a request handler to catch long running requests.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder implementation.</param>
+        /// <param name="jobRepositoryPath">The Rest path for the Job repository.</param>
+        /// <param name="jobResultPathSuffix">A suffix to the job repository path for the result repository.</param>
+        /// <param name="requestTimeout">A TimeSpan indicating how long a response might take before turning it into a pending one. Default 10 seconds.</param>
+        /// <returns></returns>
         public static IRestServicesBuilder AddJobs(this IRestServicesBuilder builder, string jobRepositoryPath = "/job/*", string jobResultPathSuffix = "/result", TimeSpan? requestTimeout = null)
         {
-            builder.UseRequestHandler((sp, p) => p.Use<ResponsePendingRequestHandler>(sp, requestTimeout ?? TimeSpan.FromSeconds(5.0)))
+            builder.UseRequestHandler((sp, p) => p.Use<ResponsePendingRequestHandler>(sp, requestTimeout ?? TimeSpan.FromSeconds(10.0)))
                 .AddRepository<JobRepository>()
                 .AddRepository<JobResultRepository>()
                 .AddPathMapping<RestJob>(jobRepositoryPath)
