@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -11,22 +12,26 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverterOptionsProvider : IOptions<JsonHttpConverterOptions>
     {
+        private readonly Lazy<JsonHttpConverterOptions> options;
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="contractResolver">An IContractResolver instance.</param>
         /// <param name="configure">A optional function to configure the JsonHttpConverterOptions.</param>
-        public JsonHttpConverterOptionsProvider(IContractResolver contractResolver, Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
+        public JsonHttpConverterOptionsProvider(IServiceProvider serviceProvider, Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
         {
-            var opts = new JsonHttpConverterOptions();
-            opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-            opts.SerializerSettings.ContractResolver = contractResolver;
-            Value = configure == null ? opts : configure(opts);
+            options = new Lazy<JsonHttpConverterOptions>(() =>
+            {
+                var opts = new JsonHttpConverterOptions();
+                opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                opts.SerializerSettings.ContractResolver = serviceProvider.GetRequiredService<IContractResolver>();
+                return configure == null ? opts : configure(opts);
+            });
         }
         /// <summary>
         /// Gets an instance of JsonHttpConverterOptions.
         /// </summary>
-        public JsonHttpConverterOptions Value { get; }
+        public JsonHttpConverterOptions Value => options.Value;
         /// <summary>
         /// Gets an instance of the IOptions instance.
         /// </summary>

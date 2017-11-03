@@ -139,7 +139,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         private Task<HttpResponseMessage> Options(HttpClient client, string path, IReadOnlyDictionary<string, string> headers = null)
             => Send(client, HttpMethod.Options, path, headers);
 
-        private async Task<JObject> getJson(HttpResponseMessage resp)
+        private async Task<JObject> GetJson(HttpResponseMessage resp)
         {
             var body = await resp.Content.ReadAsStringAsync();
             return JObject.Parse(body);
@@ -205,7 +205,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(links.ContainsKey("first"));
             Assert.IsTrue(links.ContainsKey("last"));
 
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
 
             Assert.IsNotNull(json[id]);
             Assert.IsNotNull(json[count]);
@@ -224,7 +224,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
 
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
             Assert.IsNotNull(json[id]);
             Assert.IsNotNull(json[count]);
             Assert.AreEqual(0, json[count].Value<int>());
@@ -256,7 +256,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsNotNull(desc);
             Assert.AreEqual(SchemaFor<TypeDescriptor>(), desc.Address);
 
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
             Assert.IsNotNull(json[properties]);
             Assert.IsNotNull(json[properties][id]);
             Assert.IsNotNull(json[properties][firstName]);
@@ -277,7 +277,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsNotNull(desc);
             Assert.AreEqual(SchemaFor<TypeDescriptor>(), desc.Address);
 
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
 
             Assert.IsNotNull(json[dollarRef]);
             Assert.AreEqual("http://json-schema.org/draft-04/schema#", json[dollarRef].Value<string>());
@@ -312,7 +312,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         {
             var resp = await Get(client, "/person");
             Assert.IsTrue(resp.IsSuccessStatusCode);
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
             foreach (var item in ((JArray)json["items"]))
             {
                 var addr = item["id"].Value<string>("href");
@@ -325,7 +325,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             }
             resp = await Get(client, "/person");
             Assert.IsTrue(resp.IsSuccessStatusCode);
-            json = await getJson(resp);
+            json = await GetJson(resp);
 
             Assert.AreEqual(0, json.Value<int>("count"));
 
@@ -345,7 +345,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                 resp2 = await Get(client, vals.First());
                 Assert.IsTrue(resp2.IsSuccessStatusCode);
 
-                json = await getJson(resp2);
+                json = await GetJson(resp2);
                 Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
                 Assert.AreEqual($"Test", json.Value<string>("lastName"));
 
@@ -353,7 +353,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                 resp2 = await Put(client, vals.First(), json);
                 Assert.IsTrue(resp2.IsSuccessStatusCode);
 
-                json = await getJson(resp2);
+                json = await GetJson(resp2);
                 Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
                 Assert.AreEqual($"Morsink", json.Value<string>("lastName"));
 
@@ -375,7 +375,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             resp = await Get(client, loc);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("ETag", out var etag) && etag.Any());
-            var json = await getJson(resp);
+            var json = await GetJson(resp);
 
             resp = await Get(client, loc, DefaultHeaders.Add("If-None-Match", etag.First()));
             Assert.AreEqual(HttpStatusCode.NotModified, resp.StatusCode);

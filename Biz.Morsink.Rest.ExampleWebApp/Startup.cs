@@ -26,7 +26,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 // Configure HttpConverters
-                .AddJsonHttpConverter()
+                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 // Configure Repositories
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)

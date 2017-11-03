@@ -15,22 +15,32 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// A Json Contract Resolver for Rest. 
     /// It knows how to serialize some Rest specific types like IIdentity values.
     /// </summary>
-    public class RestJsonContractResolver : CamelCasePropertyNamesContractResolver
+    public class RestJsonContractResolver : DefaultContractResolver
     {
         private readonly IJsonSchemaTranslator[] translators;
         private readonly ITypeRepresentation[] typeRepresentations;
+        private readonly IOptions<JsonHttpConverterOptions> options;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="serviceProvider">A service provider to instantiate dependencies.</param>
-        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators, IEnumerable<ITypeRepresentation> typeRepresentations)
+        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators, IEnumerable<ITypeRepresentation> typeRepresentations, IOptions<JsonHttpConverterOptions> options)
         {
             this.translators = translators.ToArray();
             this.typeRepresentations = typeRepresentations.ToArray();
+            this.options = options;
+        }
+        private void Initialize()
+        {
+            var opts = options.Value;
+            var ns = opts.NamingStrategy;
+            if (ns != null)
+                NamingStrategy = ns;
         }
         protected override JsonContract CreateContract(Type objectType)
         {
+            Initialize();
             var contract = base.CreateContract(objectType);
             foreach (var typeRep in typeRepresentations.Where(tr => tr.IsRepresentable(objectType)))
                 contract.Converter = new TypeRepresentationConverter(objectType, typeRep);
