@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
@@ -22,6 +23,8 @@ namespace Biz.Morsink.Rest
         /// This information can be used to populate schema information.
         /// </summary>
         IEnumerable<Type> SchemaTypes { get; }
+
+        ValueTask<RestResponse> ProcessResponse(RestResponse response); 
     }
     /// <summary>
     /// Generic interface to indicate a Rest repository of a certain resource type.

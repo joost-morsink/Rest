@@ -70,6 +70,15 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestRepository<R>(lifetime);
             return builder;
         }
+        public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, IRestPathMapping mapping)
+        {
+            builder.ServiceCollection.AddSingleton(mapping);
+            return builder;
+        }
+        public static IRestServicesBuilder AddPathMapping<T>(this IRestServicesBuilder builder, string path, Type[] componentTypes = null, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardType));
+        public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, Type type, string path, Type[] componentTypes = null, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(type, path, componentTypes, wildcardType));
 
         /// <summary>
         /// Adds a structure to the service collection.

@@ -45,7 +45,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, NoParameters parameters, Person entity)
         {
             var ent = await resources.Post(entity);
-            return Rest.Value(ent).ToResponse().WithMetadata(new Location { Address = ent.Id });
+            return Rest.Value(ent).ToResponse().WithMetadata(new CreatedResource { Address = ent.Id });
         }
     }
 }

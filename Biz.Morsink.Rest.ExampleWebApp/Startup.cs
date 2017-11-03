@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Biz.Morsink.Rest.AspNetCore.Caching;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -23,6 +24,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
+                .UseRequestHandler((sp,p) => p.Use<ResponsePendingRequestHandler>(sp))
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 // Configure HttpConverters
@@ -31,7 +33,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>()
+                .AddRepository<JobRepository>()
+                .AddPathMapping<RestJob>("/job/*")
                 );
+            services.AddSingleton<IRestJobStore, MemoryRestJobStore>(sp => new MemoryRestJobStore(sp.GetRequiredService<IRestIdentityProvider>()));
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }

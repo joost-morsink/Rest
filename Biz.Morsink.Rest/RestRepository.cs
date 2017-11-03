@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
@@ -107,5 +108,8 @@ namespace Biz.Morsink.Rest
                 .SelectMany(d => new[] { d.EntityType, d.BodyType, d.ParameterType, d.ResultType })
                 .Where(t => t != null)
                 .Distinct();
+
+        public virtual ValueTask<RestResponse> ProcessResponse(RestResponse response)
+            => new ValueTask<RestResponse>(response);
     }
 }

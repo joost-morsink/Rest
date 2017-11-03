@@ -77,6 +77,11 @@ namespace Biz.Morsink.Rest.AspNetCore
                     var idProv = serviceProvider.GetRequiredService<IRestIdentityProvider>();
                     context.Response.Headers["Location"] = idProv.ToPath(loc.Address);
                 });
+                response.Metadata.Execute<CreatedResource>(loc =>
+                {
+                    var idProv = serviceProvider.GetRequiredService<IRestIdentityProvider>();
+                    context.Response.Headers["Location"] = idProv.ToPath(loc.Address);
+                });
                 return response;
             });
     }

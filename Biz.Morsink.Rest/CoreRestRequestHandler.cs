@@ -126,7 +126,7 @@ namespace Biz.Morsink.Rest
                         : typeof(RestRequestHandler<T>).GetTypeInfo()
                             .GetDeclaredMethod(nameof(Handle))
                             .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
-                    var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { request, cap });
+                    var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { repo, request, cap });
                     if (!res.UntypedResult.IsFailure)
                     {
                         if (cap.Descriptor.Name == "GET")
@@ -167,7 +167,7 @@ namespace Biz.Morsink.Rest
                 }
             }
         }
-        private async ValueTask<RestResponse> HandleWithBody<P, E, R>(RestRequest request, RestCapability<T> capability)
+        private async ValueTask<RestResponse> HandleWithBody<P, E, R>(IRestRepository repo, RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
@@ -175,16 +175,18 @@ namespace Biz.Morsink.Rest
             var action = (Func<IIdentity<T>, P, E, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
             var req = request.ParseBody<E>();
             var res = await action(request.Address as IIdentity<T>, param, req.Body);
-            return res;
+            var result = await repo.ProcessResponse(res);
+            return result;
         }
-        private async ValueTask<RestResponse> Handle<P, R>(RestRequest request, RestCapability<T> capability)
+        private async ValueTask<RestResponse> Handle<P, R>(IRestRepository repo, RestRequest request, RestCapability<T> capability)
             where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
             var action = (Func<IIdentity<T>, P, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
             var res = await action(request.Address as IIdentity<T>, param);
-            return res;
+            var result = await repo.ProcessResponse(res);
+            return result;
         }
     }
 }
