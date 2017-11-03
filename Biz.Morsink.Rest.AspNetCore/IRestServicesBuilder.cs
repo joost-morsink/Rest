@@ -31,6 +31,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Should construct the Rest HTTP pipeline and request handler pipeline and add them to the ServiceCollection.
         /// </summary>
         void EndConfiguration();
+        void OnEndConfiguration(Action<IServiceCollection> endConfigurator);
     }
     /// <summary>
     /// Helper extension methods for IRestServicesBuilder

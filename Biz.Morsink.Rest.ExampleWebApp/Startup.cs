@@ -24,19 +24,16 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
-                .UseRequestHandler((sp,p) => p.Use<ResponsePendingRequestHandler>(sp))
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
+                .AddJobs()
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 // Configure Repositories
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddRepository<HomeRepository>()
-                .AddRepository<JobRepository>()
-                .AddPathMapping<RestJob>("/job/*")
                 );
-            services.AddSingleton<IRestJobStore, MemoryRestJobStore>(sp => new MemoryRestJobStore(sp.GetRequiredService<IRestIdentityProvider>()));
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }

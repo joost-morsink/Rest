@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -51,8 +52,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="structure">The structure.</param>
         /// <param name="lifetime">The lifetime scope of the root type.</param>
         /// <returns>The service collection with added registrations.</returns>
-        public static IServiceCollection AddRestStructure<S>(this IServiceCollection serviceCollection, S structure, ServiceLifetime lifetime=ServiceLifetime.Scoped)
-            where S: IRestStructure
+        public static IServiceCollection AddRestStructure<S>(this IServiceCollection serviceCollection, S structure, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S : IRestStructure
         {
             structure.RegisterComponents(serviceCollection, lifetime);
             return serviceCollection;
@@ -99,7 +100,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="lifetime">The lifetime scope of the root type.</param>
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddStructure<S>(this IRestServicesBuilder builder, S structure, ServiceLifetime lifetime = ServiceLifetime.Scoped)
-            where S: IRestStructure
+            where S : IRestStructure
         {
             builder.ServiceCollection.AddRestStructure<S>(structure, lifetime);
             return builder;
@@ -202,6 +203,33 @@ namespace Biz.Morsink.Rest.AspNetCore
         public static IRestServicesBuilder AddDefaultIdentityProvider(this IRestServicesBuilder builder)
         {
             builder.ServiceCollection.AddSingleton<IRestIdentityProvider, DefaultAspRestIdentityProvider>();
+            return builder;
+        }
+        public static IRestServicesBuilder AddJobStore<S>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestJobStore), typeof(S), lifetime));
+            return builder;
+        }
+        public static IRestServicesBuilder AddJobStore<S>(this IRestServicesBuilder builder, Func<IServiceProvider, S> factory, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where S : class
+        {
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestJobStore), factory, lifetime));
+            return builder;
+        }
+        public static IRestServicesBuilder AddJobs(this IRestServicesBuilder builder, string jobRepositoryPath = "/job/*", string jobResultPathSuffix = "/result", TimeSpan? requestTimeout = null)
+        {
+            builder.UseRequestHandler((sp, p) => p.Use<ResponsePendingRequestHandler>(sp, requestTimeout ?? TimeSpan.FromSeconds(5.0)))
+                .AddRepository<JobRepository>()
+                .AddRepository<JobResultRepository>()
+                .AddPathMapping<RestJob>(jobRepositoryPath)
+                .AddPathMapping<RestJobResult>(jobRepositoryPath + jobResultPathSuffix)
+                ;
+            builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobRepresentation>();
+            builder.OnEndConfiguration(sc =>
+            {
+                if (!sc.Any(sd => sd.ServiceType == typeof(IRestJobStore)))
+                    sc.AddSingleton<IRestJobStore, MemoryRestJobStore>(sp => new MemoryRestJobStore(sp.GetRequiredService<IRestIdentityProvider>()));
+            });
             return builder;
         }
     }

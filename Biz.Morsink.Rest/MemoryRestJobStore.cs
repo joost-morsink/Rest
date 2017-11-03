@@ -26,32 +26,39 @@ namespace Biz.Morsink.Rest
         private readonly ConcurrentDictionary<string, Entry> entries;
         private readonly CancellationTokenSource cancel;
         private readonly Task scavengeTask;
-        private readonly TimeSpan cleanupSpan;
+        private readonly TimeSpan maxAge;
         private readonly IIdentityProvider identityProvider;
 
-        public MemoryRestJobStore(IIdentityProvider identityProvider)
+        public MemoryRestJobStore(IIdentityProvider identityProvider, TimeSpan? maxAge = null)
         {
             entries = new ConcurrentDictionary<string, Entry>();
             cancel = new CancellationTokenSource();
-            cleanupSpan = TimeSpan.FromHours(1.0);
+            this.maxAge = maxAge ?? TimeSpan.FromHours(1.0);
             this.identityProvider = identityProvider;
             scavengeTask = StartScavenging(cancel.Token);
         }
 
         private async Task StartScavenging(CancellationToken token)
         {
-            do
+            try
             {
-                var now = DateTime.UtcNow;
-                var keys = entries.Keys.ToArray();
-                foreach (var key in keys)
+                do
                 {
-                    if (entries.TryGetValue(key, out var entry) && entry.Job.Finished.HasValue && now - entry.Job.Finished.Value > cleanupSpan)
-                        entries.TryRemove(key, out entry);
-                }
+                    var now = DateTime.UtcNow;
+                    var keys = entries.Keys.ToArray();
+                    foreach (var key in keys)
+                    {
+                        if (entries.TryGetValue(key, out var entry) && entry.Job.Finished.HasValue && now - entry.Job.Finished.Value > maxAge)
+                            entries.TryRemove(key, out entry);
+                    }
 
-                await Task.Delay(TimeSpan.FromMinutes(1.0), token);
-            } while (!cancel.IsCancellationRequested);
+                    await Task.Delay(TimeSpan.FromMinutes(1.0), token);
+                } while (!cancel.IsCancellationRequested);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected exception.
+            }
         }
 
         public RestJob RegisterJob(Task<RestResponse> task)
@@ -68,7 +75,7 @@ namespace Biz.Morsink.Rest
 
         private string GetKey(IIdentity<RestJob> id)
             => id.Provider.GetConverter(typeof(RestJob), false).Convert(id.Value).To<string>();
-        
+
         public void Dispose()
         {
             cancel.Cancel();

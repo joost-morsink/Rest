@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,5 +25,9 @@ namespace Biz.Morsink.Rest
         public DateTime? Finished { get; private set; }
 
         IIdentity IHasIdentity.Id => Id;
+
+        public RestJobResult GetResult()
+            => new RestJobResult(this);
     }
+
 }

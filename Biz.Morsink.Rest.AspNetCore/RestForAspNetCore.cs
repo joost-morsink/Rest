@@ -165,6 +165,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             public Func<IServiceProvider, IHttpRestRequestHandler, IHttpRestRequestHandler> httpHandlerConfigurator;
             public Func<IServiceProvider, IRestRequestHandlerBuilder, IRestRequestHandlerBuilder> restHandlerConfigurator;
+            public Action<IServiceCollection> endConfigurator = sc => { };
+
             public RestServicesBuilder(IServiceCollection serviceCollection)
             {
                 ServiceCollection = serviceCollection;
@@ -175,6 +177,7 @@ namespace Biz.Morsink.Rest.AspNetCore
 
             public void EndConfiguration()
             {
+                endConfigurator(ServiceCollection);
                 ServiceCollection.AddSingleton(sp => httpHandlerConfigurator(sp, HttpRestRequestHandler.Create()));
                 ServiceCollection.AddSingleton(sp => restHandlerConfigurator(sp, RestRequestHandlerBuilder.Create())
                     .Run(() => sp.GetRequiredService<CoreRestRequestHandler>().HandleRequest));
@@ -192,6 +195,12 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 restHandlerConfigurator = Compose(configurator, restHandlerConfigurator);
                 return this;
+            }
+
+            public void OnEndConfiguration(Action<IServiceCollection> endConfigurator)
+            {
+                var old = this.endConfigurator;
+                this.endConfigurator = sc => { old(sc); endConfigurator(sc); };
             }
         }
     }
