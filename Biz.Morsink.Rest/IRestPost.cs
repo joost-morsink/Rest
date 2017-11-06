@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -24,6 +25,6 @@ namespace Biz.Morsink.Rest
         /// <param name="parameters">The parameters for the POST operation.</param>
         /// <param name="entity">The entity to post to the resource.</param>
         /// <returns>A response potentially containing a typed result.</returns>
-        ValueTask<RestResponse<R>> Post(IIdentity<T> target, P parameters, E entity);
+        ValueTask<RestResponse<R>> Post(IIdentity<T> target, P parameters, E entity, CancellationToken cancellationToken);
     }
 }

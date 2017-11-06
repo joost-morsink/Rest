@@ -3,6 +3,7 @@ using Biz.Morsink.Rest.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -27,7 +28,7 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the RestJobResult.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest reponse that might contain a RestJobResult.</returns>
-        public ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, NoParameters parameters)
+        public ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, NoParameters parameters, CancellationToken cancellationToken)
         {
             var res = restJobStore.GetJob(id.Provider.Creator<RestJob>().Create(id.Value));
             if (res == null || res.Task.Status < TaskStatus.RanToCompletion)

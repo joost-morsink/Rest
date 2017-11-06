@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.DataConvert;
+using System.Threading;
 
 namespace Biz.Morsink.Rest
 {
@@ -59,7 +60,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<C>> IRestGet<C, NoParameters>.Get(IIdentity<C> id, NoParameters parameters)
+                async ValueTask<RestResponse<C>> IRestGet<C, NoParameters>.Get(IIdentity<C> id, NoParameters parameters, CancellationToken cancellationToken)
                 {
                     var conv = id.Provider.GetConverter(typeof(C), false).Convert(id.Value);
                     var cp = conv.To<CollectionParameters>();
@@ -84,7 +85,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestPost<C, NoParameters, E, E>.Post(IIdentity<C> target, NoParameters parameters, E entity)
+                async ValueTask<RestResponse<E>> IRestPost<C, NoParameters, E, E>.Post(IIdentity<C> target, NoParameters parameters, E entity, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Post(entity);
 
@@ -134,7 +135,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestGet<E, NoParameters>.Get(IIdentity<E> id, NoParameters parameters)
+                async ValueTask<RestResponse<E>> IRestGet<E, NoParameters>.Get(IIdentity<E> id, NoParameters parameters, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Get(id);
                     if (res == null)
@@ -159,7 +160,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestPut<E, NoParameters>.Put(IIdentity<E> id, NoParameters parameters, E entity)
+                async ValueTask<RestResponse<E>> IRestPut<E, NoParameters>.Put(IIdentity<E> id, NoParameters parameters, E entity, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Put(entity);
                     if (res == null)
@@ -184,7 +185,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<object>> IRestDelete<E, NoParameters>.Delete(IIdentity<E> id, NoParameters parameters)
+                async ValueTask<RestResponse<object>> IRestDelete<E, NoParameters>.Delete(IIdentity<E> id, NoParameters parameters, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Delete(id);
 

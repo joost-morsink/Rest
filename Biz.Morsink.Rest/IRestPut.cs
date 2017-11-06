@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -23,6 +24,6 @@ namespace Biz.Morsink.Rest
         /// <param name="parameters">THe parameters for the put operation.</param>
         /// <param name="entity">The resource to put.</param>
         /// <returns>A response potentially containing the up-to-date resource.</returns>
-        ValueTask<RestResponse<T>> Put(IIdentity<T> target, P parameters, T entity);
+        ValueTask<RestResponse<T>> Put(IIdentity<T> target, P parameters, T entity, CancellationToken cancellationToken);
     }
 }

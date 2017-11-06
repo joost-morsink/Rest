@@ -3,6 +3,7 @@ using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Biz.Morsink.Rest
 {
@@ -12,7 +13,7 @@ namespace Biz.Morsink.Rest
     public class RestRequest
     {
         private readonly Func<Type, object> bodyParser;
-
+        private readonly CancellationTokenSource cancellationTokenSource;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -28,6 +29,7 @@ namespace Biz.Morsink.Rest
             Parameters = parameters ?? RestParameterCollection.Empty;
             this.bodyParser = bodyParser ?? (ty => new object());
             Metadata = metadata ?? TypeKeyedDictionary.Empty;
+            cancellationTokenSource = new CancellationTokenSource();
         }
         /// <summary>
         /// Creates a new RestRequest.
@@ -93,6 +95,22 @@ namespace Biz.Morsink.Rest
         /// Virtual member containing the body object, if it was parsed.
         /// </summary>
         public virtual object UntypedBody => null;
+
+        /// <summary>
+        /// Gets the cancellation token for this Rest request.
+        /// </summary>
+        public CancellationToken CancellationToken => cancellationTokenSource.Token;
+        /// <summary>
+        /// True if cancellation has been requested for this Rest request.
+        /// </summary>
+        public bool IsCancellationRequested => cancellationTokenSource.IsCancellationRequested;
+        /// <summary>
+        /// Cancels the Rest request.
+        /// </summary>
+        public void Cancel()
+        {
+            cancellationTokenSource.Cancel();
+        }
     }
     /// <summary>
     /// This class represents a Rest request

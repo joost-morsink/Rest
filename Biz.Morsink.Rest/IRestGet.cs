@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
+using System.Threading;
+
 namespace Biz.Morsink.Rest
 {
     /// <summary>
@@ -21,7 +23,7 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the resource.</param>
         /// <param name="parameters">Parameters used to get the resource.</param>
         /// <returns>A response potentially containing a resource.</returns>
-        ValueTask<RestResponse<T>> Get(IIdentity<T> id, P parameters);
+        ValueTask<RestResponse<T>> Get(IIdentity<T> id, P parameters, CancellationToken cancellationToken);
     }
 
 }

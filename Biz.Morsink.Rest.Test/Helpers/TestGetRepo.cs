@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.Test.Helpers
 {
     public class TestGetRepo : RestRepository<Person>, IRestGet<Person, NoParameters>
     {
-        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters np)
+        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters np, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {
@@ -21,7 +22,7 @@ namespace Biz.Morsink.Rest.Test.Helpers
     }
     public class TestGetFriendCollectionRepo : RestRepository<PersonFriendCollection>, IRestGet<PersonFriendCollection, NoParameters>
     {
-        public ValueTask<RestResponse<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, NoParameters parameters)
+        public ValueTask<RestResponse<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, NoParameters parameters, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {
@@ -51,7 +52,7 @@ namespace Biz.Morsink.Rest.Test.Helpers
     }
     public class TestGetRepo2 : RestRepository<Person2>, IRestGet<Person2, AgeFactorParameter>, IRestGet<Person2, NoParameters>
     {
-        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, AgeFactorParameter parameters)
+        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, AgeFactorParameter parameters, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {
@@ -62,7 +63,7 @@ namespace Biz.Morsink.Rest.Test.Helpers
                 return RestResult.NotFound<Person2>().ToResponseAsync();
         }
 
-        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, NoParameters parameters)
+        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, NoParameters parameters, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {

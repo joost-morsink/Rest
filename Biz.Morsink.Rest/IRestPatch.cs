@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -23,6 +24,6 @@ namespace Biz.Morsink.Rest
         /// <param name="parameters">The parameters for the PATCH operation.</param>
         /// <param name="patchInstructions">The patch instructions to apply to the reource.</param>
         /// <returns>The updated resource.</returns>
-        ValueTask<RestResponse<T>> Patch(IIdentity<T> address, P parameters, I patchInstructions);
+        ValueTask<RestResponse<T>> Patch(IIdentity<T> address, P parameters, I patchInstructions, CancellationToken cancellationToken);
     }
 }

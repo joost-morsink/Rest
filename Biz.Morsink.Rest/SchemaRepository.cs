@@ -6,6 +6,7 @@ using System.Text;
 using Biz.Morsink.Identity;
 using System.Threading.Tasks;
 using Biz.Morsink.Rest.Metadata;
+using System.Threading;
 
 namespace Biz.Morsink.Rest
 {
@@ -32,7 +33,7 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the TypeDescriptor.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous RestResponse that may contain a TypeDescriptor.</returns>
-        public ValueTask<RestResponse<TypeDescriptor>> Get(IIdentity<TypeDescriptor> id, NoParameters parameters)
+        public ValueTask<RestResponse<TypeDescriptor>> Get(IIdentity<TypeDescriptor> id, NoParameters parameters, CancellationToken cancellationToken)
         {
             if (id.Value is Type type)
             {

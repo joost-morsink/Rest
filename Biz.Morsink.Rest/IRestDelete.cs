@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -21,6 +22,6 @@ namespace Biz.Morsink.Rest
         /// <param name="target">The identity value of the resource to delete.</param>
         /// <param name="parameters">A parameters object for deletion.</param>
         /// <returns>A response for the deletion.</returns>
-        ValueTask<RestResponse<object>> Delete(IIdentity<T> target, P parameters);
+        ValueTask<RestResponse<object>> Delete(IIdentity<T> target, P parameters, CancellationToken cancellationToken);
     }
 }

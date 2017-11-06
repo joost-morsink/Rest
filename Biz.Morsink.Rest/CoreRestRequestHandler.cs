@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -172,9 +173,9 @@ namespace Biz.Morsink.Rest
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, E, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
+            var action = (Func<IIdentity<T>, P, E, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
             var req = request.ParseBody<E>();
-            var res = await action(request.Address as IIdentity<T>, param, req.Body);
+            var res = await action(request.Address as IIdentity<T>, param, req.Body, request.CancellationToken);
             var result = await repo.ProcessResponse(res);
             return result;
         }
@@ -183,8 +184,8 @@ namespace Biz.Morsink.Rest
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
-            var res = await action(request.Address as IIdentity<T>, param);
+            var action = (Func<IIdentity<T>, P, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
+            var res = await action(request.Address as IIdentity<T>, param, request.CancellationToken);
             var result = await repo.ProcessResponse(res);
             return result;
         }

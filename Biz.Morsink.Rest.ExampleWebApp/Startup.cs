@@ -27,6 +27,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 .AddJobs()
+                .UseRequestHandler((sp,hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 // Configure Repositories

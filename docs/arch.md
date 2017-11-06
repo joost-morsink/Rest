@@ -103,8 +103,9 @@ interface IRestRequestHandler
 ```
 
 A `RestRequest` contains all data needed to process the request. 
+It also wraps a `CancellationTokenSource` to support cancellation of the request in a cooperative way, meaning the API developer is responsible for implementing or delegating the actual cancellation.
 The return value indicates possible asynchrony through the `ValueTask<>` [functor](https://en.wikipedia.org/wiki/Functor).
-The response side is a three layered value, each with its own aspects and containment of the layer below:
+The response side is a three layered value (see [Values](values.md)), each with its own aspects and containment of the layer below:
 * `RestResponse` is the top layer, containing metadata for the response.
 * `RestResult` is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success, failure and redirect.
 * `RestValue` represents the actual underlying value in a response, optionally containing links and embedded objects.

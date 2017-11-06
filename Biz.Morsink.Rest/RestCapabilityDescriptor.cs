@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
@@ -99,8 +100,8 @@ namespace Biz.Morsink.Rest
 
             var method = iti.DeclaredMethods.Single();
 
-            var par = method.GetParameters().Skip(1).Select(p => p.ParameterType).FirstOrDefault();
-            var body = method.GetParameters().Skip(2).Select(p => p.ParameterType).FirstOrDefault();
+            var par = method.GetParameters().Skip(1).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();
+            var body = method.GetParameters().Skip(2).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();
             var result = method.ReturnType.GenericTypeArguments.Length == 1
                 && (method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>) || method.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 && method.ReturnType.GenericTypeArguments[0].GenericTypeArguments.Length == 1
@@ -152,15 +153,17 @@ namespace Biz.Morsink.Rest
         {
             var mi = InterfaceType.GetTypeInfo().DeclaredMethods.Single();
             if (BodyType == null)
-                return mi.CreateDelegate(typeof(Func<,,>).MakeGenericType(
+                return mi.CreateDelegate(typeof(Func<,,,>).MakeGenericType(
                     typeof(IIdentity<>).MakeGenericType(EntityType),
                     ParameterType,
+                    typeof(CancellationToken),
                     typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(ResultType))), target);
             else
-                return mi.CreateDelegate(typeof(Func<,,,>).MakeGenericType(
-                    typeof(IIdentity<>).MakeGenericType(EntityType), 
+                return mi.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(
+                    typeof(IIdentity<>).MakeGenericType(EntityType),
                     ParameterType,
                     BodyType,
+                    typeof(CancellationToken),
                     typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(ResultType))), target);
         }
 

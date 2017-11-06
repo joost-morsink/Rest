@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.AspNetCore.Identity;
+using System.Threading;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -32,7 +33,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="id">The criteria for searching the PersonCollection.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>A Rest response containing the search results.</returns>
-        public async ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id, NoParameters parameters)
+        public async ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id, NoParameters parameters, CancellationToken cancellationToken)
             => Rest.Value(await resources.GetCollection(id)).ToResponse();
 
         /// <summary>
@@ -42,7 +43,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="parameters">No parameters.</param>
         /// <param name="entity">The entity to put to the backing store.</param>
         /// <returns>An asynchronous Rest response that may contain the posted Person entity.</returns>
-        public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, NoParameters parameters, Person entity)
+        public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, NoParameters parameters, Person entity, CancellationToken cancellationToken)
         {
             var ent = await resources.Post(entity);
             return Rest.Value(ent).ToResponse().WithMetadata(new CreatedResource { Address = ent.Id });
