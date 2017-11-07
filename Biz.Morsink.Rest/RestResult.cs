@@ -179,7 +179,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Constructor.
                 /// </summary>
-                /// <param name="restValue">A value describing the reason why the request was bad.</param>
+                /// <param name="data">A value describing the reason why the request was bad.</param>
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
                 public BadRequest(object data, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
@@ -222,6 +222,48 @@ namespace Biz.Morsink.Rest
                 public override RestResult<U>.Failure Select<U>()
                     => RestResult<U>.Failure.NotFound.Instance;
                 public override RestFailureReason Reason => RestFailureReason.NotFound;
+            }
+            /// <summary>
+            /// This class represents the request could not be executed.
+            /// </summary>
+            public class NotExecuted : Failure, IHasRestValue<object>
+            {
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="restValue">A Rest value describing the reason why the request was not executed.</param>
+                public NotExecuted(RestValue<object> restValue)
+                {
+                    RestValue = restValue;
+                }
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="data">A value describing the reason why the request was not executed.</param>              
+                /// <param name="links">An optional collection of links for the result.</param>
+                /// <param name="embeddings">An optional collection of embeddings for the result.</param>
+                public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+                    : this(new RestValue<object>(data, links, embeddings))
+                { }
+                /// <summary>
+                /// A Rest value describing the reason why the request was not executed.
+                /// </summary>
+                public RestValue<object> RestValue { get; }
+                /// <summary>
+                /// A value describing the reason why the request was not executed.
+                /// </summary>
+                public object Data => RestValue.Value;
+
+                IRestValue IHasRestValue.RestValue => RestValue;
+
+                /// <summary>
+                /// Changes the underlying successful value type for the Failure.
+                /// </summary>
+                /// <typeparam name="U">The new underlying successful value type.</typeparam>
+                /// <returns>A new NotExecuted failure for type U.</returns>
+                public override RestResult<U>.Failure Select<U>()
+                    => new RestResult<U>.Failure.NotExecuted(RestValue);
+                public override RestFailureReason Reason => RestFailureReason.NotExecuted;
 
             }
             /// <summary>

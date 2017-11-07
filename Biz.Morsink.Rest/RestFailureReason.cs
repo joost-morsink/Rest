@@ -9,6 +9,9 @@ namespace Biz.Morsink.Rest
     /// </summary>
     public enum RestFailureReason
     {
-        BadRequest, NotFound, Error
+        BadRequest,
+        NotFound,
+        Error,
+        NotExecuted
     }
 }

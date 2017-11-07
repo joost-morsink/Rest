@@ -160,6 +160,9 @@ namespace Biz.Morsink.Rest.AspNetCore
                     case RestFailureReason.Error:
                         context.Response.StatusCode = 500;
                         break;
+                    case RestFailureReason.NotExecuted:
+                        context.Response.StatusCode = 412;
+                        break;
                 }
             else if (response.UntypedResult is IRestRedirect redirect)
                 switch (redirect.Type)

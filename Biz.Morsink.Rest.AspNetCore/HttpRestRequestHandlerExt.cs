@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -19,14 +20,22 @@ namespace Biz.Morsink.Rest.AspNetCore
             => pipeline.Use(next => async (context, req, conv) =>
             {
                 RestResponse response;
-                if (context.Request.Headers.ContainsKey("If-None-Match"))
+                var httpReq = context.Request;
+                if (httpReq.Headers.ContainsKey("If-None-Match"))
                 {
-                    var token = context.Request.Headers["If-None-Match"][0];
-                    var versionToken = new VersionToken { Token = token.Substring(1, token.Length - 2) };
-                    response = await next(context, req.AddMetadata(versionToken), conv);
+                    var tokens = httpReq.Headers["If-None-Match"];
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(token => token.Substring(1, token.Length - 2)).ToList(), Matches = false };
+                    response = await next(context, req.AddMetadata(versionTokens), conv);
+                }
+                else if (httpReq.Headers.ContainsKey("If-Match"))
+                {
+                    var tokens = httpReq.Headers["If-Match"];
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(token => token.Substring(1, token.Length - 2)).ToList(), Matches = true };
+                    response = await next(context, req.AddMetadata(versionTokens), conv);
                 }
                 else
                     response = await next(context, req, conv);
+
                 if (response.Metadata.TryGet<ResponseCaching>(out var cache))
                 {
                     if (!cache.StoreAllowed)
