@@ -23,6 +23,17 @@ namespace Biz.Morsink.Rest
             Task = task;
             SetDate();
         }
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="jobId">The identity value of the RestJob.</param>
+        /// <param name="task">The asynchronous RestResponse.</param>
+        public RestJob(IIdentity<RestJob> jobId, Task<RestResponse> task)
+        {
+            Id = jobId;
+            Task = task;
+            SetDate();
+        }
         private async void SetDate()
         {
             try

@@ -283,6 +283,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 if (!sc.Any(sd => sd.ServiceType == typeof(IRestJobStore)))
                     sc.AddSingleton<IRestJobStore, MemoryRestJobStore>(sp => new MemoryRestJobStore(sp.GetRequiredService<IRestIdentityProvider>()));
             });
+            builder.AddPathMapping<RestJobController>(jobRepositoryPath + "/controller/*", new[] { typeof(RestJob), typeof(RestJobController) });
             return builder;
         }
     }
