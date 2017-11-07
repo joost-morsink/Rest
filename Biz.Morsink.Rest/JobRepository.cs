@@ -30,17 +30,17 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value for the RestJob.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest response, possibly containing the RestJob with the specified identity value.</returns>
-        public ValueTask<RestResponse<RestJob>> Get(IIdentity<RestJob> id, NoParameters parameters, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<RestJob>> Get(IIdentity<RestJob> id, NoParameters parameters, CancellationToken cancellationToken)
         {
-            var res = restJobStore.GetJob(id);
+            var res = await restJobStore.GetJob(id);
             if (res == null)
-                return RestResult.NotFound<RestJob>().ToResponseAsync();
+                return RestResult.NotFound<RestJob>().ToResponse();
 
             return res.Task.Status >= TaskStatus.RanToCompletion
                 ? Rest.ValueBuilder(res)
                     .WithLink(Link.Create("result", new RestJobResult(res).Id))
-                    .BuildResponseAsync()
-                : Rest.Value(res).ToResponseAsync();
+                    .BuildResponse()
+                : Rest.Value(res).ToResponse();
         }
     }
 

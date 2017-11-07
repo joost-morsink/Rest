@@ -100,21 +100,22 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <param name="task">The asynchronous Rest response.</param>
         /// <returns>The RestJob as registered in the store.</returns>
-        public RestJob RegisterJob(Task<RestResponse> task)
+        public ValueTask<RestJob> RegisterJob(Task<RestResponse> task)
         {
-            var job = new RestJob(identityProvider, task);
-            var key = GetKey(job.Id);
+            var id = identityProvider.Creator<RestJob>().Create(Guid.NewGuid());
+            var job = new RestJob(id, task);
+            var key = GetKey(id);
             if (!entries.TryAdd(key, new Entry(key, job)))
                 throw new ArgumentException("Entry has already been registered.");
-            return job;
+            return new ValueTask<RestJob>(job);
         }
         /// <summary>
         /// Gets a RestJob from the store.
         /// </summary>
         /// <param name="id">The identity value of the job.</param>
         /// <returns>The RestJob if it is present in the store, null otherwise.</returns>
-        public RestJob GetJob(IIdentity<RestJob> id)
-            => entries.TryGetValue(GetKey(id), out var entry) ? entry.Job : null;
+        public ValueTask<RestJob> GetJob(IIdentity<RestJob> id)
+            => new ValueTask<RestJob>(entries.TryGetValue(GetKey(id), out var entry) ? entry.Job : null);
 
         private string GetKey(IIdentity<RestJob> id)
             => id.Provider.GetConverter(typeof(RestJob), false).Convert(id.Value).To<string>();
@@ -132,24 +133,22 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <param name="id">The identity value for the job controller.</param>
         /// <returns>A RestJobController instance if it was found, null otherwise.</returns>
-        public RestJobController GetController(IIdentity<RestJob, RestJobController> id)
+        public ValueTask<RestJobController> GetController(IIdentity<RestJob, RestJobController> id)
         {
             var cid = id as IIdentity<RestJob, RestJobController>;
             var jobId = GetKey(cid?.Parent);
             if (jobId == null)
-                return null;
-            if (manualEntries.TryGetValue(jobId, out var entry) && entry.Id.Equals(id))
-            {
-                return new RestJobController(this, cid);
-            }
+                return new ValueTask<RestJobController>((RestJobController)null);
+            else if (manualEntries.TryGetValue(jobId, out var entry) && entry.Id.Equals(id))
+                return new ValueTask<RestJobController>(new RestJobController(this, cid));
             else
-                return null;
+                return new ValueTask<RestJobController>((RestJobController)null);
         }
         /// <summary>
         /// Creates a RestJob.
         /// </summary>
         /// <returns>A controller for the RestJob.</returns>
-        public RestJobController CreateJob()
+        public ValueTask<RestJobController> CreateJob()
         {
             var idval = (Guid.NewGuid(), Guid.NewGuid());
             var id = identityProvider.Creator<RestJobController>().Create(idval) as IIdentity<RestJob, RestJobController>;
@@ -159,28 +158,32 @@ namespace Biz.Morsink.Rest
             if (entries.TryAdd(key, new Entry(key, new RestJob(id.Parent, entry.Response))))
             {
                 if (manualEntries.TryAdd(key, entry))
-                    return new RestJobController(this, id);
+                    return new ValueTask<RestJobController>( new RestJobController(this, id));
                 else
                 {
                     entries.TryRemove(key, out var _);
-                    return null;
+                    return new ValueTask<RestJobController>((RestJobController)null);
                 }
             } else
-                return null;
+                return new ValueTask<RestJobController>((RestJobController)null);
         }
         /// <summary>
         /// Finishes a RestJob corresponding to the controller.
         /// </summary>
         /// <param name="controller">The controller.</param>
         /// <param name="value">The result value for the job.</param>
-        public void FinishJob(RestJobController controller, object value)
+        public ValueTask<bool> FinishJob(RestJobController controller, object value)
         {
             var key = GetKey(controller.JobId);
             if(manualEntries.TryGetValue(key, out var entry))
             {
                 if (entry.Id.Equals(controller.Id))
+                {
                     entry.Finish(value);
+                    return new ValueTask<bool>(true);
+                }
             }
+            return new ValueTask<bool>(false);
         }
     }
 }

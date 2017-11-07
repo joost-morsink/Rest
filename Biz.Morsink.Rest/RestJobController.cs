@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest
 {
@@ -38,9 +39,8 @@ namespace Biz.Morsink.Rest
         /// Finishes the job.
         /// </summary>
         /// <param name="value">The return value for the job.</param>
-        public void Finish(object value)
-        {
-            store.FinishJob(this, value);
-        }
+        public ValueTask<bool> Finish(object value)
+            => store.FinishJob(this, value);
+        
     }
 }

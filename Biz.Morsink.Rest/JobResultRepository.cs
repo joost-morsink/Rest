@@ -28,13 +28,13 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the RestJobResult.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest reponse that might contain a RestJobResult.</returns>
-        public ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, NoParameters parameters, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, NoParameters parameters, CancellationToken cancellationToken)
         {
-            var res = restJobStore.GetJob(id.Provider.Creator<RestJob>().Create(id.Value));
+            var res = await restJobStore.GetJob(id.Provider.Creator<RestJob>().Create(id.Value));
             if (res == null || res.Task.Status < TaskStatus.RanToCompletion)
-                return RestResult.NotFound<RestJobResult>().ToResponseAsync();
+                return RestResult.NotFound<RestJobResult>().ToResponse();
             else
-                return Rest.Value(new RestJobResult(res)).ToResponseAsync();
+                return Rest.Value(new RestJobResult(res)).ToResponse();
         }
         /// <summary>
         /// Process the reponse.

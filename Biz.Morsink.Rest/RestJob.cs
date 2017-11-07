@@ -15,17 +15,6 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="provider">An identity provider to create an identity value with.</param>
-        /// <param name="task">The asynchronous Rest response.</param>
-        public RestJob(IIdentityProvider provider, Task<RestResponse> task)
-        {
-            Id = provider.Creator<RestJob>().Create(Guid.NewGuid());
-            Task = task;
-            SetDate();
-        }
-        /// <summary>
-        /// Constructor.
-        /// </summary>
         /// <param name="jobId">The identity value of the RestJob.</param>
         /// <param name="task">The asynchronous RestResponse.</param>
         public RestJob(IIdentity<RestJob> jobId, Task<RestResponse> task)

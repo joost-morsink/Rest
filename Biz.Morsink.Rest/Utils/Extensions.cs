@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Biz.Morsink.Identity;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.Utils
 {
@@ -43,5 +45,13 @@ namespace Biz.Morsink.Rest.Utils
                 seed = next(seed);
             }
         }
+        /// <summary>
+        /// Gets a job controller from the job store.
+        /// </summary>
+        /// <param name="store">The store.</param>
+        /// <param name="id">The identity value for the job controller.</param>
+        /// <returns>A RestJobController instance if it was found, null otherwise.</returns>
+        public static ValueTask<RestJobController> GetController(this IRestJobStore store, IIdentity<RestJobController> id)
+            => store.GetController(id as IIdentity<RestJob, RestJobController>);
     }
 }
