@@ -160,7 +160,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 .AddRepository<E>(entityLifetime)
                 .ServiceCollection.Add(new ServiceDescriptor(typeof(IRestResourceCollection<,>).MakeGenericType(ct, et), typeof(S), sourceLifetime));
 
-            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IDynamicLinkProvider<>).MakeGenericType(ct), typeof(RestCollectionLinks<,>).MakeGenericType(ct, et), ServiceLifetime.Scoped));
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IDynamicLinkProvider<>).MakeGenericType(ct), typeof(RestCollectionLinks<,,>).MakeGenericType(ct, et, et), ServiceLifetime.Scoped));
             return builder;
         }
         /// <summary>

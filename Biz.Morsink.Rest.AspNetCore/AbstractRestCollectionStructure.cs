@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -11,15 +12,17 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     /// <typeparam name="C">The Collection type.</typeparam>
     /// <typeparam name="E">The item type.</typeparam>
-    public abstract class AbstractRestCollectionStructure<C, E> : AbstractRestResourceCollection<C, E>
-        where C : RestCollection<E>
+    /// <typeparam name="I">The type whose instances contain descriptive information about instances of the entity type.</typeparam>
+    public abstract class AbstractRestCollectionStructure<C, E, I> : AbstractRestResourceCollection<C, E>
+        where C : RestCollection<E, I>
+        where I : IHasIdentity<E>
         where E : class
     {
         /// <summary>
         /// Gets the structure corresponding to this collection.
         /// </summary>
         protected abstract AbstractStructure GetStructure();
-        
+
         /// <summary>
         /// Base class for collection structures.
         /// </summary>
@@ -74,17 +77,28 @@ namespace Biz.Morsink.Rest.AspNetCore
                 foreach (var mapping in PathMappings)
                     serviceCollection.AddSingleton(mapping);
                 serviceCollection.AddScoped<IRestRepository>(
-                    sp => ((AbstractRestCollectionStructure<C, E>)sp.GetService(RootType)).GetCollectionRepository());
+                    sp => ((AbstractRestCollectionStructure<C, E, I>)sp.GetService(RootType)).GetCollectionRepository());
                 serviceCollection.AddScoped<IRestRepository>(
-                    sp => ((AbstractRestCollectionStructure<C, E>)sp.GetService(RootType)).GetItemRepository());
+                    sp => ((AbstractRestCollectionStructure<C, E, I>)sp.GetService(RootType)).GetItemRepository());
                 serviceCollection.AddScoped<IRestRepository<C>>(
-                    sp => ((AbstractRestCollectionStructure<C, E>)sp.GetService(RootType)).GetCollectionRepository());
+                    sp => ((AbstractRestCollectionStructure<C, E, I>)sp.GetService(RootType)).GetCollectionRepository());
                 serviceCollection.AddScoped<IRestRepository<E>>(
-                    sp => ((AbstractRestCollectionStructure<C, E>)sp.GetService(RootType)).GetItemRepository());
+                    sp => ((AbstractRestCollectionStructure<C, E, I>)sp.GetService(RootType)).GetItemRepository());
 
-                serviceCollection.AddScoped<IDynamicLinkProvider<C>, RestCollectionLinks<C, E>>();
+                serviceCollection.AddScoped<IDynamicLinkProvider<C>, RestCollectionLinks<C, E, I>>();
             }
         }
 
+    }
+    /// <summary>
+    /// Abstract Root type for a collection structure of Rest components.
+    /// The descriptive type has been set to the item type itself.
+    /// </summary>
+    /// <typeparam name="C">The Collection type.</typeparam>
+    /// <typeparam name="E">The item type.</typeparam>
+    public abstract class AbstractRestCollectionStructure<C, E> : AbstractRestCollectionStructure<C, E, E>
+        where C : RestCollection<E, E>
+        where E : class, IHasIdentity<E>
+    {
     }
 }

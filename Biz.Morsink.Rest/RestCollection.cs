@@ -12,7 +12,9 @@ namespace Biz.Morsink.Rest
     /// Using identity values criteria may be passed, effectively creating slices of the entire collection.
     /// </summary>
     /// <typeparam name="T">The entity type contained in the collection.</typeparam>
-    public class RestCollection<T>
+    /// <typeparam name="I">The type whose instances contain descriptive information about instances of the entity type.</typeparam>
+    public class RestCollection<T, I>
+        where I : IHasIdentity<T>
     {
         /// <summary>
         /// Constructor.
@@ -22,7 +24,7 @@ namespace Biz.Morsink.Rest
         /// <param name="count">The total number of items in the collection (slice).</param>
         /// <param name="limit">The maximum number of items in the slice. Default = null.</param>
         /// <param name="skip">The number of entities to skip before containing entities in the slice. Default = 0.</param>
-        public RestCollection(IIdentity id, IEnumerable<T> items, int count, int? limit = null, int skip = 0)
+        public RestCollection(IIdentity id, IEnumerable<I> items, int count, int? limit = null, int skip = 0)
         {
             Id = id;
             Items = items;
@@ -37,7 +39,7 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets the items in the current slice.
         /// </summary>
-        public IEnumerable<T> Items { get; }
+        public IEnumerable<I> Items { get; }
         /// <summary>
         /// Gets the total number of items in the collection (slice).
         /// </summary>
@@ -50,5 +52,18 @@ namespace Biz.Morsink.Rest
         /// Gets the number of entities to skip before containing entities in the slice
         /// </summary>
         public int Skip { get; }
+    }
+    /// <summary>
+    /// Base class for collection (slice) types in Restful apis.
+    /// A collection represents the entire collection of entities that exist at any given time.
+    /// Using identity values criteria may be passed, effectively creating slices of the entire collection.
+    /// The descriptive type is set to the entity type itself in this base class.
+    /// </summary>
+    /// <typeparam name="T">The entity type contained in the collection.</typeparam>
+    public class RestCollection<T> : RestCollection<T, T>
+        where T : IHasIdentity<T>
+    {
+        public RestCollection(IIdentity id, IEnumerable<T> items, int count, int? limit = null, int skip = 0)
+            : base(id, items, count, limit, skip) { }
     }
 }

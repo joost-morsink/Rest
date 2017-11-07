@@ -14,8 +14,10 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The collection type.</typeparam>
     /// <typeparam name="E">The entity type contained in the collection.</typeparam>
-    public class RestCollectionLinks<T,E> : IDynamicLinkProvider<T>
-        where T: RestCollection<E>
+    /// <typeparam name="I">The type whose instances contain descriptive information about instances of the entity type.</typeparam>
+    public class RestCollectionLinks<T, E, I> : IDynamicLinkProvider<T>
+        where T : RestCollection<E, I>
+        where I : IHasIdentity<E>
     {
         /// <summary>
         /// The reltype 'first'.
