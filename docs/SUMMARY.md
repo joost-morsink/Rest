@@ -9,3 +9,6 @@
 * [Values](values.md)
 * [Type Descriptors](typeDesc.md)
 * [Metadata](metadata.md)
+* [Configuration](config.md)
+* [Jobs](jobs.md)
+* [Structures](struct.md)

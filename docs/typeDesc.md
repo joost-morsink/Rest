@@ -80,3 +80,29 @@ It is useful to model type inheritance by specifying the base class separately f
 A reference is a reference to a TypeDescriptor by name.
 It is dependent on external data (TypeDescriptor repository of some sorts) being present that knows about the referenced type.
 
+## Schema
+`TypeDescriptors` are generic representations of types. 
+As such, they can be translated into format specific schemas.
+For instance, JSON has a [JSON Schema standard](http://json-schema.org/) and the `Biz.Morsink.Rest.HttpConverter.Json` project defines a `JsonSchemaTypeDescriptorVisitor` that is able to translate any `TypeDescriptor` into a JSON schema.
+Each serialization format should be able to convert `TypeDescriptor`s to schema, and the visitor pattern is there to help with the implementation.
+
+### JSON
+JSON schema is a very compatible schema type, because of the way it is set up.
+An empty schema accepts _any_ JSON, and every element added to the schema adds a constraint.
+This allows for a very clean mathematical specification of datatype constraints.
+
+JSON as a format closely resembles datatypes defined in other languages (like .Net).
+This is also a very good reason why its schema is very compatible to `TypeDescriptor` instances.
+
+### XML
+XML on the other side has many ways of specifying schemas, the most popular being XSD (Xml schema definition).
+An empty schema accepts _no_ XML, and everything added to the schema adds either more possibilities or more constraints to the datatype.
+This means specifying XML structure using XSD is not very mathematical in nature.
+
+XML is a very powerful _document_ format, when used for data only a small subset is needed.
+There is no best, or canonical, way of determining how a `TypeDescriptor` should be converted to an XSD, or how an object of the type described should be serialized to XML.
+Of course it is possible to define a few ways of doing it.
+
+## Representations
+
+**TODO**
