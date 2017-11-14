@@ -46,6 +46,17 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(m.SegmentValues[0] == "123" && m.SegmentValues[1] == "456", "The matched wildcard parts should match those in the RestPath string in the same order.");
         }
         [TestMethod]
+        public void RestPath_Plus()
+        {
+            var p = RestPath.Parse("/api/person/*/blogs+");
+            var q = RestPath.Parse("/api/person/joost/blogs");
+            var m = p.MatchPath(q);
+            Assert.IsTrue(m.IsSuccessful, "Component indicator should be ignored in match");
+            Assert.AreEqual(2, m.SegmentValues.Count, "Components should be counted in match");
+            Assert.AreEqual("joost", m.SegmentValues[0],"Wildcard should match");
+            Assert.AreEqual("", m.SegmentValues[1], "Component should match as empty value");
+        }
+        [TestMethod]
         public void RestPath_QueryString()
         {
             var p = RestPath.Parse("/api/person?search=Morsink&limit=10&skip=0");

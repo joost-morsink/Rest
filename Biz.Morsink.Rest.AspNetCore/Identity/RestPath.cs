@@ -23,12 +23,19 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         public struct Segment : IEquatable<Segment>
         {
-            private readonly bool hasContent;
-            private Segment(string content)
+            private enum ContentType
+            {
+                Wildcard = 0,
+                Content = 1,
+                ComponentContent = 2
+            }
+            private readonly ContentType contentType;
+            private Segment(string content, ContentType contentType = ContentType.Content)
             {
                 Content = content;
-                hasContent = true;
+                this.contentType = contentType;
             }
+
             /// <summary>
             /// Gets the content of the segment.
             /// </summary>
@@ -36,7 +43,12 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// True if this segment is a wildcard.
             /// </summary>
-            public bool IsWildcard => !hasContent;
+            public bool IsWildcard => contentType == ContentType.Wildcard;
+            /// <summary>
+            /// True if the segments carries a (possibly empty) component value.
+            /// This means it is either a wildcard or an fixed value carrying an empty component.
+            /// </summary>
+            public bool IsComponent => contentType != ContentType.Content;
             /// <summary>
             /// Converts an unescaped string to a segment.
             /// </summary>
@@ -50,18 +62,25 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <param name="str">The escaped string to parse.</param>
             /// <returns>A segment.</returns>
             public static Segment Escaped(string str)
-                => str == "*" ? new Segment() : new Segment(UriDecode(str));
+                => str == "*"
+                    ? new Segment()
+                    : str.EndsWith("+")
+                        ? new Segment(UriDecode(str.Substring(0, str.Length - 1)), ContentType.ComponentContent)
+                        : new Segment(UriDecode(str));
+            /// <summary>
+            /// Gets a Wildcard segment
+            /// </summary>
             public static Segment Wildcard => default(Segment);
 
             public override string ToString()
-                => IsWildcard ? "*" : UriEncode(Content);
+                => IsWildcard ? "*" : (UriEncode(Content) + (IsComponent ? "+" : ""));
 
             public override int GetHashCode()
-                => hasContent ? Content.GetHashCode() : 0;
+                => contentType == ContentType.Wildcard ? 0 : Content.GetHashCode();
             public override bool Equals(object obj)
                 => obj is Segment && Equals((Segment)obj);
             public bool Equals(Segment other)
-                => IsWildcard == other.IsWildcard && (IsWildcard || string.Equals(Content, other.Content));
+                => contentType == other.contentType && (IsWildcard || string.Equals(Content, other.Content));
             /// <summary>
             /// Determines whether the segments 'matches' the other.
             /// </summary>
@@ -449,7 +468,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// True if this is a remote path.
         /// </summary>
         public bool IsRemote => pathBase != null;
-        internal int SegmentArity => segments.Where(s => s.IsWildcard).Count();
+        internal int SegmentArity => segments.Where(s => s.IsComponent).Count();
         /// <summary>
         /// Gets the number of wildcard parts in this RestPath.
         /// </summary>
@@ -491,6 +510,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 if (this[i].IsWildcard)
                     result.Add(other[i].Content);
+                else if (this[i].IsComponent)
+                    result.Add("");
                 else if (!this[i].Equals(other[i]))
                     return default(Match);
             }
@@ -512,6 +533,11 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 if (segments[i].IsWildcard)
                     yield return Segment.Unescaped(s[n++]);
+                else if (segments[i].IsComponent)
+                {
+                    yield return Segment.Unescaped(segments[i].Content);
+                    n++;
+                }
                 else
                     yield return segments[i];
             }
