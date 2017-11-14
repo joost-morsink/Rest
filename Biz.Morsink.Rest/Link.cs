@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest
             RelType = relType;
             Target = target;
             Parameters = parameters;
-            Capability = capability ?? typeof(IRestGet<,>).MakeGenericType(target.ForType, parameters?.GetType() ?? typeof(NoParameters));
+            Capability = capability ?? typeof(IRestGet<,>).MakeGenericType(target.ForType, parameters?.GetType() ?? typeof(Empty));
         }
         /// <summary>
         /// Gets the relation type.
@@ -77,7 +77,7 @@ namespace Biz.Morsink.Rest
     public class Link<T> : Link
         where T : class
     {
-        internal Link(string relType, IIdentity<T> target, object parameters, Type capability) : base(relType, target, parameters, capability ?? typeof(IRestGet<T, NoParameters>))
+        internal Link(string relType, IIdentity<T> target, object parameters, Type capability) : base(relType, target, parameters, capability ?? typeof(IRestGet<T, Empty>))
         { }
         /// <summary>
         /// Gets the identity value for the target of the link.

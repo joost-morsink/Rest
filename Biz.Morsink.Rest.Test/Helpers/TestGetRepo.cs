@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.Test.Helpers
 {
-    public class TestGetRepo : RestRepository<Person>, IRestGet<Person, NoParameters>
+    public class TestGetRepo : RestRepository<Person>, IRestGet<Person, Empty>
     {
-        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, NoParameters np, CancellationToken cancellationToken)
+        public ValueTask<RestResponse<Person>> Get(IIdentity<Person> id, Empty np, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {
@@ -20,9 +20,9 @@ namespace Biz.Morsink.Rest.Test.Helpers
                 return RestResult.NotFound<Person>().ToResponse().ToAsync();
         }
     }
-    public class TestGetFriendCollectionRepo : RestRepository<PersonFriendCollection>, IRestGet<PersonFriendCollection, NoParameters>
+    public class TestGetFriendCollectionRepo : RestRepository<PersonFriendCollection>, IRestGet<PersonFriendCollection, Empty>
     {
-        public ValueTask<RestResponse<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, NoParameters parameters, CancellationToken cancellationToken)
+        public ValueTask<RestResponse<PersonFriendCollection>> Get(IIdentity<PersonFriendCollection> id, Empty parameters, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {
@@ -50,7 +50,7 @@ namespace Biz.Morsink.Rest.Test.Helpers
         }
         public double AgeFactor { get; }
     }
-    public class TestGetRepo2 : RestRepository<Person2>, IRestGet<Person2, AgeFactorParameter>, IRestGet<Person2, NoParameters>
+    public class TestGetRepo2 : RestRepository<Person2>, IRestGet<Person2, AgeFactorParameter>, IRestGet<Person2, Empty>
     {
         public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, AgeFactorParameter parameters, CancellationToken cancellationToken)
         {
@@ -63,7 +63,7 @@ namespace Biz.Morsink.Rest.Test.Helpers
                 return RestResult.NotFound<Person2>().ToResponseAsync();
         }
 
-        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, NoParameters parameters, CancellationToken cancellationToken)
+        public ValueTask<RestResponse<Person2>> Get(IIdentity<Person2> id, Empty parameters, CancellationToken cancellationToken)
         {
             if (id.Value?.ToString() == "1")
             {

@@ -97,7 +97,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 res[capGroup.Key] = capGroup.Select(cap => new RequestDescription(
                      typeDescriptorCreator.GetDescriptor(cap.BodyType),
                      capGroup.Key == "GET" && wildcardtype != null
-                        ? cap.ParameterType == typeof(NoParameters)
+                        ? cap.ParameterType == typeof(Empty)
                             ? typeDescriptorCreator.GetDescriptor(wildcardtype)
                             : TypeDescriptor.MakeIntersection("", new[] { typeDescriptorCreator.GetDescriptor(wildcardtype), typeDescriptorCreator.GetDescriptor(cap.ParameterType) })
                         : typeDescriptorCreator.GetDescriptor(cap.ParameterType),

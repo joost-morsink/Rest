@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// This class represents the result of a RestJob.

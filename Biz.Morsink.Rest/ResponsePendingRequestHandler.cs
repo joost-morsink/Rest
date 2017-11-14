@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Jobs;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,7 +38,7 @@ namespace Biz.Morsink.Rest
             await Task.WhenAny(resp, Task.Delay(maxWait));
             if (resp.Status < TaskStatus.RanToCompletion)
             {
-                var job = restJobStore.RegisterJob(resp);
+                var job = await restJobStore.RegisterJob(resp);
                 return RestResult.Pending<object>(job).ToResponse();
             }
             else

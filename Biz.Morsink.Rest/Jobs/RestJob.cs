@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// A Rest Job represents an asynchronous RestResponse.
@@ -15,11 +15,11 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="provider">An identity provider to create an identity value with.</param>
-        /// <param name="task">The asynchronous Rest response.</param>
-        public RestJob(IIdentityProvider provider, Task<RestResponse> task)
+        /// <param name="jobId">The identity value of the RestJob.</param>
+        /// <param name="task">The asynchronous RestResponse.</param>
+        public RestJob(IIdentity<RestJob> jobId, Task<RestResponse> task)
         {
-            Id = provider.Creator<RestJob>().Create(Guid.NewGuid());
+            Id = jobId;
             Task = task;
             SetDate();
         }

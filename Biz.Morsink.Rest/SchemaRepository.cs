@@ -13,7 +13,7 @@ namespace Biz.Morsink.Rest
     /// <summary>
     /// The Schema repository maps identity values for Types to TypeDescriptors.
     /// </summary>
-    public class SchemaRepository : RestRepository<TypeDescriptor>, IRestGet<TypeDescriptor, NoParameters>
+    public class SchemaRepository : RestRepository<TypeDescriptor>, IRestGet<TypeDescriptor, Empty>
     {
         private static readonly ResponseCaching CACHING = new ResponseCaching
         {
@@ -33,7 +33,7 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the TypeDescriptor.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous RestResponse that may contain a TypeDescriptor.</returns>
-        public ValueTask<RestResponse<TypeDescriptor>> Get(IIdentity<TypeDescriptor> id, NoParameters parameters, CancellationToken cancellationToken)
+        public ValueTask<RestResponse<TypeDescriptor>> Get(IIdentity<TypeDescriptor> id, Empty parameters, CancellationToken cancellationToken)
         {
             if (id.Value is Type type)
             {
