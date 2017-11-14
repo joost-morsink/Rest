@@ -35,6 +35,16 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(typeof(R).GetGeneric(typeof(IRestRepository<>))), typeof(R), lifetime));
             return serviceCollection;
         }
+        public static IRestServicesBuilder AddAttributedRepository<R>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            builder.ServiceCollection.Add(new ServiceDescriptor(typeof(R), typeof(R), lifetime));
+            foreach (var (key, f) in AttributedRestRepositories.GetRepositoryFactories(sp => sp.GetRequiredService<R>()))
+            {
+                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository),f, lifetime));
+                builder.ServiceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(key), f, lifetime));
+            }
+            return builder;  
+        }
         /// <summary>
         /// Adds a Rest structure to the service collection.
         /// </summary>

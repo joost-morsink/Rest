@@ -33,6 +33,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure Repositories
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
+                .AddAttributedRepository<BlogRepository>()
+                .AddPathMapping<Blog>("/blog/*")
                 .AddRepository<HomeRepository>()
                 );
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();

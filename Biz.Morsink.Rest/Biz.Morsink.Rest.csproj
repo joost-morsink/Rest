@@ -18,6 +18,7 @@
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
     <Configurations>Debug;Release;Prerelease</Configurations>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
     <VersionSuffix>beta001</VersionSuffix>

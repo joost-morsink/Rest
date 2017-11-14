@@ -62,6 +62,26 @@ namespace Biz.Morsink.Rest
             }
         }
         /// <summary>
+        /// Dynamically register a repository's dynamic capability.
+        /// </summary>
+        /// <param name="capability"></param>
+        protected void RegisterDynamic(IRestCapability<T> capability)
+        {
+            var capGroups = from itf in capability.GetType().GetTypeInfo().ImplementedInterfaces
+                            where itf.GetTypeInfo() != CAPABILITY_TYPEINFO && CAPABILITY_TYPEINFO.IsAssignableFrom(itf.GetTypeInfo())
+                            let cap = RestCapabilityDescriptor.Create(itf)
+                            group cap by (RestCapabilityDescriptorKey)cap into g
+                            select new { Key = g.Key, Value = g.Select(c => new RestCapability<T>(c, capability)) };
+            foreach (var capGroup in capGroups)
+            {
+                if (capabilities.TryGetValue(capGroup.Key, out var lst))
+                    capabilities = capabilities.SetItem(capGroup.Key, lst.AddRange(capGroup.Value));
+                else
+                    capabilities = capabilities.Add(capGroup.Key, capGroup.Value.ToImmutableList());
+            }
+
+        }
+        /// <summary>
         /// Gets capability descriptors for all the capabilities the repository provides.
         /// </summary>
         /// <returns>Capability descriptors for all the capabilities the repository provides.</returns>
