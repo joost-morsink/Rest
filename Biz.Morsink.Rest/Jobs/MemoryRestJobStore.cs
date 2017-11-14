@@ -8,7 +8,7 @@ using System.Threading;
 using System.Linq;
 using Biz.Morsink.DataConvert;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// This class provides an implementation of the IRestJobStore interface with an in-memory datastructure.

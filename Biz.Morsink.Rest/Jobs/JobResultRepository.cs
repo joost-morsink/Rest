@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// Repository class for RestJobResults.
     /// </summary>
-    public class JobResultRepository : RestRepository<RestJobResult>, IRestGet<RestJobResult, NoParameters>
+    public class JobResultRepository : RestRepository<RestJobResult>, IRestGet<RestJobResult, Empty>
     {
         private readonly IRestJobStore restJobStore;
         /// <summary>
@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest
         /// <param name="id">The identity value of the RestJobResult.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest reponse that might contain a RestJobResult.</returns>
-        public async ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, NoParameters parameters, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, Empty parameters, CancellationToken cancellationToken)
         {
             var res = await restJobStore.GetJob(id.Provider.Creator<RestJob>().Create(id.Value));
             if (res == null || res.Task.Status < TaskStatus.RanToCompletion)

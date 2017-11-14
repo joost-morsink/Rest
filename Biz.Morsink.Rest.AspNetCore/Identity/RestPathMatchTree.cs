@@ -11,6 +11,17 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public class RestPathMatchTree
     {
+        private class SegmentEqualityComparer : IEqualityComparer<RestPath.Segment>
+        {
+            private SegmentEqualityComparer() { }
+            public static SegmentEqualityComparer Instance { get; } = new SegmentEqualityComparer();
+            public bool Equals(RestPath.Segment x, RestPath.Segment y)
+                => x.IsWildcard && y.IsWildcard
+                || !x.IsWildcard && !y.IsWildcard && x.Content == y.Content;
+
+            public int GetHashCode(RestPath.Segment obj)
+                => obj.IsWildcard ? 0 : obj.Content.GetHashCode();
+        }
         private readonly ILookup<RestPath.Segment, RestPath> lookup;
         private readonly ConcurrentDictionary<RestPath.Segment, RestPathMatchTree> tree;
 
@@ -19,7 +30,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         public RestPathMatchTree(IEnumerable<RestPath> paths)
         {
-            lookup = paths.Where(p => p.Count > 0).ToLookup(p => p[0]);
+            lookup = paths.Where(p => p.Count > 0).ToLookup(p => p[0], SegmentEqualityComparer.Instance);
             tree = new ConcurrentDictionary<RestPath.Segment, RestPathMatchTree>();
             Terminals = paths.Where(p => p.Count == 0).ToArray();
         }

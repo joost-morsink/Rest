@@ -393,6 +393,25 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
 
         }
+        [TestMethod]
+        public async Task Http_JobTest()
+        {
+            var resp = await Post(client, "/job", new object());
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Location", out var vals) && vals.Any());
+            var addr = vals.First();
+
+            resp = await Get(client, addr);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
+            var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();
+
+            resp = await Options(client, finishLink.Address);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+        }
         private class Identity
         {
             public string Href { get; set; }

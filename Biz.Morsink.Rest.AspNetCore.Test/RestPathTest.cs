@@ -55,6 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(2, m.SegmentValues.Count, "Components should be counted in match");
             Assert.AreEqual("joost", m.SegmentValues[0],"Wildcard should match");
             Assert.AreEqual("", m.SegmentValues[1], "Component should match as empty value");
+            Assert.AreEqual("/api/person/joost/blogs", p.FillWildcards(new[] { "joost", "Parameter should be ignored" }).PathString, "Component content should not be modified on fill wildcards");
         }
         [TestMethod]
         public void RestPath_QueryString()
@@ -69,5 +70,6 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(0, m.SegmentValues.Count);
             Assert.AreEqual(3, m.Query.Count);
         }
+
     }
 }

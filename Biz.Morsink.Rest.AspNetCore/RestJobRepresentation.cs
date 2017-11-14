@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Jobs;
 using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
@@ -39,7 +40,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             var job = (RestJob)obj;
             return new representation
             {
-                Id = job.Id ,
+                Id = job.Id,
                 IsFinished = job.Task.Status >= TaskStatus.RanToCompletion
             };
         }

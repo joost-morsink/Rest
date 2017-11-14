@@ -1,4 +1,6 @@
-﻿namespace Biz.Morsink.Rest
+﻿using Biz.Morsink.Rest.Jobs;
+
+namespace Biz.Morsink.Rest
 {
     /// <summary>
     /// This interface indicates the Rest result is still pending.

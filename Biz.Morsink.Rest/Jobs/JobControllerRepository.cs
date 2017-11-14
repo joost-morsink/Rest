@@ -5,12 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Utils;
-namespace Biz.Morsink.Rest
+
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// Job controller repository -> work in progress
     /// </summary>
-    public class JobControllerRepository : IRestGet<RestJobController, NoParameters>
+    public class JobControllerRepository : RestRepository<RestJobController>, IRestGet<RestJobController, Empty>
     {
         private readonly IRestJobStore store;
 
@@ -19,14 +20,14 @@ namespace Biz.Morsink.Rest
             this.store = store;
         }
 
-        public async ValueTask<RestResponse<RestJobController>> Get(IIdentity<RestJobController> id, NoParameters parameters, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<RestJobController>> Get(IIdentity<RestJobController> id, Empty parameters, CancellationToken cancellationToken)
         {
             var ctrl = await store.GetController(id);
             if (ctrl == null)
                 return RestResult.NotFound<RestJobController>().ToResponse();
-            else
+            else 
                 return Rest.ValueBuilder(ctrl)
-                    .WithLink(Link.Create("finish", id.Provider.Creator<RestJobFinished>().Create(id.Value), capability: typeof(IRestPost<RestJobFinished, NoParameters, RestJobFinished, NoParameters>)))
+                    .WithLink(Link.Create("finish", id.Provider.Creator<RestJobFinished>().Create((ctrl.JobId.ComponentValue, ctrl.Id.ComponentValue, "")), capability: typeof(IRestPost<RestJobFinished, Empty, RestJobFinished, Empty>)))
                     .BuildResponse();
         }
     }

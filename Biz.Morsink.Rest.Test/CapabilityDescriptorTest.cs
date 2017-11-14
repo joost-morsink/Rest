@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.Test
             var caps = repo.GetCapabilities().ToArray();
             Assert.AreEqual(1, caps.Length);
             var cap = caps[0];
-            Assert.AreEqual(typeof(IRestGet<Person, NoParameters>), cap.InterfaceType);
+            Assert.AreEqual(typeof(IRestGet<Person, Empty>), cap.InterfaceType);
             Assert.AreEqual(typeof(Person), cap.EntityType);
             Assert.AreEqual(typeof(Person), cap.ResultType);
             Assert.AreEqual(null, cap.BodyType);

@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.Jobs;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -93,6 +94,57 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddPathMapping<T>(this IRestServicesBuilder builder, string path, Type[] componentTypes = null, Type wildcardType = null)
             => builder.AddPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardType));
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The first component type.</typeparam>
+        /// <typeparam name="U">The second component type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddPathMapping<T, U>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(typeof(U), path, new[] { typeof(T), typeof(U) }, wildcardType));
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The first component type.</typeparam>
+        /// <typeparam name="U">The second component type.</typeparam>
+        /// <typeparam name="V">The third component type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddPathMapping<T, U, V>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(typeof(V), path, new[] { typeof(T), typeof(U), typeof(V) }, wildcardType));
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The first component type.</typeparam>
+        /// <typeparam name="U">The second component type.</typeparam>
+        /// <typeparam name="V">The third component type.</typeparam>
+        /// <typeparam name="W">The fourth component type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddPathMapping<T, U, V, W>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(typeof(W), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W) }, wildcardType));
+        /// <summary>
+        /// Adds a path mapping to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The first component type.</typeparam>
+        /// <typeparam name="U">The second component type.</typeparam>
+        /// <typeparam name="V">The third component type.</typeparam>
+        /// <typeparam name="W">The fourth component type.</typeparam>
+        /// <typeparam name="X">The fifth component type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="path">The path of the mapping.</param>
+        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddPathMapping<T, U, V, W, X>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
+            => builder.AddPathMapping(new RestPathMapping(typeof(X), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W), typeof(X) }, wildcardType));
+
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -269,13 +321,19 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="jobResultPathSuffix">A suffix to the job repository path for the result repository.</param>
         /// <param name="requestTimeout">A TimeSpan indicating how long a response might take before turning it into a pending one. Default 10 seconds.</param>
         /// <returns></returns>
-        public static IRestServicesBuilder AddJobs(this IRestServicesBuilder builder, string jobRepositoryPath = "/job/*", string jobResultPathSuffix = "/result", TimeSpan? requestTimeout = null)
+        public static IRestServicesBuilder AddJobs(this IRestServicesBuilder builder, string jobRepositoryPath = "/job", string jobResultPathSuffix = "/result", TimeSpan? requestTimeout = null)
         {
             builder.UseRequestHandler((sp, p) => p.Use<ResponsePendingRequestHandler>(sp, requestTimeout ?? TimeSpan.FromSeconds(10.0)))
                 .AddRepository<JobRepository>()
+                .AddRepository<JobControllerRepository>()
                 .AddRepository<JobResultRepository>()
-                .AddPathMapping<RestJob>(jobRepositoryPath)
-                .AddPathMapping<RestJobResult>(jobRepositoryPath + jobResultPathSuffix)
+                .AddRepository<JobCollectionRepository>()
+                .AddRepository<JobFinishedRepository>()
+                .AddPathMapping<RestJobCollection>(jobRepositoryPath + "?*")
+                .AddPathMapping<RestJob>(jobRepositoryPath + "/*")
+                .AddPathMapping<RestJob, RestJobController>(jobRepositoryPath + "/*/controller/*")
+                .AddPathMapping<RestJob, RestJobController, RestJobFinished>(jobRepositoryPath + "/*/controller/*/finish+")
+                .AddPathMapping<RestJobResult>(jobRepositoryPath + "/*" + jobResultPathSuffix)
                 ;
             builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobRepresentation>();
             builder.OnEndConfiguration(sc =>
@@ -283,7 +341,6 @@ namespace Biz.Morsink.Rest.AspNetCore
                 if (!sc.Any(sd => sd.ServiceType == typeof(IRestJobStore)))
                     sc.AddSingleton<IRestJobStore, MemoryRestJobStore>(sp => new MemoryRestJobStore(sp.GetRequiredService<IRestIdentityProvider>()));
             });
-            builder.AddPathMapping<RestJobController>(jobRepositoryPath + "/controller/*", new[] { typeof(RestJob), typeof(RestJobController) });
             return builder;
         }
     }

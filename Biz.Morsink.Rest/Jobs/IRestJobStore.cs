@@ -1,7 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest
+namespace Biz.Morsink.Rest.Jobs
 {
     /// <summary>
     /// Specifies a store for asynchronous Rest responses (Rest jobs)

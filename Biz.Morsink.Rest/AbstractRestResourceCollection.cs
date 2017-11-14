@@ -47,7 +47,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Default 'GET' implementation.
             /// </summary>
-            protected class Get : IRestGet<C, NoParameters>
+            protected class Get : IRestGet<C, Empty>
             {
                 protected readonly CollectionRepository repo;
 
@@ -60,7 +60,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<C>> IRestGet<C, NoParameters>.Get(IIdentity<C> id, NoParameters parameters, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<C>> IRestGet<C, Empty>.Get(IIdentity<C> id, Empty parameters, CancellationToken cancellationToken)
                 {
                     var conv = id.Provider.GetConverter(typeof(C), false).Convert(id.Value);
                     var cp = conv.To<CollectionParameters>();
@@ -73,7 +73,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Default 'POST' implementation.
             /// </summary>
-            protected class Post : IRestPost<C, NoParameters, E, E>
+            protected class Post : IRestPost<C, Empty, E, E>
             {
                 protected readonly CollectionRepository repo;
                 /// <summary>
@@ -85,7 +85,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestPost<C, NoParameters, E, E>.Post(IIdentity<C> target, NoParameters parameters, E entity, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<E>> IRestPost<C, Empty, E, E>.Post(IIdentity<C> target, Empty parameters, E entity, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Post(entity);
 
@@ -122,7 +122,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Default 'GET' implementation.
             /// </summary>
-            protected class Get : IRestGet<E, NoParameters>
+            protected class Get : IRestGet<E, Empty>
             {
                 protected readonly ItemRepository repo;
 
@@ -135,7 +135,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestGet<E, NoParameters>.Get(IIdentity<E> id, NoParameters parameters, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<E>> IRestGet<E, Empty>.Get(IIdentity<E> id, Empty parameters, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Get(id);
                     if (res == null)
@@ -147,7 +147,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Default 'PUT' implementation.
             /// </summary>
-            private class Put : IRestPut<E, NoParameters>
+            private class Put : IRestPut<E, Empty>
             {
                 protected readonly ItemRepository repo;
 
@@ -160,7 +160,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<E>> IRestPut<E, NoParameters>.Put(IIdentity<E> id, NoParameters parameters, E entity, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<E>> IRestPut<E, Empty>.Put(IIdentity<E> id, Empty parameters, E entity, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Put(entity);
                     if (res == null)
@@ -172,7 +172,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Default 'DELETE' implementation.
             /// </summary>
-            private class Delete : IRestDelete<E, NoParameters>
+            private class Delete : IRestDelete<E, Empty>
             {
                 protected readonly ItemRepository repo;
 
@@ -185,7 +185,7 @@ namespace Biz.Morsink.Rest
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<object>> IRestDelete<E, NoParameters>.Delete(IIdentity<E> id, NoParameters parameters, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<object>> IRestDelete<E, Empty>.Delete(IIdentity<E> id, Empty parameters, CancellationToken cancellationToken)
                 {
                     var res = await repo.Source.Delete(id);
 

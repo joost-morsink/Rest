@@ -5,13 +5,15 @@ using System.Text;
 namespace Biz.Morsink.Rest
 {
     /// <summary>
-    /// Parameter class that indicates no parameters are needed.
+    /// Class that represents an empty object.
+    /// Can be used for representing no parameters or an empty body.
     /// </summary>
-    public class NoParameters
+    public class Empty
     {
         /// <summary>
         /// Constructor.
         /// </summary>
-        public NoParameters() { }
+        public Empty() { }
+
     }
 }
