@@ -45,7 +45,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             foreach (var typeRep in typeRepresentations.Where(tr => tr.IsRepresentable(objectType)))
                 contract.Converter = new TypeRepresentationConverter(objectType, typeRep);
 
-            foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c.CanConvert(objectType)).Take(1))
+            foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c != null && c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
             return contract;
         }

@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Jobs
 {
@@ -26,7 +27,7 @@ namespace Biz.Morsink.Rest.Jobs
         {
             if (entity.Id != null && !target.Equals(entity.Id))
                 return RestResult.BadRequest<Empty>(new object()).ToResponse();
-            var controller = await store.GetController(entity.ControllerId);
+            var controller = await store.GetController(target.For<RestJobController>());
             var success = await controller.Finish(entity.Value);
             if (success)
                 return Rest.Value(new Empty()).ToResponse();

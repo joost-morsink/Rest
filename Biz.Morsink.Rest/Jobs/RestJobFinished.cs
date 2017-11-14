@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Biz.Morsink.Rest.Jobs
@@ -22,9 +23,9 @@ namespace Biz.Morsink.Rest.Jobs
         /// </summary>
         public IIdentity<RestJob, RestJobController, RestJobFinished> Id { get; set; }
         /// <summary>
-        /// The value of the asynchronous Rest Job.
+        /// The (dynamically typed) value of the asynchronous Rest Job.
         /// </summary>
-        public object Value { get; set; }
+        public ExpandoObject Value { get; set; }
         /// <summary>
         /// The identity of the Controller.
         /// </summary>

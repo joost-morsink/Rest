@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -396,21 +397,64 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public async Task Http_JobTest()
         {
+            // Create job
             var resp = await Post(client, "/job", new object());
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Location", out var vals) && vals.Any());
             var addr = vals.First();
 
+            // Get the controller
             resp = await Get(client, addr);
+            var json = await GetJson(resp);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();
+            Assert.IsNotNull(finishLink);
+            
+            // Store Job address
+            var jobaddr = json["jobId"]["href"].Value<string>();
 
+            // Check Job not finished
+            resp = await Get(client, jobaddr);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            json = await GetJson(resp);
+            Assert.IsFalse(json["isFinished"].Value<bool>());
+
+            // Check options for the finished link
             resp = await Options(client, finishLink.Address);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            json = await GetJson(resp);
+            Assert.IsNotNull(json.Property("POST"));
+
+            // Post a result for the job
+            var finished = new JobFinished();
+            finished.GetDynamicValue().abc = 123;
+            resp = await Post(client, finishLink.Address, finished);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+
+            // Check job finished
+            resp = await Get(client, jobaddr);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            json = await GetJson(resp);
+            Assert.IsTrue(json["isFinished"].Value<bool>());
+            Assert.IsTrue(resp.Headers.TryGetValues("Link", out links));
+            var resultLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "result").FirstOrDefault();
+            Assert.IsNotNull(resultLink);
+
+            // Check result
+            resp = await Get(client, resultLink.Address);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            json = await GetJson(resp);
+            Assert.IsNotNull(json.Property("abc"));
+            Assert.IsTrue(json["abc"].Value<int>() == 123);
+
+
         }
         private class Identity
         {
@@ -422,6 +466,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             public string FirstName { get; set; }
             public string LastName { get; set; }
             public int Age { get; set; }
+        }
+        private class JobFinished
+        {
+            public dynamic GetDynamicValue() => Value;
+            public ExpandoObject Value { get; set; } = new ExpandoObject();
         }
     }
 }
