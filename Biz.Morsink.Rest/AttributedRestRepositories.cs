@@ -96,7 +96,11 @@ namespace Biz.Morsink.Rest
                           from attr in mi.GetCustomAttributes<RestAttribute>()
                           group (mi, attr) by target;
 
-            var res = targets.Select(t => (t.Key, new Func<IServiceProvider, IRestRepository>(sp => CreateRepositoryFactory<C>(t.Key, t)(containerFactory(sp))))).ToArray();
+            var res = targets.Select(t =>
+            {
+                var factory = CreateRepositoryFactory<C>(t.Key, t);
+                return (t.Key, new Func<IServiceProvider, IRestRepository>(sp => factory(containerFactory(sp))));
+            }).ToArray();
 
             return res;
         }

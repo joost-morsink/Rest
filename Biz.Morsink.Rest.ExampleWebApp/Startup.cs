@@ -27,14 +27,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddDefaultIdentityProvider()
                 .AddCache<RestMemoryCache>()
                 .AddJobs()
-                .UseRequestHandler((sp,hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
+                .UseRequestHandler((sp, hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 // Configure Repositories
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
-                .AddAttributedRepository<BlogRepository>()
-                .AddPathMapping<Blog>("/blog/*")
+                .AddStructure<BlogRepository.Structure>()
                 .AddRepository<HomeRepository>()
                 );
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();

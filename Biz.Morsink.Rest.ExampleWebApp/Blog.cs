@@ -14,4 +14,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
         IIdentity IHasIdentity.Id => Id;
     }
+    public class BlogCollection : RestCollection<Blog>
+    {
+        public BlogCollection(IIdentity<BlogCollection> id, IEnumerable<Blog> items, int count, int? limit, int skip) : base(id, items, count, limit, skip) { }
+    }
 }
