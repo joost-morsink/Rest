@@ -10,38 +10,6 @@ using System.Threading.Tasks;
 using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest
 {
-    public abstract class RestAttribute : Attribute
-    {
-        public abstract string Capability { get; }
-    }
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RestGetAttribute : RestAttribute
-    {
-        public override string Capability => "GET";
-    }
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RestPutAttribute : RestAttribute
-    {
-        public override string Capability => "PUT";
-    }
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RestPostAttribute : RestAttribute
-    {
-        public override string Capability => "POST";
-    }
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RestPatchAttribute : RestAttribute
-    {
-        public override string Capability => "PATCH";
-    }
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RestDeleteAttribute : RestAttribute
-    {
-        public override string Capability => "DELETE";
-    }
-    [AttributeUsage(AttributeTargets.Parameter)]
-    public class RestBodyAttribute : Attribute { }
-
     public static class AttributedRestRepositories
     {
         private interface ICapabilityMaker<C, T>
@@ -72,21 +40,6 @@ namespace Biz.Morsink.Rest
                 yield return seed;
                 seed = next(seed);
             }
-        }
-        private static (Type[], Type) ExtractTypeConstructorList(this Type type)
-        {
-            var lst = new List<Type>();
-            (Type, Type) split;
-            do
-            {
-                split = type.ExtractGeneric();
-                if (split.Item1 != null)
-                {
-                    lst.Add(split.Item1);
-                    type = split.Item2;
-                }
-            } while (split.Item1 != null);
-            return (lst.ToArray(), split.Item2);
         }
         public static IEnumerable<(Type, Func<IServiceProvider, IRestRepository>)> GetRepositoryFactories<C>(Func<IServiceProvider, C> containerFactory)
         {
@@ -157,15 +110,29 @@ namespace Biz.Morsink.Rest
         }
         private static Func<C, IRestCapability<T>> MakeGet<C, T>(MethodInfo methodInfo)
         {
-            var (p, _, r, func) = MakeFunc<C, T>(methodInfo, false);
-            if (r != typeof(T))
+            var r = MakeFunc<C, T>(methodInfo, false);
+            if (r.InnerReturn != typeof(T))
                 throw new ArgumentException("Get method should return an entity of the addressed type.");
-            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestGetMaker<,,>).MakeGenericType(typeof(C), typeof(T), p), func);
+            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestGetMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
             return maker.Make;
         }
 
-
-        private static (Type, Type, Type, Delegate) MakeFunc<C, T>(MethodInfo methodInfo, bool withBody)
+        #region Helpers for making functions
+        private class MakeFuncResult
+        {
+            public MakeFuncResult(Type parameterType, Type bodyType, Type innerReturnType, Delegate function)
+            {
+                Parameter = parameterType;
+                Body = bodyType;
+                InnerReturn = innerReturnType;
+                Function = function;
+            }
+            public Type Parameter { get; }
+            public Type Body { get; }
+            public Type InnerReturn { get; }
+            public Delegate Function { get; }
+        }
+        private static MakeFuncResult MakeFunc<C, T>(MethodInfo methodInfo, bool withBody)
         {
             var parameters = methodInfo.GetParameters();
             if (parameters.Length == 0 || parameters[0].ParameterType != typeof(IIdentity<T>))
@@ -184,104 +151,152 @@ namespace Biz.Morsink.Rest
             var request = Ex.Parameter(typeof(RestRequest), "request");
             var cancel = Ex.Parameter(typeof(CancellationToken), "cancel");
             var retType = methodInfo.ReturnType;
-            var (retTypeConstructors, innerRetType) = ExtractTypeConstructorList(methodInfo.ReturnType);
+            var (_, _, innerType) = SplitTypes(methodInfo.ReturnType);
+
+            var methodParams = methodInfo.GetParameters().Join(withBody ? new[] { id, p, body, request, cancel } : new[] { id, p, request, cancel }, par => par.ParameterType, exp => exp.Type, (par, exp) => exp);
+            if (methodParams.Count() != methodInfo.GetParameters().Length)
+                throw new ArgumentException("Method parameters cannot be satisfied by availiable expressions.");
 
             var lambda = withBody
                 ? Ex.Lambda(WrapExpression(
-                    Ex.Call(container, methodInfo,
-                        methodInfo.GetParameters().Join(new[] { id, p, body, request, cancel }, par => par.ParameterType, exp => exp.Type, (par, exp) => exp)),
-                    retTypeConstructors, innerRetType),
+                    Ex.Call(container, methodInfo, methodParams),
+                    methodInfo.ReturnType),
                     container, id, p, body, request, cancel)
                 : Ex.Lambda(WrapExpression(
-                    Ex.Call(container, methodInfo,
-                        methodInfo.GetParameters().Join(new[] { id, p, request, cancel }, par => par.ParameterType, exp => exp.Type, (par, exp) => exp)),
-                    retTypeConstructors,innerRetType),
+                    Ex.Call(container, methodInfo, methodParams),
+                    methodInfo.ReturnType),
                     container, id, p, request, cancel);
             var func = lambda.Compile();
 
-            return (p.Type, body.Type, innerRetType, func);
+            return new MakeFuncResult(p.Type, body.Type, innerType, func);
         }
-        private static Ex WrapExpression(Ex expression, Type[] typeConstructors, Type innerType)
+        private static Ex WrapExpression(Ex expression, Type retType)
         {
-            if (typeConstructors.Length == 0)
+            var (asyncConstructor, restConstructor, inner) = SplitTypes(retType);
+
+            if (asyncConstructor == null && restConstructor == null)
             {
-                return Ex.Call(Ex.New(typeof(RestValue<>).MakeGenericType(innerType).GetConstructor(new[] { innerType }), expression),
+                return Ex.Call(Ex.New(typeof(RestValue<>).MakeGenericType(inner).GetConstructor(new[] { inner }), expression),
                     nameof(RestValue<object>.ToResponseAsync), Type.EmptyTypes,
                     Ex.Default(typeof(TypeKeyedDictionary)));
             }
-            else if (typeConstructors.Length == 1 || typeConstructors.Length == 2)
+            if (asyncConstructor == null)
             {
-                var restConstructor = typeConstructors.Last();
-                var asyncConstructor = typeConstructors.Reverse().Skip(1).FirstOrDefault();
-                if (asyncConstructor == null)
-                {
-                    if (restConstructor == typeof(RestValue<>))
-                        return Ex.Call(expression,
-                            nameof(RestValue<object>.ToResponseAsync), Type.EmptyTypes,
-                            Ex.Default(typeof(TypeKeyedDictionary)));
-                    else if (restConstructor == typeof(RestResult<>))
-                        return Ex.Call(expression,
-                            nameof(RestResult<object>.ToResponseAsync), Type.EmptyTypes,
-                            Ex.Default(typeof(TypeKeyedDictionary)));
-                    else if (restConstructor == typeof(RestResponse<>))
-                        return Ex.Call(expression, nameof(RestResponse<object>.ToAsync), Type.EmptyTypes,
-                            Ex.Default(typeof(TypeKeyedDictionary)));
-                    else
-                        throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
-                }
-                else if (asyncConstructor == typeof(Task<>))
-                {
-                    if (restConstructor == typeof(RestValue<>))
-                        return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
-                            .First(m => m.Name == nameof(ConvertValueToResponseAsync)).MakeGenericMethod(innerType),
-                            expression);
-                    else if (restConstructor == typeof(RestResult<>))
-                        return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
-                            .First(m => m.Name == nameof(ConvertResultToRestResponseAsync)).MakeGenericMethod(innerType),
-                            expression);
-                    else if (restConstructor == typeof(RestResponse<>))
-                        return Ex.New(typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(innerType))
-                            .GetConstructor(new[] { typeof(Task<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(innerType)) }),
-                            expression);
-                    else
-                        throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
-                }
-                else if (asyncConstructor == typeof(ValueTask<>))
-                {
-                    if (restConstructor == typeof(RestValue<>))
-                        return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
-                            .First(m => m.Name == nameof(ConvertVtValueToResponseAsync)).MakeGenericMethod(innerType),
-                            expression);
-                    else if (restConstructor == typeof(RestResult<>))
-                        return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
-                            .First(m => m.Name == nameof(ConvertVtResultToRestResponseAsync)).MakeGenericMethod(innerType),
-                            expression);
-                    else if (restConstructor == typeof(RestResponse<>))
-                        return expression;
-                    else
-                        throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
-                }
+                if (restConstructor == typeof(RestValue<>))
+                    return Ex.Call(expression,
+                        nameof(RestValue<object>.ToResponseAsync), Type.EmptyTypes,
+                        Ex.Default(typeof(TypeKeyedDictionary)));
+                else if (restConstructor == typeof(RestResult<>))
+                    return Ex.Call(expression,
+                        nameof(RestResult<object>.ToResponseAsync), Type.EmptyTypes,
+                        Ex.Default(typeof(TypeKeyedDictionary)));
+                else if (restConstructor == typeof(RestResponse<>))
+                    return Ex.Call(expression, nameof(RestResponse<object>.ToAsync), Type.EmptyTypes,
+                        Ex.Default(typeof(TypeKeyedDictionary)));
                 else
-                    throw new ArgumentException($"Unknown async typeconstructor {asyncConstructor}");
+                    throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
+            }
+            else if (asyncConstructor == typeof(Task<>))
+            {
+                if (restConstructor == null)
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertTaskToResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestValue<>))
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertValueToResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestResult<>))
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertResultToRestResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestResponse<>))
+                    return Ex.New(typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(inner))
+                        .GetConstructor(new[] { typeof(Task<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(inner)) }),
+                        expression);
+                else
+                    throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
+            }
+            else if (asyncConstructor == typeof(ValueTask<>))
+            {
+                if (restConstructor == null)
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertVtToResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestValue<>))
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertVtValueToResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestResult<>))
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertVtResultToRestResponseAsync)).MakeGenericMethod(inner),
+                        expression);
+                else if (restConstructor == typeof(RestResponse<>))
+                    return expression;
+                else
+                    throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
             }
             else
-                throw new ArgumentException("Unknown type construction");
+                throw new ArgumentException($"Unknown async typeconstructor {asyncConstructor}");
         }
+        private static (Type[], Type) ExtractTypeConstructorList(this Type type)
+        {
+            var lst = new List<Type>();
+            (Type, Type) split;
+            do
+            {
+                split = type.ExtractGeneric();
+                if (split.Item1 != null)
+                {
+                    lst.Add(split.Item1);
+                    type = split.Item2;
+                }
+            } while (split.Item1 != null);
+            return (lst.ToArray(), split.Item2);
+        }
+        private static (Type, Type, Type) SplitTypes(Type type)
+        {
+            var (constrs, inner) = ExtractTypeConstructorList(type);
+            Type async = null;
+            Type rest = null;
+            foreach (var t in constrs.Reverse())
+            {
+                if (t == typeof(RestValue<>) || t == typeof(RestResult<>) || t == typeof(RestResponse<>))
+                {
+                    if (async != null || rest != null)
+                        throw new ArgumentException("Unknown type construction.");
+                    rest = t;
+                }
+                else if (t == typeof(Task<>) || t == typeof(ValueTask<>))
+                {
+                    if (async != null)
+                        throw new ArgumentException("Unknown type construction.");
+                    async = t;
+                }
+                else if (async == null && rest == null)
+                    inner = t.MakeGenericType(inner);
+            }
+            return (async, rest, inner);
+        }
+        private static async ValueTask<RestResponse<T>> ConvertTaskToResponseAsync<T>(Task<T> val)
+            where T : class
+            => Rest.Value(await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertValueToResponseAsync<T>(Task<RestValue<T>> val)
             where T : class
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertResultToRestResponseAsync<T>(Task<RestResult<T>> val)
             where T : class
             => (await val).ToResponse();
+        private static async ValueTask<RestResponse<T>> ConvertVtToResponseAsync<T>(ValueTask<T> val)
+            where T : class
+            => Rest.Value(await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtValueToResponseAsync<T>(ValueTask<RestValue<T>> val)
             where T : class
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtResultToRestResponseAsync<T>(ValueTask<RestResult<T>> val)
             where T : class
             => (await val).ToResponse();
-
-
-
+        #endregion
 
         private class Repository<T> : RestRepository<T>
         {
