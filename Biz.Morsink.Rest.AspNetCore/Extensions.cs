@@ -35,19 +35,33 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(typeof(R).GetGeneric(typeof(IRestRepository<>))), typeof(R), lifetime));
             return serviceCollection;
         }
-        public static IServiceCollection AddAttributedRestRepository<R>(this IServiceCollection serviceCollection, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        /// <summary>
+        /// This method adds an attributed container's rest repositories to the service collection.
+        /// </summary>
+        /// <typeparam name="C">The 'parent' container's type.</typeparam>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <param name="lifetime">The lifetime scope for the container (default = Scoped).</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddAttributedRestRepository<C>(this IServiceCollection serviceCollection, ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
-            serviceCollection.Add(new ServiceDescriptor(typeof(R), typeof(R), lifetime));
-            foreach (var (key, f) in AttributedRestRepositories.GetRepositoryFactories(sp => sp.GetRequiredService<R>()))
+            serviceCollection.Add(new ServiceDescriptor(typeof(C), typeof(C), lifetime));
+            foreach (var (key, f) in AttributedRestRepositories.GetRepositoryFactories((IServiceProvider sp) => sp.GetRequiredService<C>()))
             {
                 serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository), f, lifetime));
                 serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(key), f, lifetime));
             }
             return serviceCollection;
         }
-        public static IRestServicesBuilder AddAttributedRepository<R>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        /// <summary>
+        /// This method adds an attributed container's rest repositories to the service collection.
+        /// </summary>
+        /// <typeparam name="C">The 'parent' container's type.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="lifetime">The lifetime scope for the container (default = Scoped).</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddAttributedRepository<C>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
-            builder.ServiceCollection.AddAttributedRestRepository<R>(lifetime);
+            builder.ServiceCollection.AddAttributedRestRepository<C>(lifetime);
             return builder;
         }
         /// <summary>
