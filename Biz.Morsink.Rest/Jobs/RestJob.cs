@@ -17,10 +17,12 @@ namespace Biz.Morsink.Rest.Jobs
         /// </summary>
         /// <param name="jobId">The identity value of the RestJob.</param>
         /// <param name="task">The asynchronous RestResponse.</param>
-        public RestJob(IIdentity<RestJob> jobId, Task<RestResponse> task)
+        /// <param name="user">The user registering the Job.</param>
+        public RestJob(IIdentity<RestJob> jobId, Task<RestResponse> task, string user)
         {
             Id = jobId;
             Task = task;
+            User = user;
             SetDate();
         }
         private async void SetDate()
@@ -42,6 +44,11 @@ namespace Biz.Morsink.Rest.Jobs
         /// Gets the asynchronous Rest response.
         /// </summary>
         public Task<RestResponse> Task { get; }
+        /// <summary>
+        /// Gets the user that originated the Task.
+        /// </summary>
+        public string User { get; }
+
         /// <summary>
         /// Gets the timestamp when the task finished.
         /// Null if the task is still running.
