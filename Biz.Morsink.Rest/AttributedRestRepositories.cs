@@ -54,6 +54,7 @@ namespace Biz.Morsink.Rest
         public static IEnumerable<(Type, Func<Context, IRestRepository>)> GetRepositoryFactories<Context, C>(Func<Context, C> parentContainerFactory)
         {
             var targets = from mi in typeof(C).GetTypeInfo().DeclaredMethods
+                          where mi.GetParameters().Length > 0
                           let target = mi.GetParameters()[0].ParameterType.GetGeneric(typeof(IIdentity<>))
                           where target != null
                           from attr in mi.GetCustomAttributes<RestAttribute>()
@@ -84,6 +85,18 @@ namespace Biz.Morsink.Rest
                     case "GET":
                         capabilities.Add(MakeGet<C, T>(method));
                         break;
+                    case "PUT":
+                        capabilities.Add(MakePut<C, T>(method));
+                        break;
+                    case "PATCH":
+                        capabilities.Add(MakePatch<C, T>(method));
+                        break;
+                    case "POST":
+                        capabilities.Add(MakePost<C, T>(method));
+                        break;
+                    case "DELETE":
+                        capabilities.Add(MakeDelete<C, T>(method));
+                        break;
                 }
             }
             return c => new Repository<T>(capabilities.Select(cap => cap(c)));
@@ -106,11 +119,11 @@ namespace Biz.Morsink.Rest
                 private readonly C container;
                 private readonly Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
 
-                public Capability(C c, Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
+                public Capability(C container, Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
                 {
-                    this.container = c;
+                    this.container = container;
                     this.func = func;
-                    Request = (c as IRestRequestContainer)?.Request;
+                    Request = (container as IRestRequestContainer)?.Request;
                 }
 
                 public RestRequest Request { get; set; }
@@ -119,12 +132,146 @@ namespace Biz.Morsink.Rest
                     => func(container, id, parameters, Request, cancellationToken);
             }
         }
+        private class RestPutMaker<C, T, P> : ICapabilityMaker<C, T>
+            where T : class
+        {
+            private readonly Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
+            public RestPutMaker(Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
+            {
+                this.func = func;
+            }
+            public IRestCapability<T> Make(C container)
+                => new Capability(container, func);
+            private class Capability : IRestPut<T, P>, IRestRequestContainer
+            {
+                private readonly C container;
+                private readonly Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
+                public Capability(C container, Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
+                {
+                    this.container = container;
+                    this.func = func;
+                    Request = (container as IRestRequestContainer)?.Request;
+                }
+                public RestRequest Request { get; set; }
+
+                public ValueTask<RestResponse<T>> Put(IIdentity<T> target, P parameters, T entity, CancellationToken cancellationToken)
+                    => func(container, target, parameters, entity, Request, cancellationToken);
+            }
+        }
+        private class RestPatchMaker<C, T, P, I> : ICapabilityMaker<C, T>
+            where T : class
+            where I : class
+        {
+            private readonly Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
+            public RestPatchMaker(Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
+            {
+                this.func = func;
+            }
+            public IRestCapability<T> Make(C container)
+                => new Capability(container, func);
+            private class Capability : IRestPatch<T, P, I>, IRestRequestContainer
+            {
+                private readonly C container;
+                private readonly Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
+                public Capability(C container, Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
+                {
+                    this.container = container;
+                    this.func = func;
+                    Request = (container as IRestRequestContainer)?.Request;
+                }
+                public RestRequest Request { get; set; }
+
+                public ValueTask<RestResponse<T>> Patch(IIdentity<T> target, P parameters, I instructions, CancellationToken cancellationToken)
+                    => func(container, target, parameters, instructions, Request, cancellationToken);
+            }
+        }
+        private class RestPostMaker<C, T, P, E, R> : ICapabilityMaker<C, T>
+            where T : class
+            where R : class
+        {
+            private readonly Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func;
+            public RestPostMaker(Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func)
+            {
+                this.func = func;
+            }
+            public IRestCapability<T> Make(C container)
+                => new Capability(container, func);
+            private class Capability : IRestPost<T, P, E, R>, IRestRequestContainer
+            {
+                private C container;
+                private Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func;
+                public Capability(C container, Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func)
+                {
+                    this.container = container;
+                    this.func = func;
+                    Request = (container as IRestRequestContainer)?.Request;
+                }
+                public RestRequest Request { get; set; }
+
+                public ValueTask<RestResponse<R>> Post(IIdentity<T> target, P parameters, E entity, CancellationToken cancellationToken)
+                    => func(container, target, parameters, entity, Request, cancellationToken);
+            }
+        }
+        private class RestDeleteMaker<C, T, P> : ICapabilityMaker<C, T>
+            where T : class
+        {
+            private readonly Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func;
+            public RestDeleteMaker(Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func)
+            {
+                this.func = func;
+            }
+            public IRestCapability<T> Make(C container)
+                => new Capability(container, func);
+            private class Capability : IRestDelete<T, P>, IRestRequestContainer
+            {
+                private readonly C container;
+                private readonly Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func;
+                public Capability(C container, Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func)
+                {
+                    this.container = container;
+                    this.func = func;
+                    Request = (container as IRestRequestContainer)?.Request;
+                }
+                public RestRequest Request { get; set; }
+
+                public ValueTask<RestResponse<object>> Delete(IIdentity<T> target, P parameters, CancellationToken cancellationToken)
+                    => func(container, target, parameters, Request, cancellationToken);
+            }
+        }
         private static Func<C, IRestCapability<T>> MakeGet<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, false);
             if (r.InnerReturn != typeof(T))
                 throw new ArgumentException("Get method should return an entity of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestGetMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
+            return maker.Make;
+        }
+        private static Func<C, IRestCapability<T>> MakePut<C, T>(MethodInfo methodInfo)
+        {
+            var r = MakeFunc<C, T>(methodInfo, true);
+            if (r.InnerReturn != typeof(T))
+                throw new ArgumentException("Put method should return an entity of the addressed type.");
+            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
+            return maker.Make;
+        }
+        private static Func<C, IRestCapability<T>> MakePatch<C, T>(MethodInfo methodInfo)
+        {
+            var r = MakeFunc<C, T>(methodInfo, true);
+            if (r.InnerReturn != typeof(T))
+                throw new ArgumentException("Patch method should return an entity of the addressed type.");
+            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter, r.Body), r.Function);
+            return maker.Make;
+        }
+        private static Func<C, IRestCapability<T>> MakePost<C, T>(MethodInfo methodInfo)
+        {
+            var r = MakeFunc<C, T>(methodInfo, true);
+            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPostMaker<,,,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter, r.Body, r.InnerReturn), r.Function);
+            return maker.Make;
+        }
+        private static Func<C, IRestCapability<T>> MakeDelete<C, T>(MethodInfo methodInfo)
+        {
+            var r = MakeFunc<C, T>(methodInfo, false);
+            var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestDeleteMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
             return maker.Make;
         }
         #endregion
@@ -203,8 +350,9 @@ namespace Biz.Morsink.Rest
                         nameof(RestResult<object>.ToResponseAsync), Type.EmptyTypes,
                         Ex.Default(typeof(TypeKeyedDictionary)));
                 else if (restConstructor == typeof(RestResponse<>))
-                    return Ex.Call(expression, nameof(RestResponse<object>.ToAsync), Type.EmptyTypes,
-                        Ex.Default(typeof(TypeKeyedDictionary)));
+                    return Ex.New(typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(inner))
+                        .GetConstructor(new[] { typeof(RestResponse<>).MakeGenericType(inner) }),
+                        expression);
                 else
                     throw new ArgumentException($"Unknown rest typeconstructor {restConstructor}");
             }

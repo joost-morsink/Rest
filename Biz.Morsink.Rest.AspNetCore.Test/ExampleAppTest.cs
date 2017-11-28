@@ -456,6 +456,41 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
 
         }
+        [TestMethod]
+        public async Task Http_AttrRepo()
+        {
+            // Get home for repository reference
+            var resp = await Get(client, "/");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
+            var linkdict = ParseLinks(links);
+            Assert.IsTrue(linkdict.ContainsKey("blogs"));
+            
+            // See if repository exists
+            resp = await Get(client, linkdict["blogs"]);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+
+            // Post a new entity
+            resp = await Post(client, linkdict["blogs"], new Blog { Name = "Joost Morsink's REST blog" });
+            Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Location", out var locations) && locations.Any());
+
+            // Get the newly posted item
+            var location = locations.First();
+            resp = await Get(client, location);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            var json = await GetJson(resp);
+            Assert.AreEqual(json["name"].Value<string>(), "Joost Morsink's REST blog");
+
+            // Delete and check
+            resp = await Delete(client,location);
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            resp = await Delete(client, location);
+            Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
+            resp = await Get(client, location);
+            Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
+
+        }
         private class Identity
         {
             public string Href { get; set; }
@@ -471,6 +506,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         {
             public dynamic GetDynamicValue() => Value;
             public ExpandoObject Value { get; set; } = new ExpandoObject();
+        }
+        private class Blog
+        {
+            public Identity Id { get; set; }
+            public string Name { get; set; }
+            public Identity Owner { get; set; }
         }
     }
 }

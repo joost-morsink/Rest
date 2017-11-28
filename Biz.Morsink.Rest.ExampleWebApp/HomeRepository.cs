@@ -24,7 +24,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             return Rest.ValueBuilder(Home.Instance)
                 .WithLink(Link.Create("admin", FreeIdentity<Person>.Create(1)))
-                .WithLink(Link.Create("persons", FreeIdentity<PersonCollection>.Create(new Dictionary<string, string>())))
+                .WithLink(Link.Create("persons", FreeIdentity<PersonCollection>.Create(new Empty())))
+                .WithLink(Link.Create("blogs", FreeIdentity<BlogCollection>.Create(new Empty())))
                 .BuildResponseAsync();
         }
     }
