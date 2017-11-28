@@ -19,7 +19,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The underlying type of the Rest value.</typeparam>
     public interface IHasRestValue<T> : IHasRestValue
-        where T:class
     {
         /// <summary>
         /// Gets a typed Rest value from the container.

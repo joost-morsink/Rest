@@ -15,8 +15,6 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="C">The collection type.</typeparam>
     /// <typeparam name="E">The item tyope.</typeparam>
     public abstract class AbstractRestResourceCollection<C, E> : IRestResourceCollection<C, E>
-        where C : class
-        where E : class
     {
         /// <summary>
         /// Base class for the Collection repository.

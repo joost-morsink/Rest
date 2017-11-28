@@ -55,7 +55,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The body type of the response.</typeparam>
     public class RestResponse<T> : RestResponse
-        where T : class
     {
         /// <summary>
         /// Constructor.
@@ -79,7 +78,6 @@ namespace Biz.Morsink.Rest
         /// </summary>
         public override bool IsSuccess => Result is IRestSuccess;
         public RestResponse<U> Select<U>(Func<RestResult<T>, RestResult<U>> f)
-            where U : class
         {
             return new RestResponse<U>(f(Result), Metadata);
         }

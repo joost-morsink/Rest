@@ -13,7 +13,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public struct RestValue<T> : IRestValue
-        where T : class
     {
         /// <summary>
         /// Constructor.
@@ -48,7 +47,6 @@ namespace Biz.Morsink.Rest
         /// <param name="f">A manipulation function for the underlying (main) value.</param>
         /// <returns>A new RestValue containing the manipulated underlying value and the same links and embeddings.</returns>
         public RestValue<U> Select<U>(Func<T, U> f)
-            where U : class
             => new RestValue<U>(f(Value), Links, Embeddings);
         /// <summary>
         /// Creates a new RestValue&lt;T&gt; manipulating the Links and Embeddings collections

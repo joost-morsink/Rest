@@ -15,7 +15,6 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="P">The parameter type.</typeparam>
     [Capability("PUT")]
     public interface IRestPut<T, P> : IRestCapability<T>
-        where T : class
     {
         /// <summary>
         /// Puts a resource.

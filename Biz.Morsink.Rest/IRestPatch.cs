@@ -15,7 +15,6 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="I">The instructions type.</typeparam>
     [Capability("PATCH")]
     public interface IRestPatch<T, P, I> : IRestCapability<T>
-        where T : class
     {
         /// <summary>
         /// Patches a resource.

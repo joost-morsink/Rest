@@ -81,7 +81,6 @@ namespace Biz.Morsink.Rest
         }
     }
     internal class RestRequestHandler<T>
-        where T : class
     {
         private X GetService<X>()
             => (X)serviceLocator.GetService(typeof(X));
@@ -169,7 +168,6 @@ namespace Biz.Morsink.Rest
             }
         }
         private async ValueTask<RestResponse> HandleWithBody<P, E, R>(IRestRepository repo, RestRequest request, RestCapability<T> capability)
-            where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
@@ -180,7 +178,6 @@ namespace Biz.Morsink.Rest
             return result;
         }
         private async ValueTask<RestResponse> Handle<P, R>(IRestRepository repo, RestRequest request, RestCapability<T> capability)
-            where R : class
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();

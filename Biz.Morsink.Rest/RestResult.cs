@@ -21,7 +21,7 @@ namespace Biz.Morsink.Rest
         /// <param name="links">Optionally a collection of links for the result.</param>
         /// <param name="embeddings">Optionally a collection of embeddings for the result.</param>
         /// <returns>A successful Rest result.</returns>
-        public static RestResult<T>.Success Create<T>(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null) where T : class
+        public static RestResult<T>.Success Create<T>(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null) 
             => new RestResult<T>.Success(value, links, embeddings);
         /// <summary>
         /// Creates a failed Rest result indicating the request was in some way not correct.
@@ -29,14 +29,14 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of the (absent) underlying value.</typeparam>
         /// <param name="data">Data describing the reason the request was bad.</param>
         /// <returns>A failed Rest result indicating the request was in some way not correct.</returns>
-        public static RestResult<T>.Failure.BadRequest BadRequest<T>(object data) where T : class
+        public static RestResult<T>.Failure.BadRequest BadRequest<T>(object data) 
             => new RestResult<T>.Failure.BadRequest(data);
         /// <summary>
         /// Creates a failed Rest result indicating the resource was not found.
         /// </summary>
         /// <typeparam name="T">The type of the (not found) underlying value.</typeparam>
         /// <returns>A failed Rest result indicating the resource was not found.</returns>
-        public static RestResult<T>.Failure.NotFound NotFound<T>() where T : class
+        public static RestResult<T>.Failure.NotFound NotFound<T>() 
             => RestResult<T>.Failure.NotFound.Instance;
         /// <summary>
         /// Creates a failed Rest result indicating an unexpected error occurred during processing of the request.
@@ -44,7 +44,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of the (absent) underlying value.</typeparam>
         /// <param name="ex">An exceptipn describing the error.</param>
         /// <returns>A failed Rest result indicating an error occurred during processing.</returns>
-        public static RestResult<T>.Failure.Error Error<T>(Exception ex) where T : class
+        public static RestResult<T>.Failure.Error Error<T>(Exception ex) 
             => new RestResult<T>.Failure.Error(ex);
         /// <summary>
         /// Creates a pending result indicating the response is not yet available.
@@ -52,7 +52,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of the (absent) underlying value.</typeparam>
         /// <param name="job">A RestJob describing the pending response.</param>
         /// <returns>A pending Rest result.</returns>
-        public static RestResult<T>.Pending Pending<T>(RestJob job) where T : class
+        public static RestResult<T>.Pending Pending<T>(RestJob job) 
             => new RestResult<T>.Pending(job);
         /// <summary>
         /// Creates a failed Rest result indicating an unexpected error occurred during processing of the request.
@@ -68,7 +68,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The type of the underlying value for the result.</typeparam>
     public abstract class RestResult<T> : IRestResult
-        where T : class
     {
         /// <summary>
         /// Tries to cast the result to a Success result.
@@ -316,8 +315,7 @@ namespace Biz.Morsink.Rest
             /// </summary>
             /// <typeparam name="U">The new underlying successful value type.</typeparam>
             /// <returns>A new failure with a different underlying successful value type.</returns>
-            public abstract RestResult<U>.Failure Select<U>()
-                where U : class;
+            public abstract RestResult<U>.Failure Select<U>();
             /// <summary>
             /// Gets the reason for failure of the Rest request.
             /// </summary>
@@ -351,7 +349,7 @@ namespace Biz.Morsink.Rest
             /// </summary>
             /// <typeparam name="U">The new underlying successful value type.</typeparam>
             /// <returns>A new redirect with a different underlying successful value type.</returns
-            public abstract RestResult<U> Select<U>() where U : class;
+            public abstract RestResult<U> Select<U>();
             /// <summary>
             /// This class represents permanent redirects. 
             /// The target of the redirect may be cached for future references by the client.
@@ -446,7 +444,6 @@ namespace Biz.Morsink.Rest
             public RestJob Job { get; }
 
             public RestResult<U> Select<U>()
-                where U : class
                 => new RestResult<U>.Pending(Job);
         }
         /// <summary>
@@ -456,7 +453,6 @@ namespace Biz.Morsink.Rest
         /// <param name="f">A manipulation function to manipulate successful Rest values.</param>
         /// <returns>A new RestResult</returns>
         public RestResult<U> Select<U>(Func<RestValue<T>, RestValue<U>> f)
-            where U : class
         {
             switch (this)
             {

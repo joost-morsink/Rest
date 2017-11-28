@@ -16,7 +16,6 @@ namespace Biz.Morsink.Rest
         /// <param name="item">The Rest value's underlying value.</param>
         /// <returns>A RestValue containing the provided underlying value.</returns>
         public static RestValue<T> Value<T>(T item)
-            where T : class
             => new RestValue<T>(item);
         /// <summary>
         /// Constructs a RestValue&lt;T&gt;.Builder from a value of type T.
@@ -26,7 +25,6 @@ namespace Biz.Morsink.Rest
         /// <param name="item">The Rest value's underlying value.</param>
         /// <returns>A RestValue Builder containing the provided underlying value.</returns>
         public static RestValue<T>.Builder ValueBuilder<T>(T item)
-            where T : class
             => RestValue<T>.Build().WithValue(item);
     }
 }

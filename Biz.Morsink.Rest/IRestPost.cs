@@ -16,7 +16,6 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="R">The return type.</typeparam>
     [Capability("POST")]
     public interface IRestPost<T, P, E, R> : IRestCapability<T>
-        where R : class
     {
         /// <summary>
         /// Posts a document to some resource.

@@ -17,7 +17,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The value type.</typeparam>
     public interface IRestSuccess<T> : IRestSuccess, IHasRestValue<T>
-        where T : class
     {
     }
 }

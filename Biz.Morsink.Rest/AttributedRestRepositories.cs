@@ -104,7 +104,6 @@ namespace Biz.Morsink.Rest
 
         #region Capability implementations
         private class RestGetMaker<C, T, P> : ICapabilityMaker<C, T>
-            where T : class
         {
             private readonly Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
 
@@ -133,7 +132,6 @@ namespace Biz.Morsink.Rest
             }
         }
         private class RestPutMaker<C, T, P> : ICapabilityMaker<C, T>
-            where T : class
         {
             private readonly Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
             public RestPutMaker(Func<C, IIdentity<T>, P, T, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
@@ -159,8 +157,6 @@ namespace Biz.Morsink.Rest
             }
         }
         private class RestPatchMaker<C, T, P, I> : ICapabilityMaker<C, T>
-            where T : class
-            where I : class
         {
             private readonly Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func;
             public RestPatchMaker(Func<C, IIdentity<T>, P, I, RestRequest, CancellationToken, ValueTask<RestResponse<T>>> func)
@@ -186,8 +182,6 @@ namespace Biz.Morsink.Rest
             }
         }
         private class RestPostMaker<C, T, P, E, R> : ICapabilityMaker<C, T>
-            where T : class
-            where R : class
         {
             private readonly Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func;
             public RestPostMaker(Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func)
@@ -213,7 +207,6 @@ namespace Biz.Morsink.Rest
             }
         }
         private class RestDeleteMaker<C, T, P> : ICapabilityMaker<C, T>
-            where T : class
         {
             private readonly Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func;
             public RestDeleteMaker(Func<C, IIdentity<T>, P, RestRequest, CancellationToken, ValueTask<RestResponse<object>>> func)
@@ -439,22 +432,16 @@ namespace Biz.Morsink.Rest
             return (async, rest, inner);
         }
         private static async ValueTask<RestResponse<T>> ConvertTaskToResponseAsync<T>(Task<T> val)
-            where T : class
             => Rest.Value(await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertValueToResponseAsync<T>(Task<RestValue<T>> val)
-            where T : class
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertResultToRestResponseAsync<T>(Task<RestResult<T>> val)
-            where T : class
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtToResponseAsync<T>(ValueTask<T> val)
-            where T : class
             => Rest.Value(await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtValueToResponseAsync<T>(ValueTask<RestValue<T>> val)
-            where T : class
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtResultToRestResponseAsync<T>(ValueTask<RestResult<T>> val)
-            where T : class
             => (await val).ToResponse();
         #endregion
 

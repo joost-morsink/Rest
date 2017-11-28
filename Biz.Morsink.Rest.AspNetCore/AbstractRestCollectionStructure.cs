@@ -16,7 +16,6 @@ namespace Biz.Morsink.Rest.AspNetCore
     public abstract class AbstractRestCollectionStructure<C, E, I> : AbstractRestResourceCollection<C, E>
         where C : RestCollection<E, I>
         where I : IHasIdentity<E>
-        where E : class
     {
         /// <summary>
         /// Gets the structure corresponding to this collection.
@@ -98,7 +97,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <typeparam name="E">The item type.</typeparam>
     public abstract class AbstractRestCollectionStructure<C, E> : AbstractRestCollectionStructure<C, E, E>
         where C : RestCollection<E, E>
-        where E : class, IHasIdentity<E>
+        where E : IHasIdentity<E>
     {
     }
 }

@@ -30,7 +30,6 @@ namespace Biz.Morsink.Rest
         /// <param name="capability">The capability needed to traverse the link.</param>
         /// <returns>A Link&lt;T&gt; object.</returns>
         public static Link<T> Create<T>(string relType, IIdentity<T> target, object parameters = null, Type capability = null)
-            where T : class
             => new Link<T>(relType, target, parameters, capability);
         
         internal Link(string relType, IIdentity target, object parameters, Type capability)
@@ -62,7 +61,6 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         public Link<T> As<T>()
-            where T : class
         {
             if (this is Link<T> res)
                 return res;
@@ -75,7 +73,6 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The resource type of the link target.</typeparam>
     public class Link<T> : Link
-        where T : class
     {
         internal Link(string relType, IIdentity<T> target, object parameters, Type capability) : base(relType, target, parameters, capability ?? typeof(IRestGet<T, Empty>))
         { }

@@ -15,7 +15,6 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="P">The parameter type.</typeparam>
     [Capability("GET")]
     public interface IRestGet<T, P> : IRestCapability<T>
-        where T : class
     {
         /// <summary>
         /// Gets a resource.
