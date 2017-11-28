@@ -99,11 +99,12 @@ namespace Biz.Morsink.Rest.Jobs
         /// Registers an asynchronous Rest response as a Rest job.
         /// </summary>
         /// <param name="task">The asynchronous Rest response.</param>
+        /// <param name="user">The user registering the Job.</param>
         /// <returns>The RestJob as registered in the store.</returns>
-        public ValueTask<RestJob> RegisterJob(Task<RestResponse> task)
+        public ValueTask<RestJob> RegisterJob(Task<RestResponse> task, string user)
         {
             var id = identityProvider.Creator<RestJob>().Create(Guid.NewGuid());
-            var job = new RestJob(id, task);
+            var job = new RestJob(id, task, user);
             var key = GetKey(id);
             if (!entries.TryAdd(key, new Entry(key, job)))
                 throw new ArgumentException("Entry has already been registered.");
@@ -147,24 +148,26 @@ namespace Biz.Morsink.Rest.Jobs
         /// <summary>
         /// Creates a RestJob.
         /// </summary>
+        /// <param name="user">The user registering the Job.</param>
         /// <returns>A controller for the RestJob.</returns>
-        public ValueTask<RestJobController> CreateJob()
+        public ValueTask<RestJobController> CreateJob(string user)
         {
             var idval = (Guid.NewGuid(), Guid.NewGuid());
             var id = identityProvider.Creator<RestJobController>().Create(idval) as IIdentity<RestJob, RestJobController>;
             var ctrl = new RestJobController(this, id);
             var entry = new ManualEntry(id);
             var key = GetKey(id.Parent);
-            if (entries.TryAdd(key, new Entry(key, new RestJob(id.Parent, entry.Response))))
+            if (entries.TryAdd(key, new Entry(key, new RestJob(id.Parent, entry.Response, user))))
             {
                 if (manualEntries.TryAdd(key, entry))
-                    return new ValueTask<RestJobController>( new RestJobController(this, id));
+                    return new ValueTask<RestJobController>(new RestJobController(this, id));
                 else
                 {
                     entries.TryRemove(key, out var _);
                     return new ValueTask<RestJobController>((RestJobController)null);
                 }
-            } else
+            }
+            else
                 return new ValueTask<RestJobController>((RestJobController)null);
         }
         /// <summary>
@@ -175,7 +178,7 @@ namespace Biz.Morsink.Rest.Jobs
         public ValueTask<bool> FinishJob(RestJobController controller, object value)
         {
             var key = GetKey(controller.JobId);
-            if(manualEntries.TryGetValue(key, out var entry))
+            if (manualEntries.TryGetValue(key, out var entry))
             {
                 if (entry.Id.Equals(controller.Id))
                 {

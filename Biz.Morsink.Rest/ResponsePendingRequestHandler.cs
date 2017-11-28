@@ -38,7 +38,8 @@ namespace Biz.Morsink.Rest
             await Task.WhenAny(resp, Task.Delay(maxWait));
             if (resp.Status < TaskStatus.RanToCompletion)
             {
-                var job = await restJobStore.RegisterJob(resp);
+                var user = request.Metadata.TryGet(out IServiceProvider sp) ? (IUser)sp.GetService(typeof(IUser)) : null;
+                var job = await restJobStore.RegisterJob(resp, user?.Principal.Identity.Name);
                 return RestResult.Pending<object>(job).ToResponse();
             }
             else

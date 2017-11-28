@@ -18,8 +18,9 @@ namespace Biz.Morsink.Rest.Jobs
         /// Registers an asynchronous Rest response as a Rest job.
         /// </summary>
         /// <param name="task">The asynchronous Rest response.</param>
+        /// <param name="user">The user registering the Job.</param>
         /// <returns>The RestJob as registered in the store.</returns>
-        ValueTask<RestJob> RegisterJob(Task<RestResponse> task);
+        ValueTask<RestJob> RegisterJob(Task<RestResponse> task, string user);
 
         /// <summary>
         /// Gets a job controller from the job store.
@@ -30,8 +31,9 @@ namespace Biz.Morsink.Rest.Jobs
         /// <summary>
         /// Creates a RestJob.
         /// </summary>
+        /// <param name="user">The user registering the Job.</param>
         /// <returns>A controller for the RestJob.</returns>
-        ValueTask<RestJobController> CreateJob();
+        ValueTask<RestJobController> CreateJob(string user);
         /// <summary>
         /// Finishes a RestJob corresponding to the controller.
         /// </summary>
