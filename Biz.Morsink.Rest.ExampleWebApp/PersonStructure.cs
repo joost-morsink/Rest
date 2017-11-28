@@ -39,7 +39,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
                 async ValueTask<RestResponse<Person>> IRestPost<PersonCollection, DelayParameter, Person, Person>.Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person entity, CancellationToken cancellationToken)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(parameters.Delay));
+                    await Task.Delay(TimeSpan.FromSeconds(parameters.Delay), cancellationToken);
+
                     var res = await repo.Source.Post(entity);
                     if (res == null)
                         return RestResult.BadRequest<Person>(new object()).ToResponse();
