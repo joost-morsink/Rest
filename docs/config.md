@@ -91,5 +91,9 @@ Adds a repository to the services collection.
 In this case the `HomeRepository` mapped to the home resource (`/`).
 This resource is most important for its links to important other repositories, and is needed to satisfy the HATEOAS constraint.
 
+## Other methods
+Other methods are available for configuration of the Rest component, such as:
 
+* `AddPathMapping` to add path mappings for the `DefaultRestIdentityProvider`.
+* `AddAttributedRepository` to add an [attributed Rest repository](attrRepo.md) to the services.
     
