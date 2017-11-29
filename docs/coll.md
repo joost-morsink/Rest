@@ -19,3 +19,13 @@ If the `RestCollection` type is used, all pagination links are provided by the `
 
 ### Element repository
 This is a straightforward repository implementing Get, Put and Delete methods.
+
+## Source
+The source is the main container for executing the repository logic.
+It should maintain the reference to the actual data or data source.
+The repositories delegate implementation to this component.
+
+There is a configuration method to register the entire collection structure available as an extension method on `IRestServicesBuilder`.
+
+## Structure
+Collections can be (and `AbstractRestCollectionStructure` derivatives are) based on [structures](struct.md). 
