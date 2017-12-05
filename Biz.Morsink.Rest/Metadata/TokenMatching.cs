@@ -6,7 +6,7 @@ namespace Biz.Morsink.Rest.Metadata
 {
     public class TokenMatching
     {
-        public List<string> Tokens { get; set; }
+        public List<VersionToken> Tokens { get; set; }
         public bool Matches { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.DataConvert;
+using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
@@ -71,10 +72,10 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <param name="item">The item to create a hash token for.</param>
         /// <returns>A strring representation of the token.</returns>
-        public string GetTokenFor(T item)
-            => getToken(item, converter);
+        public VersionToken GetTokenFor(T item)
+            => new VersionToken { Token = getToken(item, converter), IsStrong = false };
 
-        string ITokenProvider.GetTokenFor(object item)
+        VersionToken ITokenProvider.GetTokenFor(object item)
             => GetTokenFor((T)item);
     }
 }

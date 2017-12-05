@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Metadata;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,8 +15,8 @@ namespace Biz.Morsink.Rest
         /// Gets a token for the specified item.
         /// </summary>
         /// <param name="item">The item to create a version token for.</param>
-        /// <returns>A verison token for the specified item.</returns>
-        string GetTokenFor(object item);
+        /// <returns>A version token for the specified item.</returns>
+        VersionToken GetTokenFor(object item);
     }
     /// <summary>
     /// An interface for token providers. 
@@ -28,7 +29,7 @@ namespace Biz.Morsink.Rest
         /// Gets a token for the specified item.
         /// </summary>
         /// <param name="item">The item to create a version token for.</param>
-        /// <returns>A verison token for the specified item.</returns>
-        string GetTokenFor(T item);
+        /// <returns>A version token for the specified item.</returns>
+        VersionToken GetTokenFor(T item);
     }
 }

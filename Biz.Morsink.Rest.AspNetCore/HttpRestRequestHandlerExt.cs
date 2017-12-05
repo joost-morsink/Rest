@@ -11,6 +11,15 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public static class HttpRestRequestHandlerExt
     {
+        private static VersionToken parseToken(string token)
+        {
+            if (token.StartsWith("W/\"") && token.EndsWith("\"") && token.Length >= 4)
+                return new VersionToken { Token = token.Substring(3, token.Length - 4), IsStrong = false };
+            else if (token.StartsWith("\"") && token.EndsWith("\"") && token.Length >= 2)
+                return new VersionToken { Token = token.Substring(1, token.Length - 2), IsStrong = true };
+            else
+                throw new ArgumentException("Unable to parse token.", nameof(token));
+        }
         /// <summary>
         /// Adds a middleware component to the IHttpRestRequestHandler that implements metadata for caching through HTTP headers.
         /// </summary>
@@ -24,13 +33,13 @@ namespace Biz.Morsink.Rest.AspNetCore
                 if (httpReq.Headers.ContainsKey("If-None-Match"))
                 {
                     var tokens = httpReq.Headers["If-None-Match"];
-                    var versionTokens = new TokenMatching { Tokens = tokens.Select(token => token.Substring(1, token.Length - 2)).ToList(), Matches = false };
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(parseToken).ToList(), Matches = false };
                     response = await next(context, req.AddMetadata(versionTokens), conv);
                 }
                 else if (httpReq.Headers.ContainsKey("If-Match"))
                 {
                     var tokens = httpReq.Headers["If-Match"];
-                    var versionTokens = new TokenMatching { Tokens = tokens.Select(token => token.Substring(1, token.Length - 2)).ToList(), Matches = true };
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(parseToken).ToList(), Matches = true };
                     response = await next(context, req.AddMetadata(versionTokens), conv);
                 }
                 else
@@ -54,7 +63,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                         context.Response.Headers["Cache-Control"] = string.Join(", ", lst);
                     }
                 }
-                response.Metadata.Execute<VersionToken>(vt => context.Response.Headers["ETag"] = string.Concat("\"", vt.Token, "\""));
+                response.Metadata.Execute<VersionToken>(vt => context.Response.Headers["ETag"] = vt.IsStrong ? "" : "W/" + string.Concat("\"", vt.Token, "\""));
                 return response;
             });
         /// <summary>

@@ -44,9 +44,9 @@ namespace Biz.Morsink.Rest
                     {
                         var token = tokenProvider.GetTokenFor(restValue.Value);
                         if (request.Metadata.TryGet<TokenMatching>(out var tokenMatching) && !tokenMatching.Matches && tokenMatching.Tokens.Contains(token))
-                            return resp.Select(r => r.MakeNotNecessary()).AddMetadata(new VersionToken { Token = token });
+                            return resp.Select(r => r.MakeNotNecessary()).AddMetadata(token);
                         else
-                            return resp.AddMetadata(new VersionToken { Token = token });
+                            return resp.AddMetadata(token);
                     }
                     else
                         return resp;
