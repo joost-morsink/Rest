@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Xml
@@ -17,9 +19,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 seed = next(seed);
             }
         }
+
+        internal static Type GetGeneric(this Type type, Type interf)
+            => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
+                .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == interf)
+                .Select(i => i.GetGenericArguments()[0])
+                .FirstOrDefault();
+
         public static object GetContent(this XElement element)
-            => element.HasElements
-                ? (object)element.Elements()
-                : element.Value;
+            => element == null
+                ? null
+                : element.HasElements
+                    ? (object)element.Elements()
+                    : element.Value;
     }
 }

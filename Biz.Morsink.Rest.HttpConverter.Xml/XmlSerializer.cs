@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.Rest.Schema;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public class XmlSerializer
     {
+        private static string StripName(string name)
+        {
+            if (name.Contains('`'))
+                return name.Substring(0, name.IndexOf('`'));
+            else
+                return name;
+        }
         private readonly ConcurrentDictionary<Type, IForType> serializers;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly IDataConverter converter;
@@ -51,11 +59,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         public XElement Serialize(object item)
         {
+            if (item == null)
+                return null;
             var serializer = GetSerializerForType(item.GetType());
             return serializer.Serialize(item);
         }
         public XElement Serialize<T>(T item)
         {
+            if (item == null)
+                return null;
             var serializer = GetSerializerForType<T>();
             return serializer.Serialize(item);
         }
@@ -79,9 +91,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         {
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
 
-            return (IForType)(repr == null
-                ? Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
-                : Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, repr));
+            var res = (IForType)(repr == null
+                ? typeof(IEnumerable).IsAssignableFrom(t)
+                    ? Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this)
+                    : Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
+                : Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr));
+
+            return res;
         }
 
         #region Helper types
@@ -139,7 +155,52 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override XElement Serialize(T item) => new XElement("simple", converter.Convert(item).To<string>());
 
             }
+            public class Collection : Typed<T>
+            {
+                private readonly Type basetype;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
 
+                public Collection(XmlSerializer parent) : base(parent)
+                {
+                    basetype = typeof(T).GetGeneric(typeof(IEnumerable<>));
+                    if (basetype == null)
+                        throw new ArgumentException("Generic type is not a collection");
+                    serializer = makeSerializer();
+                }
+                private Func<T, XElement> makeSerializer()
+                {
+                    var input = Ex.Parameter(typeof(T), "input");
+                    var result = Ex.Parameter(typeof(XElement), "result");
+                    var enumerator = Ex.Parameter(typeof(IEnumerator<>).MakeGenericType(basetype), "enumerator");
+                    var item = Ex.Parameter(basetype, "item");
+                    var start = Ex.Label("start");
+                    var end = Ex.Label("end");
+                    var block = Ex.Block(new[] { item,enumerator,result },
+                        Ex.Assign(result, Ex.New(typeof(XElement).GetConstructor(new[] { typeof(XName) }), Ex.Constant((XName)"Array"))),
+                        Ex.Assign(enumerator, Ex.Call(input, typeof(IEnumerable<>).MakeGenericType(basetype).GetMethod(nameof(IEnumerable<object>.GetEnumerator)))),
+                        Ex.Label(start),
+                        Ex.IfThen(Ex.Not(Ex.Call(Ex.Convert(enumerator, typeof(IEnumerator)), nameof(IEnumerator.MoveNext), Type.EmptyTypes)),
+                            Ex.Goto(end, result)),
+                        Ex.Assign(item, Ex.Property(enumerator, nameof(IEnumerator<object>.Current))),
+                        Ex.Call(result, nameof(XElement.Add), Type.EmptyTypes,
+                            Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Serialize), Type.EmptyTypes,
+                                Ex.Convert(item, typeof(object))),
+                                typeof(object))),
+                        Ex.Goto(start),
+                        Ex.Label(end),
+                        result);
+                    var lambda = Ex.Lambda(block, input);
+                    return (Func<T, XElement>)lambda.Compile();
+                }
+                public override T Deserialize(XElement e)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override XElement Serialize(T item)
+                    => serializer(item);
+            }
             public class Default : Typed<T>
             {
                 private Func<T, XElement> serializer;
@@ -169,7 +230,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         .Select(x => x.First())
                         .ToArray();
                     var block = Ex.New(typeof(XElement).GetConstructor(new[] { typeof(XName), typeof(object[]) }),
-                        Ex.Convert(Ex.Constant(Parent.typeDescriptorCreator.GetTypeName(typeof(T))), typeof(XName)),
+                        Ex.Convert(Ex.Constant(StripName(typeof(T).Name)), typeof(XName)),
                         Ex.NewArrayInit(typeof(object),
                             props.Select(prop =>
                                 Ex.New(typeof(XElement).GetConstructor(new[] { typeof(XName), typeof(object) }),
@@ -184,15 +245,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             public class Represented : Typed<T>
             {
                 private readonly ITypeRepresentation representation;
+                private readonly Type originalType;
 
-                public Represented(XmlSerializer parent, ITypeRepresentation representation) : base(parent)
+                public Represented(XmlSerializer parent, Type originalType, ITypeRepresentation representation) : base(parent)
                 {
                     this.representation = representation;
+                    this.originalType = originalType;
                 }
                 public override XElement Serialize(T item)
                 {
                     var repr = representation.GetRepresentation(item);
-                    return Parent.Serialize(repr);
+                    var res = Parent.Serialize(repr);
+                    return new XElement(StripName(originalType.Name), res.GetContent());
                 }
                 public override T Deserialize(XElement e)
                 {

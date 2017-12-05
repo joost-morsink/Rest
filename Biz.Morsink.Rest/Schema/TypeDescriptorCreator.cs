@@ -119,7 +119,7 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="type">The type.</param>
         /// <returns>The name for a type.</returns>
         public string GetTypeName(Type type)
-            => type.ToString();
+            => type.ToString().Replace('+', '.');
 
         private TypeDescriptor GetNullableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
@@ -164,7 +164,7 @@ namespace Biz.Morsink.Rest.Schema
                     && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
                     || i == typeof(IDictionary))
                 .Any())
-                return new TypeDescriptor.Record(type.ToString(),Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
+                return new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
             else if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
             {
                 var props = from p in type.GetTypeInfo().DeclaredProperties
