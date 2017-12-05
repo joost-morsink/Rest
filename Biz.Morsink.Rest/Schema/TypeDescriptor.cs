@@ -323,7 +323,7 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public class Reference : TypeDescriptor
         {
-            private static int hashcode = typeof(Reference).GetHashCode();
+            private static readonly int hashcode = typeof(Reference).GetHashCode();
             /// <summary>
             /// Constructor.
             /// </summary>
@@ -338,11 +338,53 @@ namespace Biz.Morsink.Rest.Schema
             public string RefName { get; }
 
             public bool Equals(Reference other)
-                => other != null && Name == other.Name;
+                => other != null && RefName == other.RefName;
             public override bool Equals(TypeDescriptor other)
                 => Equals(other as Reference);
             public override int GetHashCode()
-                => hashcode ^ Name.GetHashCode();
+                => hashcode ^ RefName.GetHashCode();
+        }
+        /// <summary>
+        /// This class represents a reference to a TypeDescriptor by name, and lazily embeds the TypeDescriptor as well.
+        /// </summary>
+        public class Referable : TypeDescriptor
+        {
+            private static readonly int hashcode = typeof(Referable).GetHashCode();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="refname">The name of the reference.</param>
+            /// <param name="expandedDescriptor">The expanded type descriptor for the reference.</param>
+            public Referable(string refname, Lazy<TypeDescriptor> expandedDescriptor) : base("&+"+ refname)
+            {
+                RefName = refname;
+                this.expandedDescriptor = expandedDescriptor;
+            }
+            /// <summary>
+            /// Creates a new Referable based on an already expanded descriptor.
+            /// </summary>
+            /// <param name="refname"></param>
+            /// <param name="expandedDescriptor"></param>
+            /// <returns>A new referable TypeDescriptor.</returns>
+            public static Referable Create(string refname, TypeDescriptor expandedDescriptor)
+                => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor));
+            
+            private readonly Lazy<TypeDescriptor> expandedDescriptor;
+            /// <summary>
+            /// Gets the name of the TypeDescriptor referenced by this TypeDescriptor.
+            /// </summary>
+            public string RefName { get; }
+            /// <summary>
+            /// Gets the actual TypeDescriptor.
+            /// </summary>
+            public TypeDescriptor ExpandedDescriptor => expandedDescriptor.Value;
+
+            public bool Equals(Referable other)
+                => other != null && RefName == other.RefName;
+            public override bool Equals(TypeDescriptor other)
+                => Equals(other as Referable);
+            public override int GetHashCode()
+                => hashcode ^ RefName.GetHashCode();
         }
 
         public abstract bool Equals(TypeDescriptor other);

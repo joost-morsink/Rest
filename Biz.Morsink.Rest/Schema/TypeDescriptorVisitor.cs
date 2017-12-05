@@ -42,6 +42,8 @@ namespace Biz.Morsink.Rest.Schema
                 return PrevisitRecord(r);
             if (t is TypeDescriptor.Reference rf)
                 return VisitReference(rf);
+            if (t is TypeDescriptor.Referable ra)
+                return PrevisitReferable(ra);
             if (t is TypeDescriptor.Null nl)
                 return VisitNull(nl);
             if (t is TypeDescriptor.Value v)
@@ -97,7 +99,7 @@ namespace Biz.Morsink.Rest.Schema
             return VisitArray(a, inner);
         }
         /// <summary>
-        /// Previsit function for Value types.. 
+        /// Previsit function for Value types.
         /// Override if recursive processing is not needed.
         /// </summary>
         /// <param name="u">A Value TypeDescriptor.</param>
@@ -107,7 +109,16 @@ namespace Biz.Morsink.Rest.Schema
             var inner = Visit(v.BaseType);
             return VisitValue(v, inner);
         }
-
+        /// <summary>
+        /// Previsit function for Referables.
+        /// </summary>
+        /// <param name="r">A Referable TypeDescriptor.</param>
+        /// <returns>An object of type R.</returns>
+        protected virtual R PrevisitReferable(TypeDescriptor.Referable r)
+        {
+            var inner = Visit(r.ExpandedDescriptor);
+            return VisitReferable(r, inner);
+        }
         /// <summary>
         /// Visits Null TypeDescriptors.
         /// </summary>
@@ -171,6 +182,13 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="r">A Reference TypeDescriptor.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitReference(TypeDescriptor.Reference r);
+        /// <summary>
+        /// Visit Referable TypeDescriptors.
+        /// </summary>
+        /// <param name="r">A Referable TypeDescriptor.</param>
+        /// <param name="expandedDescriptor">A visited value of the Referable's ExpandedDescriptor.</param>
+        /// <returns></returns>
+        protected abstract R VisitReferable(TypeDescriptor.Referable r, R expandedDescriptor);
         /// <summary>
         /// Visits Union TypeDescriptors.
         /// </summary>

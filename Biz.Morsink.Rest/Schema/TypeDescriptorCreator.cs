@@ -66,11 +66,33 @@ namespace Biz.Morsink.Rest.Schema
         /// <returns>A TypeDescriptor for the type.</returns>
         public TypeDescriptor GetDescriptor(Type type)
             => type == null ? null : GetDescriptor(type, null, null);
+        private static bool primitiveTypeDescriptor(TypeDescriptor desc)
+        {
+            if (desc is TypeDescriptor.Primitive || desc is TypeDescriptor.Null || desc is TypeDescriptor.Referable
+                || desc is TypeDescriptor.Reference || desc is TypeDescriptor.Value)
+                return true;
+            else if (desc is TypeDescriptor.Union u)
+                return u.Options.All(primitiveTypeDescriptor);
+            else if (desc is TypeDescriptor.Intersection i)
+                return i.Parts.All(primitiveTypeDescriptor);
+            else if (desc is TypeDescriptor.Array a)
+                return primitiveTypeDescriptor(a.ElementType);
+            else
+                return false;
+        }
+        private TypeDescriptor GetReferableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            var desc = GetDescriptor(type, cutoff, enclosing);
+            if (primitiveTypeDescriptor(desc))
+                return desc;
+            else
+                return TypeDescriptor.Referable.Create(GetTypeName(type), desc);
+        }
         private TypeDescriptor GetDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             enclosing = enclosing ?? ImmutableStack<Type>.Empty;
             if (enclosing.Contains(type))
-                return new TypeDescriptor.Reference(type.ToString());
+                return new TypeDescriptor.Reference(GetTypeName(type));
             return descriptors.GetOrAdd(type, ty =>
             {
                 ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
@@ -107,7 +129,7 @@ namespace Biz.Morsink.Rest.Schema
             {
                 if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    var t = GetDescriptor(ga[0], cutoff, enclosing);
+                    var t = GetReferableDescriptor(ga[0], cutoff, enclosing);
                     return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
                 }
             }
@@ -128,7 +150,7 @@ namespace Biz.Morsink.Rest.Schema
                         let ga = iti.GetGenericArguments()
                         where ga.Length == 1 && iti.GetGenericTypeDefinition() == typeof(IEnumerable<>)
                         select ga[0];
-                var inner = GetDescriptor((q.FirstOrDefault() ?? typeof(object)), null, enclosing);
+                var inner = GetReferableDescriptor((q.FirstOrDefault() ?? typeof(object)), null, enclosing);
                 return new TypeDescriptor.Array(inner);
             }
             else
@@ -148,7 +170,7 @@ namespace Biz.Morsink.Rest.Schema
                 var props = from p in type.GetTypeInfo().DeclaredProperties
                             where p.CanRead && p.CanWrite
                             let req = p.GetCustomAttributes<RequiredAttribute>().Any()
-                            select new PropertyDescriptor<TypeDescriptor>(p.Name, GetDescriptor(p.PropertyType, null, enclosing), req);
+                            select new PropertyDescriptor<TypeDescriptor>(p.Name, GetReferableDescriptor(p.PropertyType, null, enclosing), req);
                 return props.Any()
                     ? new TypeDescriptor.Record(type.ToString(), props)
                     : null;
@@ -169,7 +191,7 @@ namespace Biz.Morsink.Rest.Schema
                                  where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
                                      && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
                                  from p in ps.Join(props, p => p.Name, p => p.Name,
-                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, GetDescriptor(prop.PropertyType, null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),
+                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, GetReferableDescriptor(prop.PropertyType, null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),
                                      CaseInsensitiveEqualityComparer.Instance)
                                  select p;
 
@@ -192,7 +214,7 @@ namespace Biz.Morsink.Rest.Schema
             if (ti.IsAbstract && ti.DeclaredNestedTypes.Any(nt => nt.BaseType == type))
             {
                 var rec = GetRecordDescriptor(type, cutoff, enclosing);
-                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type).Select(ty => GetDescriptor(ty, type, enclosing)));
+                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type).Select(ty => GetReferableDescriptor(ty, type, enclosing)));
 
                 if (rec != null)
                     res = new TypeDescriptor.Intersection(type.ToString(), new[] { rec, res });

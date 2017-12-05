@@ -129,6 +129,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             return new JObject(new JProperty("$ref", shortName));
         }
 
+        protected override JObject VisitReferable(TypeDescriptor.Referable r, JObject expandedDescriptor)
+            => expandedDescriptor;
+
         protected override JObject VisitString(TypeDescriptor.Primitive.String s)
         {
             return new JObject(new JProperty("type", "string"));
