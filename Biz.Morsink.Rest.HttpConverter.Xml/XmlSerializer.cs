@@ -12,12 +12,11 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
+    /// <summary>
+    /// This class provides XML serialization and deserialization.
+    /// </summary>
     public class XmlSerializer
     {
-        private static class Exts
-        {
-
-        }
         private static string StripName(string name)
         {
             if (name.Contains('`'))
@@ -30,6 +29,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         private readonly IDataConverter converter;
         private readonly IReadOnlyList<ITypeRepresentation> representations;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
+        /// <param name="converter">An IDataConverter instance.</param>
+        /// <param name="representations">A collection of ITypeRepresentation instances.</param>
         public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<ITypeRepresentation> representations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
@@ -59,7 +64,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             AddSimple<float>(serializers);
             AddSimple<double>(serializers);
         }
-
+        /// <summary>
+        /// Serializes an object into an XElement.
+        /// </summary>
+        /// <param name="item">The object to serialize. The method reflects on the type of the object.</param>
+        /// <returns>An XElement representing the serialized item.</returns>
         public XElement Serialize(object item)
         {
             if (item == null)
@@ -67,6 +76,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             var serializer = GetSerializerForType(item.GetType());
             return serializer.Serialize(item);
         }
+        /// <summary>
+        /// Serializes an object into an XElement.
+        /// </summary>
+        /// <typeparam name="T">The type of object to serialize.</typeparam>
+        /// <param name="item">The object to serialize.</param>
+        /// <returns>An XElement representing the serialized item.</returns>
         public XElement Serialize<T>(T item)
         {
             if (item == null)
@@ -74,19 +89,41 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             var serializer = GetSerializerForType<T>();
             return serializer.Serialize(item);
         }
+        /// <summary>
+        /// Deserializes an XElement to an object of the specified type.
+        /// </summary>
+        /// <param name="element">The element to deserialize.</param>
+        /// <param name="type">The type of object to construct.</param>
+        /// <returns>An object constructed by deserialization of the element.</returns>
         public object Deserialize(XElement element, Type type)
         {
             var serializer = GetSerializerForType(type);
             return serializer.Deserialize(element);
-        }
+        }        /
+        /// <summary>
+        /// Deserializes an XElement to an object of the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of object to construct.</typeparam>
+        /// <param name="element">The element to deserialize.</param>
+        /// <returns>An object constructed by deserialization of the element.</returns>
         public T Deserialize<T>(XElement element)
         {
             var serializer = GetSerializerForType<T>();
             return serializer.Deserialize(element);
         }
 
+        /// <summary>
+        /// Gets a serializer for a specific type.
+        /// </summary>
+        /// <param name="type">The type the serializer should handle.</param>
+        /// <returns>An XmlSerializer.IForType instance.</returns>
         public IForType GetSerializerForType(Type type)
             => serializers.GetOrAdd(type, get);
+        /// <summary>
+        /// Gets a typed serializer for a specific type.
+        /// </summary>
+        /// <typeparam name="T">The type the serializer should handle.</typeparam>
+        /// <returns>An XmlSerializer.Typed&lt;T&gt; instance.</returns>
         public Typed<T> GetSerializerForType<T>()
             => (Typed<T>)GetSerializerForType(typeof(T));
 
@@ -106,20 +143,57 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         }
 
         #region Helper types
+        /// <summary>
+        /// Interface for a serializer for a specific type.
+        /// </summary>
         public interface IForType
         {
+            /// <summary>
+            /// The type the implementation handles.
+            /// </summary>
             Type ForType { get; }
+            /// <summary>
+            /// Serializes an object of the type.
+            /// </summary>
+            /// <param name="item">An object of the correct type.</param>
+            /// <returns>The XElement representing the serialized object.</returns>
             XElement Serialize(object item);
+            /// <summary>
+            /// Deserializes an XElement to an object of the type.
+            /// </summary>
+            /// <param name="element">The XElement to deserialize.</param>
+            /// <returns>A typed object constructed by the deserialization of the element.</returns>
             object Deserialize(XElement element);
         }
+        /// <summary>
+        /// Abstract base class for serializers that handle a specific single type.
+        /// </summary>
+        /// <typeparam name="T">The type the serializer handles.</typeparam>
         public abstract class Typed<T> : IForType
         {
+            /// <summary>
+            /// Gets a reference to the parent XmlSerializer instance.
+            /// </summary>
             protected XmlSerializer Parent { get; }
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
             public Typed(XmlSerializer parent)
             {
                 Parent = parent;
             }
+            /// <summary>
+            /// Should implement serialization for objects of type T.
+            /// </summary>
+            /// <param name="item">The object to serialize.</param>
+            /// <returns>The serialization of the object as an XElement.</returns>
             public abstract XElement Serialize(T item);
+            /// <summary>
+            /// Should implement deserialization to object of type T.
+            /// </summary>
+            /// <param name="e">The XElement to deserialize.</param>
+            /// <returns>A deserialized object of type T.</returns>
             public abstract T Deserialize(XElement e);
 
             Type IForType.ForType => typeof(T);
@@ -147,10 +221,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         return (T)serializer.Deserialize(rdr);
                 }
             }
+            /// <summary>
+            /// Typed XmlSerializer for simple (primitive) 'tostring' types.
+            /// </summary>
             public class Simple : Typed<T>
             {
                 private readonly IDataConverter converter;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
+                /// <param name="converter">An IDataConverter instance for converting to and from string.</param>
                 public Simple(XmlSerializer parent, IDataConverter converter) : base(parent)
                 {
                     this.converter = converter;
@@ -160,11 +242,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override XElement Serialize(T item) => new XElement("simple", converter.Convert(item).To<string>());
 
             }
+            /// <summary>
+            /// Typed XmlSerializer for Dictionary-like types.
+            /// </summary>
             public class Dictionary : Typed<T>
             {
                 private readonly Type valueType;
                 private readonly Func<T, XElement> serializer;
                 private readonly Func<XElement, T> deserializer;
+
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
                 public Dictionary(XmlSerializer parent) : base(parent)
                 {
                     var (keyType, valueType) = typeof(T).GetGenerics2(typeof(IDictionary<,>));
@@ -196,7 +286,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     var ctor = typeof(XElement).GetConstructor(new[] { typeof(XName), typeof(object) });
                     var innerlambda = Ex.Lambda(
                         Ex.New(ctor,
-                            Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string,object>.Key)), typeof(XName)),
+                            Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string, object>.Key)), typeof(XName)),
                             Ex.Call(typeof(Utils).GetMethod(nameof(Utils.GetContent)),
                                 Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Serialize), Type.EmptyTypes,
                                     Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string, object>.Value)), typeof(object))))), kvp);
@@ -216,14 +306,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
                     return lambda.Compile();
                 }
-
             }
+            /// <summary>
+            /// Typed XmlSerializer for collection types.
+            /// </summary>
             public class Collection : Typed<T>
             {
                 private readonly Type basetype;
                 private readonly Func<T, XElement> serializer;
                 private readonly Func<XElement, T> deserializer;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
                 public Collection(XmlSerializer parent) : base(parent)
                 {
                     basetype = typeof(T).GetGeneric(typeof(IEnumerable<>));
@@ -319,11 +415,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override XElement Serialize(T item)
                     => serializer(item);
             }
+            /// <summary>
+            /// Default implementation for typed XmlSerializers.
+            /// Assumes a 'record-like' structure.
+            /// Supports both mutable and immutable classes.
+            /// </summary>
             public class Default : Typed<T>
             {
                 private Func<T, XElement> serializer;
                 private Func<XElement, T> deserializer;
-
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
                 public Default(XmlSerializer parent) : base(parent)
                 {
                     serializer = MakeSerializer();
@@ -440,11 +544,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     }
                 }
             }
+            /// <summary>
+            /// Typed XmlSerializer for types that are represented through an ITypeRepresentation instance.
+            /// </summary>
             public class Represented : Typed<T>
             {
                 private readonly ITypeRepresentation representation;
                 private readonly Type originalType;
-
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent XmlSerializer instance.</param>
+                /// <param name="originalType">Equals typeof(T).</param>
+                /// <param name="representation">The type representation instance to use for transformations.</param>
                 public Represented(XmlSerializer parent, Type originalType, ITypeRepresentation representation) : base(parent)
                 {
                     this.representation = representation;
