@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     {
         private static class Exts
         {
- 
+
         }
         private static string StripName(string name)
         {
@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             this.representations = representations.ToArray();
             InitializeDefaultSerializers();
         }
-        private void AddSimple<T>(ConcurrentDictionary<Type,IForType> dict)
+        private void AddSimple<T>(ConcurrentDictionary<Type, IForType> dict)
             => dict[typeof(T)] = new Typed<T>.Simple(this, converter);
         private void InitializeDefaultSerializers()
         {
@@ -95,9 +95,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
 
             var res = (IForType)(repr == null
-                ? typeof(IEnumerable).IsAssignableFrom(t)
-                    ? Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this)
-                    : Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
+                ? t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string)
+                    ? Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this)
+                    : typeof(IEnumerable).IsAssignableFrom(t)
+                        ? Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this)
+                        : Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
                 : Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr));
 
             return res;
@@ -158,7 +160,64 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override XElement Serialize(T item) => new XElement("simple", converter.Convert(item).To<string>());
 
             }
+            public class Dictionary : Typed<T>
+            {
+                private readonly Type valueType;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
+                public Dictionary(XmlSerializer parent) : base(parent)
+                {
+                    var (keyType, valueType) = typeof(T).GetGenerics2(typeof(IDictionary<,>));
+                    if (keyType == null || keyType != typeof(string) || valueType == null)
+                        throw new ArgumentException("Generic type is not a proper dictionary");
+                    this.valueType = valueType;
+                    serializer = MakeSerializer();
+                    deserializer = MakeDeserializer();
+                }
 
+                public override T Deserialize(XElement e)
+                    => deserializer(e);
+
+                public override XElement Serialize(T item)
+                    => serializer(item);
+
+                private Func<XElement, T> MakeDeserializer()
+                {
+                    return null;
+                }
+
+                private Func<T, XElement> MakeSerializer()
+                {
+                    var input = Ex.Parameter(typeof(T), "input");
+                    var kvp = Ex.Parameter(typeof(KeyValuePair<,>).MakeGenericType(typeof(string), valueType), "kvp");
+                    var enumerator = Ex.Parameter(typeof(IEnumerator<>).MakeGenericType(kvp.Type), "enumerator");
+                    var start = Ex.Label("start");
+                    var end = Ex.Label("end");
+                    var ctor = typeof(XElement).GetConstructor(new[] { typeof(XName), typeof(object) });
+                    var innerlambda = Ex.Lambda(
+                        Ex.New(ctor,
+                            Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string,object>.Key)), typeof(XName)),
+                            Ex.Call(typeof(Utils).GetMethod(nameof(Utils.GetContent)),
+                                Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Serialize), Type.EmptyTypes,
+                                    Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string, object>.Value)), typeof(object))))), kvp);
+
+                    var block = Ex.New(ctor,
+                        Ex.Convert(Ex.Constant(StripName(typeof(T).Name)), typeof(XName)),
+                        Ex.Convert(
+                            Ex.Call(typeof(Enumerable).GetMethods()
+                                .Where(m => m.Name == nameof(Enumerable.Select)
+                                    && m.GetGenericArguments().Length == 2
+                                    && m.GetParameters().Length == 2
+                                    && m.GetParameters()[1].ParameterType == typeof(Func<,>).MakeGenericType(m.GetGenericArguments()[0], m.GetGenericArguments()[1]))
+                                .First().MakeGenericMethod(kvp.Type, typeof(XElement)),
+                                Ex.Convert(input, typeof(IEnumerable<>).MakeGenericType(kvp.Type)),
+                                innerlambda), typeof(object)));
+                    var lambda = Ex.Lambda<Func<T, XElement>>(block, input);
+
+                    return lambda.Compile();
+                }
+
+            }
             public class Collection : Typed<T>
             {
                 private readonly Type basetype;
@@ -170,10 +229,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     basetype = typeof(T).GetGeneric(typeof(IEnumerable<>));
                     if (basetype == null)
                         throw new ArgumentException("Generic type is not a collection");
-                    serializer = makeSerializer();
-                    deserializer = makeDeserializer();
+                    serializer = MakeSerializer();
+                    deserializer = MakeDeserializer();
                 }
-                private Func<T, XElement> makeSerializer()
+                private Func<T, XElement> MakeSerializer()
                 {
                     var input = Ex.Parameter(typeof(T), "input");
                     var result = Ex.Parameter(typeof(XElement), "result");
@@ -198,7 +257,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     var lambda = Ex.Lambda(block, input);
                     return (Func<T, XElement>)lambda.Compile();
                 }
-                private Func<XElement, T> makeDeserializer()
+                private Func<XElement, T> MakeDeserializer()
                 {
                     var input = Ex.Parameter(typeof(XElement), "input");
                     var children = Ex.Parameter(typeof(XElement[]), "children");
@@ -210,16 +269,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         var result = Ex.Parameter(basetype.MakeArrayType(), "tmp");
                         var block = Ex.Block(new[] { children, idx, result },
                             Ex.Assign(children,
-                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)),
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(XElement)),
                                     Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes))),
                             Ex.Assign(result, Ex.NewArrayBounds(basetype, Ex.Property(children, nameof(Array.Length)))),
                             Ex.Assign(idx, Ex.Constant(0)),
                             Ex.Label(start),
                             Ex.IfThen(Ex.MakeBinary(System.Linq.Expressions.ExpressionType.GreaterThanOrEqual, idx, Ex.Property(children, nameof(Array.Length))),
                                 Ex.Goto(end)),
-                            Ex.Assign(Ex.ArrayIndex(result, idx),
+                            Ex.Assign(Ex.ArrayAccess(result, idx),
                                 Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
                                     Ex.ArrayIndex(children, idx), Ex.Constant(basetype)), basetype)),
+                            Ex.Assign(idx, Ex.Increment(idx)),
                             Ex.Goto(start),
                             Ex.Label(end),
                             Ex.Convert(result, typeof(T)));
@@ -232,9 +292,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         var result = Ex.Parameter(typeof(T), "result");
                         var block = Ex.Block(new[] { children, idx, result },
                             Ex.Assign(children,
-                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)),
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(XElement)),
                                     Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes))),
-                            Ex.Assign(result, Ex.NewArrayBounds(basetype, Ex.Property(children, nameof(Array.Length)))),
+                            Ex.Assign(result, Ex.New(typeof(T).GetConstructor(Type.EmptyTypes))),
                             Ex.Assign(idx, Ex.Constant(0)),
                             Ex.Label(start),
                             Ex.IfThen(Ex.MakeBinary(System.Linq.Expressions.ExpressionType.GreaterThanOrEqual, idx, Ex.Property(children, nameof(Array.Length))),
@@ -242,6 +302,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                             Ex.Call(Ex.Convert(result, typeof(ICollection<>).MakeGenericType(basetype)), nameof(ICollection<object>.Add), Type.EmptyTypes,
                                 Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
                                     Ex.ArrayIndex(children, idx), Ex.Constant(basetype)), basetype)),
+                            Ex.Assign(idx, Ex.Increment(idx)),
                             Ex.Goto(start),
                             Ex.Label(end),
                             result);
@@ -265,8 +326,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
                 public Default(XmlSerializer parent) : base(parent)
                 {
-                    serializer = makeSerializer();
-                    deserializer = makeDeserializer();
+                    serializer = MakeSerializer();
+                    deserializer = MakeDeserializer();
                 }
 
                 public override T Deserialize(XElement e)
@@ -275,7 +336,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override XElement Serialize(T item)
                     => serializer(item);
 
-                private Func<T, XElement> makeSerializer()
+                private Func<T, XElement> MakeSerializer()
                 {
                     var input = Ex.Parameter(typeof(T), "input");
                     var props = typeof(T).GetTypeInfo().Iterate(x => x.BaseType?.GetTypeInfo())
@@ -297,7 +358,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     var lambda = Ex.Lambda(block, input);
                     return (Func<T, XElement>)lambda.Compile();
                 }
-                private Func<XElement, T> makeDeserializer()
+                private Func<XElement, T> MakeDeserializer()
                 {
                     var parameterlessConstructor = typeof(T).GetTypeInfo().GetConstructor(Type.EmptyTypes);
                     var input = Ex.Parameter(typeof(XElement), "input");
@@ -350,29 +411,29 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         var ctor = typeof(T).GetConstructors().Where(c => c.IsPublic).OrderByDescending(c => c.GetParameters().Length).First();
                         var parameters = ctor.GetParameters().Select(p => Ex.Parameter(p.ParameterType, p.Name.ToUpperInvariant())).ToArray();
                         var block = Ex.Block(new[] { enumerator, current }.Concat(parameters),
-                                                  Ex.Assign(enumerator,
-                                                      Ex.Call(Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes),
-                                                          nameof(IEnumerable<object>.GetEnumerator), Type.EmptyTypes)),
-                                                  Ex.Label(start),
+                            Ex.Assign(enumerator,
+                                Ex.Call(Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes),
+                                    nameof(IEnumerable<object>.GetEnumerator), Type.EmptyTypes)),
+                            Ex.Label(start),
 
-                                                  Ex.IfThen(Ex.Not(Ex.Call(Ex.Convert(enumerator, typeof(IEnumerator)),
-                                                          nameof(IEnumerator.MoveNext), Type.EmptyTypes)),
-                                                      Ex.Goto(end)),
-                                                  Ex.Assign(current, Ex.Property(enumerator, nameof(IEnumerator<XElement>.Current))),
-                                                  Ex.Switch(
-                                                      Ex.Call(Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)), nameof(string.ToUpperInvariant), Type.EmptyTypes),
-                                                      parameters.Select(par =>
-                                                          Ex.SwitchCase(
-                                                              Ex.Block(
-                                                                  Ex.Assign(
-                                                                      par,
-                                                                      Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
-                                                                          current, Ex.Constant(par.Type)), par.Type)),
-                                                                  Ex.Default(typeof(void))),
-                                                              Ex.Constant(par.Name.ToUpperInvariant()))).ToArray()),
-                                                  Ex.Goto(start),
-                                                  Ex.Label(end),
-                                                  Ex.New(ctor, parameters.ToArray()));
+                            Ex.IfThen(Ex.Not(Ex.Call(Ex.Convert(enumerator, typeof(IEnumerator)),
+                                    nameof(IEnumerator.MoveNext), Type.EmptyTypes)),
+                                Ex.Goto(end)),
+                            Ex.Assign(current, Ex.Property(enumerator, nameof(IEnumerator<XElement>.Current))),
+                            Ex.Switch(
+                                Ex.Call(Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)), nameof(string.ToUpperInvariant), Type.EmptyTypes),
+                                parameters.Select(par =>
+                                    Ex.SwitchCase(
+                                        Ex.Block(
+                                            Ex.Assign(
+                                                par,
+                                                Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
+                                                    current, Ex.Constant(par.Type)), par.Type)),
+                                            Ex.Default(typeof(void))),
+                                        Ex.Constant(par.Name.ToUpperInvariant()))).ToArray()),
+                            Ex.Goto(start),
+                            Ex.Label(end),
+                            Ex.New(ctor, parameters.ToArray()));
 
                         var lambda = Ex.Lambda<Func<XElement, T>>(block, input);
                         return lambda.Compile();

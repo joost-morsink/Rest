@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -25,7 +26,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == interf)
                 .Select(i => i.GetGenericArguments()[0])
                 .FirstOrDefault();
-
+        internal static (Type,Type) GetGenerics2(this Type type, Type interf)
+            => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
+                .Where(i => i.GetGenericArguments().Length == 2 && i.GetGenericTypeDefinition() == interf)
+                .Select(i => (i.GetGenericArguments()[0],i.GetGenericArguments()[1]))
+                .FirstOrDefault();
         public static object GetContent(this XElement element)
             => element == null
                 ? null
