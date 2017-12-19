@@ -107,8 +107,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
             Assert.AreEqual(4, xml.Elements().Count());
             Assert.IsNotNull(xml.Element("A"));
             Assert.IsNotNull(xml.Element("As"));
+            Assert.AreEqual(2, xml.Element("As").Elements().Count());
             Assert.IsNotNull(xml.Element("Bs"));
+            Assert.AreEqual(2, xml.Element("Bs").Elements().Count());
             Assert.IsNotNull(xml.Element("MoreAs"));
+            Assert.AreEqual(1, xml.Element("MoreAs").Elements().Count());
+
             var dec = serializer.Deserialize<HelperC>(xml);
             Assert.AreEqual("123", dec.A);
             Assert.AreEqual(2, dec.As.Length);
@@ -132,6 +136,21 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
             Assert.IsNotNull(xml.Element("A"));
             Assert.IsNotNull(xml.Element("B"));
             Assert.IsNotNull(xml.Element("C"));
+
+            xml = XElement.Parse("<a><a>1</a><b><c>2</c><d>3</d></b></a>");
+            var dict = serializer.Deserialize<Dictionary<string, object>>(xml);
+            Assert.IsTrue(dict.TryGetValue("a",out var y));
+            Assert.AreEqual("1", y);
+            Assert.IsTrue(dict.TryGetValue("b", out y));
+            if (y is Dictionary<string, object> b)
+            {
+                Assert.IsTrue(b.TryGetValue("c", out y));
+                Assert.AreEqual("2", y);
+                Assert.IsTrue(b.TryGetValue("d", out y));
+                Assert.AreEqual("3", y);
+            }
+            else
+                Assert.Fail();
         }
     }
 }
