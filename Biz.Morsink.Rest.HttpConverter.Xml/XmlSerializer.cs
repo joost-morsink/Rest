@@ -27,7 +27,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         private readonly ConcurrentDictionary<Type, IForType> serializers;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly IDataConverter converter;
-        private readonly IReadOnlyList<ITypeRepresentation> representations;
+        private readonly ITypeRepresentation[] representations;
+        private readonly IXmlSchemaTranslator[] schemaTranslators;
 
         /// <summary>
         /// Constructor.
@@ -35,12 +36,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
         /// <param name="converter">An IDataConverter instance.</param>
         /// <param name="representations">A collection of ITypeRepresentation instances.</param>
-        public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<ITypeRepresentation> representations)
+        public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<IXmlSchemaTranslator> schemaTranslators, IEnumerable<ITypeRepresentation> representations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             this.typeDescriptorCreator = typeDescriptorCreator;
             this.converter = converter;
             this.representations = representations.ToArray();
+            this.schemaTranslators = schemaTranslators.ToArray();
             InitializeDefaultSerializers();
         }
         private void AddSimple<T>(ConcurrentDictionary<Type, IForType> dict)
@@ -129,17 +131,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private IForType get(Type t)
         {
+            var trans = schemaTranslators.FirstOrDefault(st => st.ForType == t);
+            if (trans != null)
+                return trans.GetConverter();
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
-
-            var res = (IForType)(repr == null
-                ? t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string)
-                    ? Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this)
-                    : typeof(IEnumerable).IsAssignableFrom(t)
-                        ? Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this)
-                        : Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
-                : Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr));
-
-            return res;
+            if (repr != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
+            else if (t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
+            else if (typeof(IEnumerable).IsAssignableFrom(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
+            else
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
         }
 
         #region Helper types
