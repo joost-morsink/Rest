@@ -35,7 +35,7 @@ It provides default behavior on some of the interface methods:
 It also provides many useful (protected) methods to help implement the gaps.
 
 ## JsonHttpConverter
-Included in the solution is the JsonHttpConverter, which implements a plain JSON serialization format for the Rest requests and responses.
+Included in the solution is the `JsonHttpConverter`, which implements a plain JSON serialization format for the Rest requests and responses.
 It determines applicability on the Accept header, which should equal `application/json`.
 It also serializes values using the `application/json` Content-Type header.
 
@@ -53,6 +53,14 @@ protected override void ApplyHeaders(...)
 }
 ```
 
-Although plain JSON is not considered to be RESTful, the JsonHttpConverter is able to satisfy the HATEOAS constraint by using HTTP-headers and JSON Schemas for `TypeDescriptor`s, as can be seen in the code fragment above.
+Although plain JSON is not considered to be RESTful, the `JsonHttpConverter` is able to satisfy the HATEOAS constraint by using HTTP-headers and JSON Schemas for `TypeDescriptor`s, as can be seen in the code fragment above.
 
+## XmlHttpConverter
+Also included is the `XmlHttpConverter`, which implements a plain XML serialization format for the Rest requests and responses.
+The Accept header should be `application/xml` if this component should be used. 
+This is also reflected in the Content-Type header.
+
+Plain XML is just as RESTful as plain JSON, so the `XmlHttpConverter` also satisfies the HATEOAS constraint by using HTTP-headers, and XML schemas.
+
+More information about this converter can be found in the [chapter about XML](xml.md).
 
