@@ -26,6 +26,7 @@ The subtype hierarchy is as follows:
   * Union
   * Intersection
   * Reference
+  * Referable
 
 TypeDescriptors constrain other types in some way, ultimately constraining a 'Anything' type containing all possible values. 
 The absence of a descriptor means any value (Anything) and the presence of multiple descriptors should be interpreted as an intersection of those types.
@@ -83,6 +84,10 @@ It is useful to model type inheritance by specifying the base class separately f
 ### Reference
 A reference is a reference to a TypeDescriptor by name.
 It is dependent on external data (TypeDescriptor repository of some sorts) being present that knows about the referenced type.
+
+### Referable
+A referable is a lazily evaluated TypeDescriptor, with a reference name attached. 
+Consumers can choose whether to evaluate the actual TypeDescriptor or to use the reference name.
 
 ## Schema
 `TypeDescriptors` are generic representations of types. 

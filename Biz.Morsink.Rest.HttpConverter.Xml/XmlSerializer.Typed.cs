@@ -131,7 +131,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                             Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
                             Ex.Assign(elements, Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes)),
                             elements.Foreach(current =>
-                                Ex.Call(result, nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(Ex.Convert(result, typeof(IDictionary<string, object>)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)),
                                     Ex.Condition(Ex.Property(current, nameof(XElement.HasElements)),
                                         Ex.Convert(Ex.Call(Ex.Constant(this), nameof(Deserialize), Type.EmptyTypes, current), typeof(object)),
@@ -148,7 +148,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                             Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
                             Ex.Assign(elements, Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes)),
                             elements.Foreach(current =>
-                                Ex.Call(result, nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(Ex.Convert(result, typeof(IDictionary<string, object>)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)),
                                         Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
                                             current, Ex.Constant(valueType)),
@@ -425,6 +425,22 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     var repr = Parent.Deserialize(e, representation.GetRepresentationType(typeof(T)));
                     return (T)representation.GetRepresentable(repr);
                 }
+            }
+            public class Delegated : Typed<T>
+            {
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
+                public Delegated(XmlSerializer parent, Func<T, XElement> serializer, Func<XElement, T> deserializer) : base(parent)
+                {
+                    this.serializer = serializer;
+                    this.deserializer = deserializer;
+                }
+
+                public override T Deserialize(XElement e)
+                    => deserializer(e);
+
+                public override XElement Serialize(T item)
+                    => serializer(item);
             }
         }
 

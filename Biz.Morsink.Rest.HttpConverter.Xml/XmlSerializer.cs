@@ -44,6 +44,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             this.representations = representations.ToArray();
             this.schemaTranslators = schemaTranslators.ToArray();
             InitializeDefaultSerializers();
+            foreach (var schemaTranslator in schemaTranslators)
+                schemaTranslator.SetSerializer(this);
         }
         private void AddSimple<T>(ConcurrentDictionary<Type, IForType> dict)
             => dict[typeof(T)] = new Typed<T>.Simple(this, converter);
@@ -131,7 +133,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private IForType get(Type t)
         {
-            var trans = schemaTranslators.FirstOrDefault(st => st.ForType == t);
+            var trans = schemaTranslators.FirstOrDefault(st => st.ForType.IsAssignableFrom(t));
             if (trans != null)
                 return trans.GetConverter();
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));

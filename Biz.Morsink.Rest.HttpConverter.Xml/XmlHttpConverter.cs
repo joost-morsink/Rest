@@ -44,11 +44,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             UseSchemaLocationHeader(httpResponse, value);
         }
 
-        protected override Task WriteValue(Stream bodyStream, IRestValue value)
+        protected override async Task WriteValue(Stream bodyStream, IRestValue value)
         {
-            using (var wri = XmlWriter.Create(bodyStream))
+            using (var ms = new MemoryStream())
+            using (var wri = XmlWriter.Create(ms))
+            {
                 serializer.Serialize(value.Value).WriteTo(wri);
-            return Task.CompletedTask;
+                wri.Flush();
+                ms.Seek(0L, SeekOrigin.Begin);
+                await ms.CopyToAsync(bodyStream);
+            }
         }
     }
 }

@@ -42,9 +42,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
         public void Init()
         {
             var typereps = Enumerable.Empty<ITypeRepresentation>();
+            var transs = Enumerable.Empty<IXmlSchemaTranslator>();
             var converter = DataConverter.Default;
             var tdc = new TypeDescriptorCreator(typereps);
-            serializer = new XmlSerializer(tdc, converter, typereps);
+            serializer = new XmlSerializer(tdc, converter, transs, typereps);
         }
         [TestMethod]
         public void XmlSerializer_Primitives()
@@ -139,7 +140,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
 
             xml = XElement.Parse("<a><a>1</a><b><c>2</c><d>3</d></b></a>");
             var dict = serializer.Deserialize<Dictionary<string, object>>(xml);
-            Assert.IsTrue(dict.TryGetValue("a",out var y));
+            Assert.IsTrue(dict.TryGetValue("a", out var y));
             Assert.AreEqual("1", y);
             Assert.IsTrue(dict.TryGetValue("b", out y));
             if (y is Dictionary<string, object> b)
