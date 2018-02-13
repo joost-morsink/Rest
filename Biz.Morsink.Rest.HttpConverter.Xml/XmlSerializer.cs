@@ -27,7 +27,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         private readonly ConcurrentDictionary<Type, IForType> serializers;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly IDataConverter converter;
-        private readonly IReadOnlyList<ITypeRepresentation> representations;
+        private readonly ITypeRepresentation[] representations;
+        private readonly IXmlSchemaTranslator[] schemaTranslators;
 
         /// <summary>
         /// Constructor.
@@ -35,13 +36,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
         /// <param name="converter">An IDataConverter instance.</param>
         /// <param name="representations">A collection of ITypeRepresentation instances.</param>
-        public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<ITypeRepresentation> representations)
+        public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<IXmlSchemaTranslator> schemaTranslators, IEnumerable<ITypeRepresentation> representations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             this.typeDescriptorCreator = typeDescriptorCreator;
             this.converter = converter;
             this.representations = representations.ToArray();
+            this.schemaTranslators = schemaTranslators.ToArray();
             InitializeDefaultSerializers();
+            foreach (var schemaTranslator in schemaTranslators)
+                schemaTranslator.SetSerializer(this);
         }
         private void AddSimple<T>(ConcurrentDictionary<Type, IForType> dict)
             => dict[typeof(T)] = new Typed<T>.Simple(this, converter);
@@ -74,6 +78,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             if (item == null)
                 return null;
             var serializer = GetSerializerForType(item.GetType());
+            return serializer.Serialize(item);
+        }
+        /// <summary>
+        /// Serializes an object into an XElement.
+        /// </summary>
+        /// <param name="item">The object to serialize.</param>
+        /// <param name="type">The type used to serialize.</param>
+        /// <returns>An XElement representing the serialized item.</returns>
+        public XElement Serialize(Type type, object item)
+        {
+            if (item == null)
+                return null;
+            var serializer = GetSerializerForType(type);
             return serializer.Serialize(item);
         }
         /// <summary>
@@ -129,17 +146,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private IForType get(Type t)
         {
+            var trans = schemaTranslators.FirstOrDefault(st => st.ForType.IsAssignableFrom(t));
+            if (trans != null)
+                return trans.GetConverter();
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
-
-            var res = (IForType)(repr == null
-                ? t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string)
-                    ? Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this)
-                    : typeof(IEnumerable).IsAssignableFrom(t)
-                        ? Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this)
-                        : Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this)
-                : Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr));
-
-            return res;
+            if (repr != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
+            else if (t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
+            else if (typeof(IEnumerable).IsAssignableFrom(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
+            else if (t.GetGeneric(typeof(Nullable<>)) != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
+            else
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
         }
 
         #region Helper types

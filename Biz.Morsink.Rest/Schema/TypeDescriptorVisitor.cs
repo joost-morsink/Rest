@@ -18,7 +18,7 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         /// <param name="t">A TypeDescriptor to 'visit'.</param>
         /// <returns>An object of type R.</returns>
-        public R Visit(TypeDescriptor t)
+        public virtual R Visit(TypeDescriptor t)
         {
             if (t is TypeDescriptor.Primitive p)
             {
