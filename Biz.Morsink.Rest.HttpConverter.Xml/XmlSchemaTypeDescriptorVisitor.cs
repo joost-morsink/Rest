@@ -5,31 +5,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-
+using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public class XmlSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<XElement>
     {
-        private static XNamespace XSD = "http://www.w3.org/2001/XMLSchema";
-        private static XNamespace XSI = "http://www.w3.org/2001/XMLSchema-instance";
-        private const string schema = nameof(schema);
-        private const string complexType = nameof(complexType);
-        private const string sequence = nameof(sequence);
-        private const string element = nameof(element);
-        private const string type = nameof(type);
-        private const string name = nameof(name);
-        private const string minOccurs = nameof(minOccurs);
-        private const string maxOccurs = nameof(maxOccurs);
-        private const string nillable = nameof(nillable);
-        private const string boolean = xs + ":" + nameof(boolean);
-        private const string @string = xs + ":" + nameof(@string);
-        private const string integer = xs + ":" + nameof(integer);
-        private const string dateTime = xs + ":" + nameof(dateTime);
-        private const string @decimal = xs + ":" + nameof(@decimal);
-        private const string any = xs + ":" + nameof(any);
-        private const string xs = nameof(xs);
-        private const string xsi = nameof(xsi);
-
         private Dictionary<string, XElement> types;
         public XmlSchemaTypeDescriptorVisitor()
         {
@@ -37,7 +17,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         }
         private string GetName(string name)
         {
-            return name.Replace('+', '.');
+            return name.TrimStart('&', '+', '.').Replace('+', '.');
+        }
+        private string GetShortName(string name)
+        {
+            return GetName(name.Substring(name.LastIndexOf('.') + 1));
         }
         public new XElement Visit(TypeDescriptor t)
         {
@@ -45,15 +29,26 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             return new XElement(XSD + schema,
                 new XAttribute(XNamespace.Xmlns + xs, XSD.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + xsi, XSI.NamespaceName),
-                new XElement(XSD + element, new XAttribute(name, GetName(t.Name.Substring(t.Name.LastIndexOf('.') + 1))),
+                new XElement(XSD + element, new XAttribute(name, GetShortName(t.Name)),
                 new XAttribute(type, GetName(t.Name))),
                 types.Values);
         }
 
         protected override XElement VisitArray(TypeDescriptor.Array a, XElement inner)
         {
-
-            throw new NotImplementedException();
+            if (!types.ContainsKey(a.Name))
+            {
+                var schema = new XElement(XSD + complexType,
+                    new XAttribute(name, "ArrayOf" + GetName(a.ElementType.Name)),
+                        new XElement(XSD + sequence,
+                            new XElement(XSD + element,
+                                new XAttribute(name, GetShortName(a.ElementType.Name)),
+                                new XAttribute(type, inner.Attribute(type)?.Value ?? (xs + @string)),
+                                new XAttribute(minOccurs, 0),
+                                new XAttribute(maxOccurs, "unbounded"))));
+                types[a.Name] = schema;
+            }
+            return new XElement("_", new XAttribute(type, "ArrayOf" + GetName(a.ElementType.Name)));
         }
 
         protected override XElement VisitBoolean(TypeDescriptor.Primitive.Boolean b)
@@ -88,7 +83,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     new XElement(XSD + sequence,
                         props.Select(prop =>
                             new XElement(XSD + element,
-                                new XAttribute(name, prop.Name),
+                                new XAttribute(name, GetName(prop.Name)),
                                 new XAttribute(type, GetName(prop.Type.Attribute(type)?.Value ?? any)),
                                 new XAttribute(minOccurs, prop.Required ? 1 : 0),
                                 new XAttribute(maxOccurs, 1)))));
@@ -108,6 +103,40 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         protected override XElement VisitString(TypeDescriptor.Primitive.String s)
             => new XElement("_", new XAttribute(type, @string));
 
+        private string valueTypeToString(TypeDescriptor td)
+        {
+            if (td is TypeDescriptor.Primitive)
+            {
+                if (td is TypeDescriptor.Primitive.String)
+                    return @string;
+                else if (td is TypeDescriptor.Primitive.Numeric.Integral)
+                    return integer;
+                else if (td is TypeDescriptor.Primitive.Numeric.Float)
+                    return @decimal;
+                else if (td is TypeDescriptor.Primitive.Boolean)
+                    return boolean;
+                else if (td is TypeDescriptor.Primitive.DateTime)
+                    return dateTime;
+                else
+                    return @string;
+            }
+            else return any;
+        }
+        protected override XElement PrevisitUnion(TypeDescriptor.Union u)
+        {
+            if (u.Options.Count > 0 && u.Options.All(o => o is TypeDescriptor.Value))
+            {
+                var schema = new XElement(XSD + simpleType,
+                    new XAttribute(name, u.Name),
+                    new XElement(XSD + restriction,
+                        new XAttribute(@base, valueTypeToString(((TypeDescriptor.Value)u.Options.First()).BaseType)),
+                        u.Options.Cast<TypeDescriptor.Value>().Select(o => new XElement(XSD + enumeration, new XAttribute(value, o.InnerValue)))));
+                types[u.Name] = schema;
+                return new XElement("_", new XAttribute("type", u.Name));
+            }
+            else
+                return base.PrevisitUnion(u);
+        }
         protected override XElement VisitUnion(TypeDescriptor.Union u, XElement[] options)
         {
             if (options.Length == 2 && (options[0] == null || options[1] == null))
@@ -116,7 +145,25 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 basetype.SetAttributeValue(nillable, true);
                 return basetype;
             }
-            return options.Length == 0 ? null : options[0];
+            else if (options.Length == 0)
+                return null;
+            else
+            {
+                if (!types.ContainsKey(u.Name))
+                {
+                    var schema = new XElement(XSD + complexType,
+                        new XAttribute(name, GetName(u.Name)),
+                        new XElement(XSD + choice,
+                            options.Select(opt =>
+                                new XElement(XSD + element,
+                                    new XAttribute(name, opt.Name.LocalName),
+                                    new XAttribute(type, opt.Attribute(type)?.Value ?? any),
+                                    new XAttribute(minOccurs, opt.Attribute(minOccurs)?.Value ?? "1"),
+                                    new XAttribute(maxOccurs, 1)))));
+                    types[u.Name] = schema;
+                }
+                return new XElement("_", new XAttribute("type", u.Name));
+            }
         }
 
         protected override XElement VisitValue(TypeDescriptor.Value v, XElement inner)

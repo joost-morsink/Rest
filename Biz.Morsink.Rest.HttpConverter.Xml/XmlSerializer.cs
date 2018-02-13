@@ -83,6 +83,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <summary>
         /// Serializes an object into an XElement.
         /// </summary>
+        /// <param name="item">The object to serialize.</param>
+        /// <param name="type">The type used to serialize.</param>
+        /// <returns>An XElement representing the serialized item.</returns>
+        public XElement Serialize(Type type, object item)
+        {
+            if (item == null)
+                return null;
+            var serializer = GetSerializerForType(type);
+            return serializer.Serialize(item);
+        }
+        /// <summary>
+        /// Serializes an object into an XElement.
+        /// </summary>
         /// <typeparam name="T">The type of object to serialize.</typeparam>
         /// <param name="item">The object to serialize.</param>
         /// <returns>An XElement representing the serialized item.</returns>
@@ -143,6 +156,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
             else if (typeof(IEnumerable).IsAssignableFrom(t))
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
+            else if (t.GetGeneric(typeof(Nullable<>)) != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
             else
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
         }
