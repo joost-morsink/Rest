@@ -10,6 +10,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public static XNamespace XSD = "http://www.w3.org/2001/XMLSchema";
         public static XNamespace XSI = "http://www.w3.org/2001/XMLSchema-instance";
         public const string schema = nameof(schema);
+        public const string schemaLocation = nameof(schemaLocation);
+        public const string include = nameof(include);
         public const string simpleType = nameof(simpleType);
         public const string complexType = nameof(complexType);
         public const string choice = nameof(choice);
