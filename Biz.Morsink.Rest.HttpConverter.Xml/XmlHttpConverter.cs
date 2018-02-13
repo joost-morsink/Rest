@@ -7,7 +7,7 @@ using System.Text;
 using System.Xml;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-
+using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public class XmlHttpConverter : AbstractHttpRestConverter
@@ -49,7 +49,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             using (var ms = new MemoryStream())
             using (var wri = XmlWriter.Create(ms))
             {
-                serializer.Serialize(value.Value).WriteTo(wri);
+                var element = serializer.Serialize(value.Value);
+                element.SetAttributeValue(XNamespace.Xmlns + xsi, XSI.NamespaceName);
+                element.WriteTo(wri);
                 wri.Flush();
                 ms.Seek(0L, SeekOrigin.Begin);
                 await ms.CopyToAsync(bodyStream);

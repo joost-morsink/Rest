@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 using Ex = System.Linq.Expressions.Expression;
-
+using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public partial class XmlSerializer
@@ -86,7 +86,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 }
 
                 public override T Deserialize(XElement e) => converter.Convert(e.Value).TryTo(out T res) ? res : default(T);
-                public override XElement Serialize(T item) => new XElement("simple", converter.Convert(item).To<string>());
+                public override XElement Serialize(T item)
+                {
+                    var ty = item.GetType();
+                    if (converter.Convert(item).TryTo(out string str) && str != null)
+                        return new XElement("simple", converter.Convert(item).To<string>());
+                    else
+                        return new XElement("simple", new XAttribute(XSI + nil, true));
+                }
 
             }
             /// <summary>
@@ -380,7 +387,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                             props.Select(prop =>
                                 Ex.New(typeof(XElement).GetConstructor(new[] { typeof(XName), typeof(object) }),
                                 Ex.Convert(Ex.Constant(prop.Name), typeof(XName)),
-                                Ex.Call(typeof(Utils), nameof(Utils.GetContent), Type.EmptyTypes,
+                                Ex.Call(typeof(Utils), nameof(Utils.GetContentOrNil), Type.EmptyTypes,
                                     Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Serialize), Type.EmptyTypes,
                                         Ex.Constant(prop.PropertyType),
                                         Ex.Convert(Ex.Property(input, prop), typeof(object))))))));

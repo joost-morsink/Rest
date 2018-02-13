@@ -23,6 +23,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         {
             return GetName(name.Substring(name.LastIndexOf('.') + 1));
         }
+        private XElement modify(XElement source, Action<XElement> modification)
+        {
+            var copy = new XElement(source);
+            modification(copy);
+            return copy;
+        }
         public new XElement Visit(TypeDescriptor t)
         {
             var res = base.Visit(t);
@@ -66,7 +72,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         protected override XElement VisitIntersection(TypeDescriptor.Intersection i, XElement[] parts)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Todo");
         }
 
         protected override XElement VisitNull(TypeDescriptor.Null n)
@@ -82,11 +88,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     new XAttribute(name, GetName(r.Name)),
                     new XElement(XSD + all,
                         props.Select(prop =>
-                            new XElement(XSD + element,
-                                new XAttribute(name, GetName(prop.Name)),
-                                new XAttribute(type, GetName(prop.Type.Attribute(type)?.Value ?? any)),
-                                new XAttribute(minOccurs, prop.Required ? 1 : 0),
-                                new XAttribute(maxOccurs, 1)))));
+                            modify(prop.Type, e =>
+                            {
+                                e.Name = XSD + element;
+                                e.SetAttributeValue(name, prop.Name);
+                                e.SetAttributeValue(minOccurs, prop.Required ? 1 : 0);
+                            }))));
                 types[r.Name] = schema;
             }
             return new XElement("_", new XAttribute(type, GetName(r.Name)));
@@ -132,7 +139,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         new XAttribute(@base, valueTypeToString(((TypeDescriptor.Value)u.Options.First()).BaseType)),
                         u.Options.Cast<TypeDescriptor.Value>().Select(o => new XElement(XSD + enumeration, new XAttribute(value, o.InnerValue)))));
                 types[u.Name] = schema;
-                return new XElement("_", new XAttribute("type", u.Name));
+                return new XElement("_", new XAttribute(type, u.Name));
             }
             else
                 return base.PrevisitUnion(u);
@@ -143,6 +150,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             {
                 var basetype = options[0] ?? options[1];
                 basetype.SetAttributeValue(nillable, true);
+                basetype.SetAttributeValue(minOccurs, 0);
                 return basetype;
             }
             else if (options.Length == 0)
@@ -155,20 +163,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         new XAttribute(name, GetName(u.Name)),
                         new XElement(XSD + choice,
                             options.Select(opt =>
-                                new XElement(XSD + element,
-                                    new XAttribute(name, opt.Name.LocalName),
-                                    new XAttribute(type, opt.Attribute(type)?.Value ?? any),
-                                    new XAttribute(minOccurs, opt.Attribute(minOccurs)?.Value ?? "1"),
-                                    new XAttribute(maxOccurs, 1)))));
+                                modify(opt, e =>
+                                {
+                                    e.Name = XSD + element;
+                                    e.SetAttributeValue(name, opt.Name.LocalName);
+                                }))));
                     types[u.Name] = schema;
                 }
-                return new XElement("_", new XAttribute("type", u.Name));
+                return new XElement("_", new XAttribute(type, u.Name));
             }
         }
 
         protected override XElement VisitValue(TypeDescriptor.Value v, XElement inner)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Values are only supported in enumerations (unions of only values).");
         }
     }
 }
