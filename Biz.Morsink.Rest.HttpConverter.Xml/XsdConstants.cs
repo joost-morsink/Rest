@@ -16,6 +16,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public const string complexType = nameof(complexType);
         public const string choice = nameof(choice);
         public const string sequence = nameof(sequence);
+        public const string all = nameof(all);
         public const string element = nameof(element);
         public const string restriction = nameof(restriction);
         public const string enumeration = nameof(enumeration);

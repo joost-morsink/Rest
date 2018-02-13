@@ -80,7 +80,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             {
                 var schema = new XElement(XSD + complexType,
                     new XAttribute(name, GetName(r.Name)),
-                    new XElement(XSD + sequence,
+                    new XElement(XSD + all,
                         props.Select(prop =>
                             new XElement(XSD + element,
                                 new XAttribute(name, GetName(prop.Name)),
