@@ -41,3 +41,15 @@ The operation is idempotent, which means making the request multiple times has t
 This does not mean the response is the same on all requests (After deletion, the resource might 'not be found').
 
 The response type can be any type.
+
+## Table
+The constraints of all the capability types are:
+
+| Capability | Request body type | Response body type |
+| ---------- | ----------------- | ------------------ |
+| GET        | Empty             | Same as entity     |
+| POST       | Any               | Any                |
+| PUT        | Same as entity    | Same as entity     |
+| PATCH      | Any               | Same as entity     |
+| DELETE     | Should be empty   | Any                |
+ 

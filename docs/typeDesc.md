@@ -104,5 +104,32 @@ There is no best, or canonical, way of determining how a `TypeDescriptor` should
 Of course it is possible to define a few ways of doing it.
 
 ## Representations
+Sometimes a type is not the best candidate for a serialization format.
+In that case you can _represent_ the type by another type.
+We say the _representable_ type is represented by the _representation_ type.
 
-**TODO**
+A very good example is the `Identity<T>` types. 
+They contain a lot of information that is very useful in an in-process context.
+However, it is not information that you would want to be serialized. 
+Every type of `T` in `Identity<T>` must be known by the Rest Identity Provider, allowing the identity value to be converted into a URL.
+This URL is part of the representation type for identity values. (`Href` property)
+
+The implementation of type representations is made through the `ITypeRepresentation` interface, which is defined as follows:
+
+```csharp
+interface ITypeRepresentation
+{
+    bool IsRepresentable(Type type);
+    bool IsRepresentation(Type type);
+    Type GetRepresentationType(Type type);
+    Type GetRepresentableType(Type type);
+    object GetRepresentation(object obj);
+    object GetRepresentable(object rep);
+}
+```
+
+The type representation implementation supports querying representation eligibility through the `IsRepresentable` and `IsRepresentation` methods. 
+It supports querying the representable or representation types responding to each other through the `GetRepresentationType` and `GetRepresentableType`, because the information is needed for serialization and de-serialization.
+The actual conversion is implemented in the `GetRepresentation` and `GetRepresentable` methods.
+
+The type representations are injected into the Http converters at runtime, and queried when necessary.
