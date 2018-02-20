@@ -10,10 +10,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public class XmlSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<XElement>
     {
-        private Dictionary<string, XElement> types;
-        public XmlSchemaTypeDescriptorVisitor()
+        private readonly Dictionary<string, XElement> types;
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
+
+        public XmlSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator)
         {
             types = new Dictionary<string, XElement>();
+            this.typeDescriptorCreator = typeDescriptorCreator;
         }
         private string GetName(string name)
         {
@@ -31,6 +34,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         }
         public new XElement Visit(TypeDescriptor t)
         {
+            types.Clear();
             var res = base.Visit(t);
             return new XElement(XSD + schema,
                 new XAttribute(XNamespace.Xmlns + xs, XSD.NamespaceName),

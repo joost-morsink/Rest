@@ -47,7 +47,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(item) == true);
             if (specific == null)
             {
-                var visitor = new XmlSchemaTypeDescriptorVisitor();
+                var visitor = new XmlSchemaTypeDescriptorVisitor(typeDescriptorCreator);
                 return visitor.Visit(item);
             }
             else

@@ -66,24 +66,24 @@ namespace Biz.Morsink.Rest.Schema
         /// <returns>A TypeDescriptor for the type.</returns>
         public TypeDescriptor GetDescriptor(Type type)
             => type == null ? null : GetDescriptor(type, null, null);
-        private static bool primitiveTypeDescriptor(TypeDescriptor desc)
+        private static bool IsPrimitiveTypeDescriptor(TypeDescriptor desc)
         {
             if (desc is TypeDescriptor.Primitive || desc is TypeDescriptor.Null || desc is TypeDescriptor.Referable
                 || desc is TypeDescriptor.Reference || desc is TypeDescriptor.Value)
                 return true;
             else if (desc is TypeDescriptor.Union u)
-                return u.Options.All(primitiveTypeDescriptor);
+                return u.Options.All(IsPrimitiveTypeDescriptor);
             else if (desc is TypeDescriptor.Intersection i)
-                return i.Parts.All(primitiveTypeDescriptor);
+                return i.Parts.All(IsPrimitiveTypeDescriptor);
             else if (desc is TypeDescriptor.Array a)
-                return primitiveTypeDescriptor(a.ElementType);
+                return IsPrimitiveTypeDescriptor(a.ElementType);
             else
                 return false;
         }
         private TypeDescriptor GetReferableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var desc = GetDescriptor(type, cutoff, enclosing);
-            if (primitiveTypeDescriptor(desc))
+            if (IsPrimitiveTypeDescriptor(desc))
                 return desc;
             else
                 return TypeDescriptor.Referable.Create(GetTypeName(type), desc);
@@ -167,10 +167,14 @@ namespace Biz.Morsink.Rest.Schema
                 return new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
             else if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
             {
-                var props = from p in type.GetTypeInfo().DeclaredProperties
-                            where p.CanRead && p.CanWrite
-                            let req = p.GetCustomAttributes<RequiredAttribute>().Any()
-                            select new PropertyDescriptor<TypeDescriptor>(p.Name, GetReferableDescriptor(p.PropertyType, null, enclosing), req);
+                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
+                       .TakeWhile(x => x != null)
+                       .SelectMany(x => x.DeclaredProperties)
+                       .Where(p => p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
+                       .GroupBy(x => x.Name)
+                       .Select(x => x.First())
+                       .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, GetReferableDescriptor(x.PropertyType, null, enclosing), x.GetCustomAttributes<RequiredAttribute>().Any()));
+                       
                 return props.Any()
                     ? new TypeDescriptor.Record(type.ToString(), props)
                     : null;
