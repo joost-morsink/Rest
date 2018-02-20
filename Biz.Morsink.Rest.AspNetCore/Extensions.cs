@@ -450,6 +450,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 .AddPathMapping<RestJobResult>(jobRepositoryPath + "/*" + jobResultPathSuffix)
                 ;
             builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobRepresentation>();
+            builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobResultRepresentation>();
             builder.OnEndConfiguration(sc =>
             {
                 if (!sc.Any(sd => sd.ServiceType == typeof(IRestJobStore)))

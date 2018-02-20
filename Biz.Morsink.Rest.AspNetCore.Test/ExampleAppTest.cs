@@ -451,8 +451,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
             json = await GetJson(resp);
-            Assert.IsNotNull(json.Property("abc"));
-            Assert.IsTrue(json["abc"].Value<int>() == 123);
+            Assert.IsNotNull((json.Property("value")?.Value as JObject)?.Property("abc"));
+            Assert.IsTrue(json["value"]["abc"].Value<int>() == 123);
 
 
         }
