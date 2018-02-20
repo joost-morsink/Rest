@@ -8,7 +8,7 @@ using System.Text;
 using System.Xml.Linq;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 namespace Biz.Morsink.Rest.HttpConverter.Xml
-{{
+{
     /// <summary>
     /// An IXmlSchemaTranslator implementation for TypeDescriptors.
     /// </summary>
