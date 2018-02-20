@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
-    public class Blog : IHasIdentity<Blog>
+    public class Ownable
+    {
+        public IIdentity<Person> Owner { get; set; }
+    }
+    public class Blog : Ownable, IHasIdentity<Blog> 
     {
         public IIdentity<Blog> Id { get; set; }
         public string Name { get; set; }
-        public IIdentity<Person> Owner { get; set; }
 
         IIdentity IHasIdentity.Id => Id;
     }

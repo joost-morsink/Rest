@@ -193,7 +193,7 @@ More specific usage of a serialization format could be implemented to support ex
 Descriptiveness is dependent upon serialization format.
 Both JSON and XML have a definition of schema, which can be used to make the messages self-descriptive. 
 Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message can be given.
-A translation between `TypeDescriptor`s and schema's is an essential element of implementing a `IHttpRestConverter`. (See [HTTP Converters](./httpConv.md))
+A translation between `TypeDescriptor`s and schemas is an essential element of implementing a `IHttpRestConverter`. (See [HTTP Converters](./httpConv.md))
 
 ##### Hypermedia as the engine of application state
 * The `Home` resource should map to the root path of the api: `/`.

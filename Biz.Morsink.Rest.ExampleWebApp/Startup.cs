@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.HttpConverter.Json;
+using Biz.Morsink.Rest.HttpConverter.Xml;
 using Newtonsoft.Json;
 using Biz.Morsink.Rest.AspNetCore.Caching;
 using Newtonsoft.Json.Serialization;
@@ -30,6 +31,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .UseRequestHandler((sp, hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
+                .AddXmlHttpConverter()
                 // Configure Repositories
                 .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)

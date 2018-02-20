@@ -5,7 +5,7 @@ The type system will be explained here, as well as patterns and transformation t
 Type descriptors are used to construct schemas for concrete serialization types.
 
 ## Formal definition
-A TypeDescriptor is a disjoint union type, and can be any its subtypes. 
+A TypeDescriptor is a disjoint union type, and can be any of its subtypes. 
 The constructor is private and can only be accessed by nested classes. 
 All abstract nested classes have private constructors, and all non-abstract classes are sealed.
 This way we can be certain that the set of known subtypes is a complete set.
@@ -26,6 +26,11 @@ The subtype hierarchy is as follows:
   * Union
   * Intersection
   * Reference
+  * Referable
+
+TypeDescriptors constrain other types in some way, ultimately constraining a 'Anything' type containing all possible values. 
+The absence of a descriptor means any value (Anything) and the presence of multiple descriptors should be interpreted as an intersection of those types.
+At the other end of the type spectrum there is 'Nothing', a type that is not inhabited by any value.
 
 ### Primitives
 A primitive value is just that: a primitive value.
@@ -43,7 +48,7 @@ Each property has the following 'properties':
 * Value (For each key a TypeDescriptor)
 * Required (A boolean indicating whether the _presence_ of the property is required)
 
-Note that the presence of properties is not the same as nullability.
+Note that the presence of properties is not the same as nullability of their values.
 
 ### Null
 This type only contains the null value, and other types explicitly do not allow null values.
@@ -80,6 +85,10 @@ It is useful to model type inheritance by specifying the base class separately f
 A reference is a reference to a TypeDescriptor by name.
 It is dependent on external data (TypeDescriptor repository of some sorts) being present that knows about the referenced type.
 
+### Referable
+A referable is a lazily evaluated TypeDescriptor, with a reference name attached. 
+Consumers can choose whether to evaluate the actual TypeDescriptor or to use the reference name.
+
 ## Schema
 `TypeDescriptors` are generic representations of types. 
 As such, they can be translated into format specific schemas.
@@ -91,7 +100,7 @@ JSON schema is a very compatible schema type, because of the way it is set up.
 An empty schema accepts _any_ JSON, and every element added to the schema adds a constraint.
 This allows for a very clean mathematical specification of datatype constraints.
 
-JSON as a format closely resembles datatypes defined in other languages (like .Net).
+JSON as a format closely resembles data types defined in other languages (like .Net).
 This is also a very good reason why its schema is very compatible to `TypeDescriptor` instances.
 
 ### XML

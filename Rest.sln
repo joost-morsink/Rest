@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.27004.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.AspNetCore", "Biz.Morsink.Rest.AspNetCore\Biz.Morsink.Rest.AspNetCore.csproj", "{D029E537-DB4D-40D3-B2E2-E805F327C103}"
 EndProject
@@ -14,6 +14,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.Json", "Biz.Morsink.Rest.HttpConverter.Json\Biz.Morsink.Rest.HttpConverter.Json.csproj", "{DC25F41B-1445-4606-B40E-88D0938A6733}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.ExampleWebApp", "Biz.Morsink.Rest.ExampleWebApp\Biz.Morsink.Rest.ExampleWebApp.csproj", "{B815682F-68EF-413C-9FB0-2FCDBE55A0C2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.Xml", "Biz.Morsink.Rest.HttpConverter.Xml\Biz.Morsink.Rest.HttpConverter.Xml.csproj", "{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.Xml.Test", "Biz.Morsink.Rest.HttpConverter.Xml.Test\Biz.Morsink.Rest.HttpConverter.Xml.Test.csproj", "{B7A6BA63-2738-43A3-8A22-E652A6F45211}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +62,18 @@ Global
 		{B815682F-68EF-413C-9FB0-2FCDBE55A0C2}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
 		{B815682F-68EF-413C-9FB0-2FCDBE55A0C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B815682F-68EF-413C-9FB0-2FCDBE55A0C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B835EC3-A6E0-4FF0-B7F6-FB164FC4876F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7A6BA63-2738-43A3-8A22-E652A6F45211}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
