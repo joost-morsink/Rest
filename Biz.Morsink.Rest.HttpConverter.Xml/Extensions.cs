@@ -29,6 +29,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             return serviceCollection;
         }
 
+        /// <summary>
+        /// Adds the Xml Http Converter to the service collection.
+        /// </summary>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <returns>The service collection with the added registrations.</returns>
         public static IServiceCollection AddXmlHttpConverter(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddSingleton<IHttpRestConverter, XmlHttpConverter>();
@@ -36,6 +41,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             serviceCollection.AddXmlSchemaTranslator<XmlSchemaXmlSchemaTranslator>();
             return serviceCollection;
         }
+        /// <summary>
+        /// Adds the Xml Http Converter to the service collection.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddXmlHttpConverter(this IRestServicesBuilder builder)
         {
             builder.ServiceCollection.AddXmlHttpConverter();

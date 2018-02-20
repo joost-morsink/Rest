@@ -5,10 +5,19 @@ using System.Xml.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
-    public static  class XsdConstants
+    /// <summary>
+    /// Static class containing readonly/const members to be used for Xml Schema and instances (for nil)
+    /// </summary>
+    public static class XsdConstants
     {
-        public static XNamespace XSD = "http://www.w3.org/2001/XMLSchema";
-        public static XNamespace XSI = "http://www.w3.org/2001/XMLSchema-instance";
+        /// <summary>
+        /// The Xml schema namespace.
+        /// </summary>
+        public static readonly XNamespace XSD = "http://www.w3.org/2001/XMLSchema";
+        /// <summary>
+        /// The Xml schema instance namespace.
+        /// </summary>
+        public static readonly XNamespace XSI = "http://www.w3.org/2001/XMLSchema-instance";
         public const string schema = nameof(schema);
         public const string schemaLocation = nameof(schemaLocation);
         public const string include = nameof(include);

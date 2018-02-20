@@ -46,28 +46,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             Type IForType.ForType => typeof(T);
             XElement IForType.Serialize(object item) => Serialize((T)item);
             object IForType.Deserialize(XElement element) => Deserialize(element);
-            [Obsolete]
-            public class DotNetDefault : Typed<T>
-            {
-                private System.Xml.Serialization.XmlSerializer serializer;
-                public DotNetDefault(XmlSerializer parent) : base(parent)
-                {
-                    serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
-                }
 
-                public override XElement Serialize(T item)
-                {
-                    var root = new XElement("root");
-                    using (var wri = root.CreateWriter())
-                        serializer.Serialize(wri, item);
-                    return root.Elements().First();
-                }
-                public override T Deserialize(XElement e)
-                {
-                    using (var rdr = e.CreateReader())
-                        return (T)serializer.Deserialize(rdr);
-                }
-            }
             /// <summary>
             /// Typed XmlSerializer for simple (primitive) 'tostring' types.
             /// </summary>
@@ -484,10 +463,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     return (T)representation.GetRepresentable(repr);
                 }
             }
+            /// <summary>
+            /// Typed XmlSerializer for which the operations are delegated to functions.
+            /// </summary>
             public class Delegated : Typed<T>
             {
                 private readonly Func<T, XElement> serializer;
                 private readonly Func<XElement, T> deserializer;
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">The parent serializer.</param>
+                /// <param name="serializer">A function used for serialization.</param>
+                /// <param name="deserializer">A function used for deserialization.</param>
                 public Delegated(XmlSerializer parent, Func<T, XElement> serializer, Func<XElement, T> deserializer) : base(parent)
                 {
                     this.serializer = serializer;

@@ -135,7 +135,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="type">The type the serializer should handle.</param>
         /// <returns>An XmlSerializer.IForType instance.</returns>
         public IForType GetSerializerForType(Type type)
-            => serializers.GetOrAdd(type, get);
+            => serializers.GetOrAdd(type, Get);
         /// <summary>
         /// Gets a typed serializer for a specific type.
         /// </summary>
@@ -144,7 +144,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public Typed<T> GetSerializerForType<T>()
             => (Typed<T>)GetSerializerForType(typeof(T));
 
-        private IForType get(Type t)
+        private IForType Get(Type t)
         {
             var trans = schemaTranslators.FirstOrDefault(st => st.ForType.IsAssignableFrom(t));
             if (trans != null)

@@ -1,6 +1,6 @@
 # Rest server
 These libraries support developing Rest services (Richardson maturity model level 3), in a protocol-agnostic way, on top of which HTTP is supported.
-It tries to adhere to the original meaning of the word 'Rest', contrary to what is found on the web in abundance, something which may be called Web Api's.
+It tries to adhere to the original meaning of the word 'Rest', contrary to what is found on the web in abundance, something which may be called Web Apis.
 Additionally the Rest services can be served over an HTTP connection by using ASP.Net Core.
 
 ## Architecture
@@ -76,7 +76,7 @@ The precise specification of the operation interfaces depends on the specificati
 
 An operation interface should not be equal to an HTTP method, but there should be a mapping.
 When dealing with entities, often there is a preference for specifying 'CRUD' operations. 
-However, CRUD deals too much with the implementation of the backend layer, whereas the HTTP methods deal more with what kind of guarantees are tied to the different methods.
+However, CRUD deals too much with the implementation of the back-end layer, whereas the HTTP methods deal more with what kind of guarantees are tied to the different methods.
 For this reason, we at least need to specify the following interfaces:
 * IRestGet
 * IRestPut
@@ -111,12 +111,12 @@ Non-entities are handled by the server component only.
 Of course, it is also possible to let ASP.Net Core handle static files (non-entities) using the UseStaticFiles() extension method.
 
 ### Schema and metadata
-All entities should link to a schema, definining the structure of that entity.
+All entities should link to a schema, defining the structure of that entity.
 
 ### Content-Type and serialization
 This is purely an HTTP aspect. 
 The Rest service delivers a `RestResponse` which must be translated into a `HttpResponse`.
-Part of this transformation is determining in what format the reponse needs to be serialized.
+Part of this transformation is determining in what format the response needs to be serialized.
 
 Determination of the Content-Type is affected by the following factors:
 * Constraints of the resource.
@@ -166,7 +166,7 @@ This aspect encompasses the following aspects:
 * Specification of the way in which parameters are passed on the HTTP level. (Query string, HTTP Headers or Request Body)
 
 #### Security 
-A security interface needs to be defined that can serve as a backend for the implementation of link validation on Rest calls and also for the implementation of a ASP.Net Core pipeline component.
+A security interface needs to be defined that can serve as a back-end for the implementation of link validation on Rest calls and also for the implementation of a ASP.Net Core pipeline component.
 
 #### Paging
 Paging can be made Restful by including navigation links.

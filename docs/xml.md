@@ -28,6 +28,9 @@ For the XML Schema of records this means we have the following possibilities:
 * We can use an XSD `all`, solving the element order problem (not relevant), but we have no means to contain unconstrained properties.
 
 It seems best to use the `sequence` with the `any` and not enforce the ordering constraint.
+However, because a `TypeDescriptor.Record` does not keep any defined ordering of properties (class order nor constructor parameter order), we cannot determine a safe way of using the sequence without consorting to some artificial method of specifying an ordering.
+Because of this we use an XSD `all`.
+This way we will mostly have data complying with the schema.
 
 ### Nulls
 Nulls need to be integrated into the declaration site of the types it 'unions' with.
@@ -38,6 +41,8 @@ As intersections are not supported in XML Schema, the contents of the sub-schema
 In the case a sub-schema is a reference, the referred type needs to be available in the context.
 If intersection is used for object oriented extension, XML Schema extension might be an option. 
 Although detecting the extension structure might prove to be difficult, because the OOP information is forgotten when translating an extended type to a `TypeDescriptor`.
+
+For now, intersections will not be supported in XML schemas, although regular inheritance structures are.
 
 ### References
 Recursive `TypeDescriptor`s need references to keep the schema finite. 

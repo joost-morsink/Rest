@@ -7,12 +7,20 @@ using System.Text;
 using System.Xml.Linq;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 namespace Biz.Morsink.Rest.HttpConverter.Xml
-{
+{ 
+    /// <summary>
+    /// A TypeDescriptorVisitor to generate an XML schema (XSD) from a TypeDescriptor.
+    /// It has several shortcomings due to the nature of XSD.
+    /// </summary>
     public class XmlSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<XElement>
     {
         private readonly Dictionary<string, XElement> types;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
         public XmlSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator)
         {
             types = new Dictionary<string, XElement>();
@@ -26,12 +34,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         {
             return GetName(name.Substring(name.LastIndexOf('.') + 1));
         }
-        private XElement modify(XElement source, Action<XElement> modification)
+        private XElement Modify(XElement source, Action<XElement> modification)
         {
             var copy = new XElement(source);
             modification(copy);
             return copy;
         }
+        /// <summary>
+        /// New Visit method, which calls the underlying base.Visit.
+        /// During the visiting process typedefinitions are collected, so they can be referred to from other definitions.
+        /// </summary>
+        /// <param name="t">The main TypeDescriptor to visit.</param>
+        /// <returns>An XElement containing an schema (XSD) for the TypeDescriptor.</returns>
         public new XElement Visit(TypeDescriptor t)
         {
             types.Clear();
@@ -92,7 +106,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     new XAttribute(name, GetName(r.Name)),
                     new XElement(XSD + all,
                         props.Select(prop =>
-                            modify(prop.Type, e =>
+                            Modify(prop.Type, e =>
                             {
                                 e.Name = XSD + element;
                                 e.SetAttributeValue(name, prop.Name);
@@ -114,7 +128,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         protected override XElement VisitString(TypeDescriptor.Primitive.String s)
             => new XElement("_", new XAttribute(type, @string));
 
-        private string valueTypeToString(TypeDescriptor td)
+        private string ValueTypeToString(TypeDescriptor td)
         {
             if (td is TypeDescriptor.Primitive)
             {
@@ -140,7 +154,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 var schema = new XElement(XSD + simpleType,
                     new XAttribute(name, u.Name),
                     new XElement(XSD + restriction,
-                        new XAttribute(@base, valueTypeToString(((TypeDescriptor.Value)u.Options.First()).BaseType)),
+                        new XAttribute(@base, ValueTypeToString(((TypeDescriptor.Value)u.Options.First()).BaseType)),
                         u.Options.Cast<TypeDescriptor.Value>().Select(o => new XElement(XSD + enumeration, new XAttribute(value, o.InnerValue)))));
                 types[u.Name] = schema;
                 return new XElement("_", new XAttribute(type, u.Name));
@@ -167,7 +181,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         new XAttribute(name, GetName(u.Name)),
                         new XElement(XSD + choice,
                             options.Select(opt =>
-                                modify(opt, e =>
+                                Modify(opt, e =>
                                 {
                                     e.Name = XSD + element;
                                     e.SetAttributeValue(name, opt.Name.LocalName);
