@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Linq;
 using Biz.Morsink.DataConvert;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Jobs
 {
@@ -103,7 +104,7 @@ namespace Biz.Morsink.Rest.Jobs
         /// <returns>The RestJob as registered in the store.</returns>
         public ValueTask<RestJob> RegisterJob(Task<RestResponse> task, string user)
         {
-            var id = identityProvider.Creator<RestJob>().Create(Guid.NewGuid());
+            var id = identityProvider.Creator<RestJob>().Create(RandomId.Next());
             var job = new RestJob(id, task, user);
             var key = GetKey(id);
             if (!entries.TryAdd(key, new Entry(key, job)))
@@ -152,7 +153,7 @@ namespace Biz.Morsink.Rest.Jobs
         /// <returns>A controller for the RestJob.</returns>
         public ValueTask<RestJobController> CreateJob(string user)
         {
-            var idval = (Guid.NewGuid(), Guid.NewGuid());
+            var idval = (RandomId.Next(), RandomId.Next());
             var id = identityProvider.Creator<RestJobController>().Create(idval) as IIdentity<RestJob, RestJobController>;
             var ctrl = new RestJobController(this, id);
             var entry = new ManualEntry(id);
