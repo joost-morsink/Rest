@@ -37,7 +37,10 @@ namespace Biz.Morsink.Rest.Jobs
             if (parameters.Secure && user?.Principal == null)
                 return RestResult.BadRequest<Empty>("Cannot be secure without user").ToResponse();
             var controller = await jobstore.CreateJob(parameters.Secure ? user?.Principal.Identity.Name : null);
-            return Rest.Value(new Empty()).ToResponse().WithMetadata(new CreatedResource { Address = controller.Id });
+            return Rest.ValueBuilder(new Empty())
+                .WithLink(Link.Create("controller", controller.Id))
+                .BuildResponse()
+                .WithMetadata(new CreatedResource { Address = controller.JobId });
         }
     }
 }

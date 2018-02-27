@@ -15,6 +15,7 @@ using Biz.Morsink.Rest.AspNetCore.Caching;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Biz.Morsink.Rest.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -50,6 +51,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.Use(next => context =>
+            {
+#if USERTEST
+                context.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "Joost") }));
+#endif
+                return next(context);
+            });
             app.UseRest();
             app.Run(async context =>
             {
