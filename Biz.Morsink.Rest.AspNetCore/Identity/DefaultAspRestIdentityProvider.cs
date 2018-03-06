@@ -10,9 +10,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
 {
     class DefaultAspRestIdentityProvider : RestIdentityProvider
     {
-        public DefaultAspRestIdentityProvider() : base()
+        private readonly string localPrefix;
+
+        public DefaultAspRestIdentityProvider(string localPrefix = null) : base()
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
+            this.localPrefix = localPrefix;
         }
 
         internal void Initialize(IEnumerable<IRestRepository> repositories, IEnumerable<IRestPathMapping> pathMappings)

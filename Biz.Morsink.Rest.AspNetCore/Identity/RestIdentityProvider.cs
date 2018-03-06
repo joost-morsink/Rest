@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
@@ -356,5 +357,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         }
         public virtual IReadOnlyList<RestPath> GetRestPaths(Type forType)
             => entries.TryGetValue(forType, out var entry) ? entry.Paths : new RestPath[0];
+
+        public RestPrefixContainer Prefixes { get; } = new RestPrefixContainer();
     }
 }
