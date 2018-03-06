@@ -321,21 +321,21 @@ namespace Biz.Morsink.Rest.AspNetCore
                 if (id.Arity == 1)
                 {
                     if (queryString != null)
-                        return new Identity<object, string>(
+                        return new Identity<object, RestPath>(
                             this,
                             entry.PrimaryPath.FillWildcards(Enumerable.Empty<string>(),
-                                RestPath.Query.FromPairs(queryString)).PathString);
+                                RestPath.Query.FromPairs(queryString)));
                     else
-                        return new Identity<object, string>(this, entry.PrimaryPath.FillWildcards(new[] { converter.Convert(id.Value).To<string>() }).PathString);
+                        return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(new[] { converter.Convert(id.Value).To<string>() }));
                 }
                 else
                 {
                     if (queryString != null)
-                        return new Identity<object, string>(
+                        return new Identity<object, RestPath>(
                             this,
-                            entry.PrimaryPath.FillWildcards(componentValues(id), RestPath.Query.FromPairs(queryString)).PathString);
+                            entry.PrimaryPath.FillWildcards(componentValues(id), RestPath.Query.FromPairs(queryString)));
                     else
-                        return new Identity<object, string>(this, entry.PrimaryPath.FillWildcards(converter.Convert(id.Value).To<string[]>()).PathString);
+                        return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(converter.Convert(id.Value).To<string[]>()));
                 }
             }
             else

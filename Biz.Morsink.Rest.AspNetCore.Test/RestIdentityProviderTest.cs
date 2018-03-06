@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual("1", p.Value.ToString());
             var g = provider.ToGeneralIdentity(p);
             Assert.IsNotNull(g);
-            Assert.AreEqual("/api/person/1", g.Value.ToString());
+            Assert.AreEqual("/api/person/1", provider.ToPath(g));
         }
         [TestMethod]
         public void RestIdProv_HappySearch()
@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual("Morsink", srch);
             var g = provider.ToGeneralIdentity(p);
             Assert.IsNotNull(g);
-            Assert.AreEqual("/api/person?search=Morsink", g.Value.ToString());
+            Assert.AreEqual("/api/person?search=Morsink", provider.ToPath(g));
         }
         [TestMethod]
         public void RestIdProv_HappyDetailSearch()

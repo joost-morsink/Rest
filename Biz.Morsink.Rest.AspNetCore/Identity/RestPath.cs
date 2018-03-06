@@ -552,7 +552,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Gets a string representation for the Path.
         /// </summary>
-        public string PathString => string.Join("/", segments) + query.ToUriSuffix();
+        public string PathString => string.Concat(pathBase, string.Join("/", segments) , query.ToUriSuffix());
         /// <summary>
         /// Turn the path into a remote path. Throws if the path is already remote.
         /// </summary>
