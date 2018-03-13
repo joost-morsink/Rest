@@ -7,10 +7,16 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Utils
 {
+    /// <summary>
+    /// This class facilitates prefix matching for strings. 
+    /// Prefixes map in a dictionary-like structure to some value of type T.
+    /// This class is 'immutable'.
+    /// </summary>
+    /// <typeparam name="T">The type of value.</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     public abstract class PrefixMatcher<T>
     {
-        public static int SubstringMatchLength(string full, string sub, int offset)
+        private static int SubstringMatchLength(string full, string sub, int offset)
         {
             int i;
             for (i = 0; i < sub.Length && offset + i < full.Length; i++)
@@ -18,22 +24,54 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                     break;
             return i;
         }
+        /// <summary>
+        /// Create a PrefixMatcher based on a collection of prefix value pairs.
+        /// </summary>
+        /// <param name="elements">A collection of prefix value pairs.</param>
+        /// <returns>A PrefixMatcher object.</returns>
         public static PrefixMatcher<T> Make(IEnumerable<(string, T)> elements)
         {
             return elements.Aggregate(Empty, (pm, el) => pm.Add(el.Item1, el.Item2));
         }
+        /// <summary>
+        /// Create a PrefixMatcher based on a collection of prefix value pairs.
+        /// </summary>
+        /// <param name="elements">A collection of prefix value pairs.</param>
+        /// <returns>A PrefixMatcher object.</returns>        
         public static PrefixMatcher<T> Make(IEnumerable<KeyValuePair<string, T>> elements)
         {
             return elements.Aggregate(Empty, (pm, el) => pm.Add(el.Key, el.Value));
         }
-        public static PrefixMatcher<T> Empty { get; } = new _Empty();
-        public abstract PrefixMatcher<T> Add(string str, T item);
+        /// <summary>
+        /// Gets an empty PrefixMatcher.
+        /// </summary>
+        public static PrefixMatcher<T> Empty => _Empty.Instance;
+        /// <summary>
+        /// Adds an entry to the PrefixMatcher.
+        /// </summary>
+        /// <param name="prefix">The prefix.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>A new PrefixMatcher containing the added mapping.</returns>
+        public abstract PrefixMatcher<T> Add(string prefix, T value);
         protected abstract PrefixMatcher<T> Translate(int offset);
+        /// <summary>
+        /// Gets a collection of all prefix value mappings.
+        /// </summary>
+        /// <returns>A collection of all prefix value mappings in this PrefixMatcher.</returns>
         public abstract IEnumerable<(string, T)> GetPrefixMatches();
 
         protected abstract void BuildDebugString(StringBuilder sb, int indent);
+        /// <summary>
+        /// Tries to match a string to a prefix in the PrefixMatcher.
+        /// </summary>
+        /// <param name="str">The string to test for prefixes.</param>
+        /// <param name="result">The value of the mapping if a match was found.</param>
+        /// <returns>True if a match was found, false otherwise.</returns>
         public abstract bool TryMatch(string str, out T result);
 
+        /// <summary>
+        /// Gets a pretty-printed textual representation of the PrefixMatcher.
+        /// </summary>
         public string DebugDisplay
         {
             get
@@ -43,15 +81,40 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 return sb.ToString();
             }
         }
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         private PrefixMatcher() { }
-
+        /// <summary>
+        /// This class represents the empty PrefixMatcher.
+        /// </summary>
         private sealed class _Empty : PrefixMatcher<T>
         {
-            public _Empty() { }
-            public override PrefixMatcher<T> Add(string str, T item)
-                => new Leaf(str, 0, item);
+            /// <summary>
+            /// Gets the singleton instance.
+            /// </summary>
+            public static _Empty Instance { get; } = new _Empty();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            private _Empty() { }
+            /// <summary>
+            /// Adding a mapping to an empty PrefixMatcher gives a single Leaf entry.
+            /// </summary>
+            /// <param name="prefix">The prefix to register.</param>
+            /// <param name="value">The corresponding value.</param>
+            /// <returns>A new PrefixMatcher.</returns>
+            public override PrefixMatcher<T> Add(string prefix, T value)
+                => new Leaf(prefix, 0, value);
+            /// <summary>
+            /// Empty does not translate.
+            /// </summary>
+            /// <returns>this</returns>
             protected override PrefixMatcher<T> Translate(int offset)
                 => this;
+            /// <summary>
+            /// Gets an empty colllection of mappings.
+            /// </summary>
             public override IEnumerable<(string, T)> GetPrefixMatches()
                 => Enumerable.Empty<(string, T)>();
             protected override void BuildDebugString(StringBuilder sb, int indent)
@@ -59,49 +122,75 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 sb.Append(' ', indent);
                 sb.AppendLine("()");
             }
+            /// <summary>
+            /// An empty PrefixMatcher never matches.
+            /// </summary>
+            /// <returns>false</returns>
             public override bool TryMatch(string str, out T result)
             {
                 result = default(T);
                 return false;
             }
         }
+        /// <summary>
+        /// A Leaf represents a single prefix mapping, optionally offset because of shorter partial prefixes.
+        /// </summary>
         private sealed class Leaf : PrefixMatcher<T>
         {
-            public Leaf(string str, int offset, T item)
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="prefix">The prefix.</param>
+            /// <param name="offset">The offset.</param>
+            /// <param name="value">The value.</param>
+            public Leaf(string prefix, int offset, T value)
             {
-                String = str;
+                Prefix = prefix;
                 Offset = offset;
-                Value = item;
+                Value = value;
             }
-            public string String { get; }
+            /// <summary>
+            /// Gets the Leaf's Prefix.
+            /// </summary>
+            public string Prefix { get; }
+            /// <summary>
+            /// Gets the offset in the Prefix.
+            /// </summary>
             public int Offset { get; }
+            /// <summary>
+            /// Gets the corresponding value.
+            /// </summary>
             public T Value { get; }
             public override PrefixMatcher<T> Add(string str, T item)
             {
-                var length = SubstringMatchLength(String, str, 0) - Offset;
+                var length = SubstringMatchLength(Prefix, str, 0) - Offset;
                 if (length == 0)
-                    return new Node(String.Substring(0, Offset))
-                        .Add(String, Value).Add(str, item);
+                    return new Node(Prefix.Substring(0, Offset))
+                        .Add(Prefix, Value).Add(str, item);
                 else
-                    return new Fixed(String.Substring(0, Offset), String.Substring(Offset, length),
-                        new Node(String.Substring(0, Offset + length)).Add(String, Value).Add(str, item));
+                    return new Fixed(Prefix.Substring(0, Offset), Prefix.Substring(Offset, length),
+                        new Node(Prefix.Substring(0, Offset + length)).Add(Prefix, Value).Add(str, item));
             }
             protected override PrefixMatcher<T> Translate(int offset)
-                => new Leaf(String, Math.Max(0, Math.Min(String.Length, Offset + offset)), Value);
+                => new Leaf(Prefix, Math.Max(0, Math.Min(Prefix.Length, Offset + offset)), Value);
             public override IEnumerable<(string, T)> GetPrefixMatches()
             {
-                yield return (String, Value);
+                yield return (Prefix, Value);
             }
             protected override void BuildDebugString(StringBuilder sb, int indent)
             {
                 sb.Append(' ', indent);
-                sb.Append(String.Substring(Offset));
+                sb.Append(Prefix.Substring(Offset));
                 sb.Append(" = ");
                 sb.AppendLine(Value?.ToString());
             }
+            /// <summary>
+            /// A match is found if the parameter starts with the Leaf's Prefix.
+            /// </summary>
+            /// <returns>True if the parameter matches the Prefix.</returns>
             public override bool TryMatch(string str, out T result)
             {
-                if (SubstringMatchLength(String, str, 0) == String.Length)
+                if (SubstringMatchLength(Prefix, str, 0) == Prefix.Length)
                 {
                     result = Value;
                     return true;
@@ -113,61 +202,82 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 }
             }
         }
+        /// <summary>
+        /// The Fixed class represents a fixed range in the prefix, that must match.
+        /// </summary>
         private sealed class Fixed : PrefixMatcher<T>
         {
-            public Fixed(string prefix, string fix, PrefixMatcher<T> next)
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="prefix">The prefix for the fixed range.</param>
+            /// <param name="fixedRange">The fixed range.</param>
+            /// <param name="next">A PrefixMatcher that should apply after the fixed range.</param>
+            public Fixed(string prefix, string fixedRange, PrefixMatcher<T> next)
             {
-                Fix = fix;
+                FixedRange = fixedRange;
                 Prefix = prefix;
                 Next = next;
             }
 
             public int Offset => Prefix.Length;
-            public string Fix { get; }
+            /// <summary>
+            /// Gets the fixed range.
+            /// </summary>
+            public string FixedRange { get; }
+            /// <summary>
+            /// Gets the fixed range's prefix.
+            /// </summary>
             public string Prefix { get; }
+            /// <summary>
+            /// Gets the next PrefixMatcher.
+            /// </summary>
             public PrefixMatcher<T> Next { get; }
             public override PrefixMatcher<T> Add(string str, T item)
             {
-                var len = SubstringMatchLength(str, Fix, Offset);
-                if (len == Fix.Length)
+                var len = SubstringMatchLength(str, FixedRange, Offset);
+                if (len == FixedRange.Length)
                 {
-                    return new Fixed(Prefix, Fix, Next.Add(str, item));
+                    return new Fixed(Prefix, FixedRange, Next.Add(str, item));
                 }
                 else if (len > 0)
                 {
-                    return new Fixed(Prefix, Fix.Substring(0, len), Next.Translate(len - Fix.Length)).Add(str, item);
+                    return new Fixed(Prefix, FixedRange.Substring(0, len), Next.Translate(len - FixedRange.Length)).Add(str, item);
                 }
                 else
                     return new Node(Prefix,
                         ImmutableDictionary<char, PrefixMatcher<T>>.Empty
-                        .Add(Fix[0], this.Translate(1))).Add(str, item);
+                        .Add(FixedRange[0], this.Translate(1)),false).Add(str, item);
 
             }
             protected override PrefixMatcher<T> Translate(int offset)
             {
-                if (offset > Fix.Length)
+                if (offset > FixedRange.Length)
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 if (offset == 0)
                     return this;
                 else if (offset < 0)
-                    return new Fixed(Prefix.Substring(0, Prefix.Length + offset), Prefix.Substring(Prefix.Length + offset) + Fix, Next);
-                else if (offset == Fix.Length)
+                    return new Fixed(Prefix.Substring(0, Prefix.Length + offset), Prefix.Substring(Prefix.Length + offset) + FixedRange, Next);
+                else if (offset == FixedRange.Length)
                     return Next;
                 else
-                    return new Fixed(Prefix + Fix.Substring(0, offset), Fix.Substring(offset), Next);
+                    return new Fixed(Prefix + FixedRange.Substring(0, offset), FixedRange.Substring(offset), Next);
             }
             public override IEnumerable<(string, T)> GetPrefixMatches()
                 => Next.GetPrefixMatches();
             protected override void BuildDebugString(StringBuilder sb, int indent)
             {
                 sb.Append(' ', indent);
-                sb.Append(Fix);
+                sb.Append(FixedRange);
                 sb.AppendLine(" -> ");
-                Next.BuildDebugString(sb, indent + Fix.Length + 4);
+                Next.BuildDebugString(sb, indent + FixedRange.Length + 4);
             }
+            /// <summary>
+            /// Checks the fixed range and if equal, delegates matching to the Next PrefixMatcher.
+            /// </summary>
             public override bool TryMatch(string str, out T result)
             {
-                if (SubstringMatchLength(str, Fix, Offset) == Fix.Length)
+                if (SubstringMatchLength(str, FixedRange, Offset) == FixedRange.Length)
                     return Next.TryMatch(str, out result);
                 else
                 {
@@ -176,8 +286,15 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 }
             }
         }
+        /// <summary>
+        /// A Node represents a point where a branch of PrefixMatchers is chosen based on a single character.
+        /// </summary>
         private sealed class Node : PrefixMatcher<T>
         {
+            /// <summary>
+            /// Constructor for an empty Node.
+            /// </summary>
+            /// <param name="prefix">The prefix for the Node.</param>
             public Node(string prefix)
             {
                 Prefix = prefix;
@@ -185,13 +302,13 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 hasValue = false;
                 value = default(T);
             }
-            public Node(string prefix, ImmutableDictionary<char, PrefixMatcher<T>> routes)
-            {
-                Prefix = prefix;
-                Routes = routes;
-                hasValue = false;
-                value = default(T);
-            }
+            /// <summary>
+            /// Constructor for a Node.
+            /// </summary>
+            /// <param name="prefix">The prefix for the Node.</param>
+            /// <param name="routes">The routes for the Node.</param>
+            /// <param name="hasValue">Indicates whether the Node has a value for the prefix.</param>
+            /// <param name="value">The value of the Node for the prefix.</param>
             public Node(string prefix, ImmutableDictionary<char, PrefixMatcher<T>> routes, bool hasValue, T value = default(T))
             {
                 Prefix = prefix;
@@ -201,12 +318,20 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             }
             private readonly bool hasValue;
             private readonly T value;
+            /// <summary>
+            /// True if the Node has a value for the prefix.
+            /// </summary>
             public bool HasValue => hasValue;
+            /// <summary>
+            /// The Value for the prefix if HasValue == true.
+            /// </summary>
             public T Value => value;
-
             public int Offset => Prefix.Length;
+            /// <summary>
+            /// Gets the Node's prefix.
+            /// </summary>
             public string Prefix { get; }
-            public ImmutableDictionary<char, PrefixMatcher<T>> Routes;
+            public ImmutableDictionary<char, PrefixMatcher<T>> Routes { get; }
 
             public override PrefixMatcher<T> Add(string str, T item)
             {
@@ -249,6 +374,10 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                     kvp.Value.BuildDebugString(sb, indent + 6);
                 }
             }
+            /// <summary>
+            /// Selects the proper 'next' PrefixMatcher to delegate evaluation to. 
+            /// Failure might be caught by an optional Value registered on the Node.
+            /// </summary>
             public override bool TryMatch(string str, out T result)
             {
                 if (str.Length == Prefix.Length)
