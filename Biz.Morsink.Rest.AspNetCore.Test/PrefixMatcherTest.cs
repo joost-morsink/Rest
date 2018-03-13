@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
     public class PrefixMatcherTest
     {
         [TestMethod]
-        public void Test()
+        public void PrefixMatch_Test()
         {
             var m = PrefixMatcher<int>.Empty
                 .Add("abcdefgh", 1)
