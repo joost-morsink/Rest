@@ -231,15 +231,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             RecordConverter.ForDictionaries()
         }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();
+        private readonly string localPrefix;
         private Lazy<RestPathMatchTree> matchTree;
 
         private RestPathMatchTree GetMatchTree()
-            => new RestPathMatchTree(entries.SelectMany(e => e.Value.Paths));
+            => new RestPathMatchTree(entries.SelectMany(e => e.Value.Paths), localPrefix);
         /// <summary>
         /// Constructor.
         /// </summary>
-        public RestIdentityProvider()
+        public RestIdentityProvider(string localPrefix = null)
         {
+            this.localPrefix = localPrefix;
             matchTree = new Lazy<RestPathMatchTree>(GetMatchTree);
         }
         /// <summary>
@@ -289,8 +291,20 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="path">The path to parse.</param>
         /// <param name="nullOnFailure">When there is not match found for the Path, this boolean indicates whether to return a null or an IIdentity&lt;object&gt;.</param>
         /// <returns>An IIdentity value for the path.</returns>
-        public virtual IIdentity Parse(string path, bool nullOnFailure = false)
+        public virtual IIdentity Parse(string path, bool nullOnFailure = false, RestPrefixContainer prefixes = null)
         {
+            prefixes = prefixes ?? Prefixes;
+            if (path.StartsWith("[") && path.EndsWith("]"))
+            {
+                var colonIndex = path.IndexOf(':');
+                if (colonIndex < 0)
+                    throw new ArgumentException("Safe Compact URI is not in proper format.", nameof(path));
+                var prefix = path.Substring(1, colonIndex - 1);
+                path = path.Substring(colonIndex + 1, path.Length - colonIndex - 2);
+                if (!prefixes.TryGetByAbbreviation(prefix, out var rpref))
+                    throw new ArgumentException("Prefix not found.", nameof(path));
+                path = rpref.Prefix + path;
+            }
             var match = matchTree.Value.Walk(RestPath.Parse(path));
             if (match.IsSuccessful)
             {
@@ -302,7 +316,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return nullOnFailure ? null : new Identity<object, string>(this, path);
         }
-  
+
         /// <summary>
         /// Converts any identity value for a known type into a general identity value with a pathstring as underlying value.
         /// </summary>
@@ -316,32 +330,39 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return (IIdentity<object>)id;
 
             var converter = GetConverter(id.ForType, false);
-            if (entries.TryGetValue(id.ForType, out var entry))
+            var res = createIdentity();
+            if (res?.Value.IsLocal == true)
+                res = new Identity<object, RestPath>(this, res.Value.ToRemote(localPrefix));
+            return res;
+
+            Identity<object, RestPath> createIdentity()
             {
-                var queryString = id.ComponentValue as IEnumerable<KeyValuePair<string, string>>;
-                if (id.Arity == 1)
+                if (entries.TryGetValue(id.ForType, out var entry))
                 {
-                    if (queryString != null)
-                        return new Identity<object, RestPath>(
-                            this,
-                            entry.PrimaryPath.FillWildcards(Enumerable.Empty<string>(),
-                                RestPath.Query.FromPairs(queryString)));
+                    var queryString = id.ComponentValue as IEnumerable<KeyValuePair<string, string>>;
+                    if (id.Arity == 1)
+                    {
+                        if (queryString != null)
+                            return new Identity<object, RestPath>(
+                                this,
+                                entry.PrimaryPath.FillWildcards(Enumerable.Empty<string>(),
+                                    RestPath.Query.FromPairs(queryString)));
+                        else
+                            return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(new[] { converter.Convert(id.Value).To<string>() }));
+                    }
                     else
-                        return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(new[] { converter.Convert(id.Value).To<string>() }));
+                    {
+                        if (queryString != null)
+                            return new Identity<object, RestPath>(
+                                this,
+                                entry.PrimaryPath.FillWildcards(componentValues(id), RestPath.Query.FromPairs(queryString)));
+                        else
+                            return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(converter.Convert(id.Value).To<string[]>()));
+                    }
                 }
                 else
-                {
-                    if (queryString != null)
-                        return new Identity<object, RestPath>(
-                            this,
-                            entry.PrimaryPath.FillWildcards(componentValues(id), RestPath.Query.FromPairs(queryString)));
-                    else
-                        return new Identity<object, RestPath>(this, entry.PrimaryPath.FillWildcards(converter.Convert(id.Value).To<string[]>()));
-                }
+                    return null;
             }
-            else
-                return null;
-
             IEnumerable<string> componentValues(IIdentity idval)
             {
                 var st = ImmutableStack<IIdentity>.Empty;

@@ -1,7 +1,9 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore;
+using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -16,7 +18,8 @@ namespace Biz.Morsink.Rest.AspNetCore
     public class IdentityRepresentation : ITypeRepresentation
     {
         private readonly IRestIdentityProvider identityProvider;
-
+        private readonly RestPrefixContainer prefixes;
+        private readonly bool useCuries;
         private class representation
         {
             [Required]
@@ -27,9 +30,13 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Constructor.
         /// </summary>
         /// <param name="identityProvider">The Rest identity provider.</param>
-        public IdentityRepresentation(IRestIdentityProvider identityProvider)
+        /// <param name="prefixes">A RestPrefixContainer.</param>
+        /// <param name="options">Options for Rest for ASP.Net Core.</param>
+        public IdentityRepresentation(IRestIdentityProvider identityProvider, RestPrefixContainer prefixes, IOptions<RestAspNetCoreOptions> options)
         {
             this.identityProvider = identityProvider;
+            this.prefixes = prefixes;
+            useCuries = options.Value.UseCuries;
         }
         /// <summary>
         /// Gets the IIdentity value correspoding to the Href representation.
@@ -37,7 +44,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="rep">An Href representation.</param>
         /// <returns></returns>
         public object GetRepresentable(object rep)
-            => identityProvider.Parse(((representation)rep).Href, true);
+            => identityProvider.Parse(((representation)rep).Href, true, prefixes);
 
         /// <summary>
         /// Gets the Href representation type if the type is an IIdentity.
@@ -54,6 +61,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         public object GetRepresentation(object obj)
         {
             var path = identityProvider.ToPath((IIdentity)obj);
+            if (useCuries && prefixes.TryMatch(path, out var prefix))
+                path = $"[{prefix.Abbreviation}:{path.Substring(prefix.Prefix.Length)}]";
             return path == null ? null : new representation { Href = path };
         }
         /// <summary>

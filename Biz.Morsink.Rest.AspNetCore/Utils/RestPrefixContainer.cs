@@ -21,10 +21,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         /// Constructor.
         /// </summary>
         public RestPrefixContainer() {
-            byPrefix = ImmutableDictionary<string, RestPrefix>.Empty;
-            byAbbrev = ImmutableDictionary<string, RestPrefix>.Empty;
-            prefixMatcher = PrefixMatcher<RestPrefix>.Empty;
-            idCounter = 0;
+            Clear();
         }
         /// <summary>
         /// Constructor.
@@ -93,7 +90,17 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         /// <returns>A boolean indicating whether the address could be matched against a prefix.</returns>
         public bool TryMatch(string address, out RestPrefix result)
             => prefixMatcher.TryMatch(address, out result);
-        
+
+        /// <summary>
+        /// Clears all registrations for this RestPrefixContainer.
+        /// </summary>
+        public void Clear()
+        {
+            byPrefix = ImmutableDictionary<string, RestPrefix>.Empty;
+            byAbbrev = ImmutableDictionary<string, RestPrefix>.Empty;
+            prefixMatcher = PrefixMatcher<RestPrefix>.Empty;
+            idCounter = 0;
+        }
         private string NextId()
         {
             var n = idCounter++;
