@@ -16,14 +16,6 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
     [DebuggerDisplay("{DebugDisplay}")]
     public abstract class PrefixMatcher<T>
     {
-        private static int SubstringMatchLength(string full, string sub, int offset)
-        {
-            int i;
-            for (i = 0; i < sub.Length && offset + i < full.Length; i++)
-                if (full[offset + i] != sub[i])
-                    break;
-            return i;
-        }
         /// <summary>
         /// Create a PrefixMatcher based on a collection of prefix value pairs.
         /// </summary>
@@ -105,7 +97,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// <param name="value">The corresponding value.</param>
             /// <returns>A new PrefixMatcher.</returns>
             public override PrefixMatcher<T> Add(string prefix, T value)
-                => new Leaf(prefix, 0, value);
+                => new Leaf(new StringSlice(prefix), value);
             /// <summary>
             /// Empty does not translate.
             /// </summary>
@@ -140,49 +132,39 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// <summary>
             /// Constructor.
             /// </summary>
-            /// <param name="prefix">The prefix.</param>
-            /// <param name="offset">The offset.</param>
+            /// <param name="slice">The slice of the Leaf.</param>
             /// <param name="value">The value.</param>
-            public Leaf(string prefix, int offset, T value)
+            public Leaf(StringSlice slice, T value)
             {
-                Prefix = prefix;
-                Offset = offset;
-                Value = value;
+                this.slice = slice;
+                this.value = value;
             }
-            /// <summary>
-            /// Gets the Leaf's Prefix.
-            /// </summary>
-            public string Prefix { get; }
-            /// <summary>
-            /// Gets the offset in the Prefix.
-            /// </summary>
-            public int Offset { get; }
-            /// <summary>
-            /// Gets the corresponding value.
-            /// </summary>
-            public T Value { get; }
+            private readonly StringSlice slice;
+            private readonly T value;
+
             public override PrefixMatcher<T> Add(string str, T item)
             {
-                var length = SubstringMatchLength(Prefix, str, 0) - Offset;
+                var length = slice.SubstringMatchLength(new StringSlice(str, slice.Offset));
+
                 if (length == 0)
-                    return new Node(Prefix.Substring(0, Offset))
-                        .Add(Prefix, Value).Add(str, item);
+                    return new Node(slice.Prefix)
+                        .Add(slice.FullString, value).Add(str, item);
                 else
-                    return new Fixed(Prefix.Substring(0, Offset), Prefix.Substring(Offset, length),
-                        new Node(Prefix.Substring(0, Offset + length)).Add(Prefix, Value).Add(str, item));
+                    return new Fixed(slice.Slice(0, length),
+                        new Node(slice.Slice(length).Prefix).Add(slice.FullString, value).Add(str, item));
             }
             protected override PrefixMatcher<T> Translate(int offset)
-                => new Leaf(Prefix, Math.Max(0, Math.Min(Prefix.Length, Offset + offset)), Value);
+                => new Leaf(slice.Translate(offset), value);
             public override IEnumerable<(string, T)> GetPrefixMatches()
             {
-                yield return (Prefix, Value);
+                yield return (slice.FullString, value);
             }
             protected override void BuildDebugString(StringBuilder sb, int indent)
             {
                 sb.Append(' ', indent);
-                sb.Append(Prefix.Substring(Offset));
+                sb.Append(slice.Value);
                 sb.Append(" = ");
-                sb.AppendLine(Value?.ToString());
+                sb.AppendLine(value?.ToString());
             }
             /// <summary>
             /// A match is found if the parameter starts with the Leaf's Prefix.
@@ -190,9 +172,9 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// <returns>True if the parameter matches the Prefix.</returns>
             public override bool TryMatch(string str, out T result)
             {
-                if (SubstringMatchLength(Prefix, str, 0) == Prefix.Length)
+                if (new StringSlice(str, slice.Offset).SubstringMatchLength(slice) == slice.Length)
                 {
-                    result = Value;
+                    result = value;
                     return true;
                 }
                 else
@@ -210,75 +192,67 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// <summary>
             /// Constructor.
             /// </summary>
-            /// <param name="prefix">The prefix for the fixed range.</param>
-            /// <param name="fixedRange">The fixed range.</param>
+            /// <param name="slice">The slice for the fixed range.</param>
             /// <param name="next">A PrefixMatcher that should apply after the fixed range.</param>
-            public Fixed(string prefix, string fixedRange, PrefixMatcher<T> next)
+            public Fixed(StringSlice slice, PrefixMatcher<T> next)
             {
-                FixedRange = fixedRange;
-                Prefix = prefix;
-                Next = next;
+                this.slice = slice;
+                this.next = next;
             }
-
-            public int Offset => Prefix.Length;
-            /// <summary>
-            /// Gets the fixed range.
-            /// </summary>
-            public string FixedRange { get; }
-            /// <summary>
-            /// Gets the fixed range's prefix.
-            /// </summary>
-            public string Prefix { get; }
-            /// <summary>
-            /// Gets the next PrefixMatcher.
-            /// </summary>
-            public PrefixMatcher<T> Next { get; }
+            private readonly StringSlice slice;
+            private readonly PrefixMatcher<T> next;
             public override PrefixMatcher<T> Add(string str, T item)
             {
-                var len = SubstringMatchLength(str, FixedRange, Offset);
-                if (len == FixedRange.Length)
+                var len = slice.SubstringMatchLength(new StringSlice(str, slice.Offset));
+
+                if (len == slice.Length)
                 {
-                    return new Fixed(Prefix, FixedRange, Next.Add(str, item));
+                    return new Fixed(slice, next.Add(str, item));
                 }
                 else if (len > 0)
                 {
-                    return new Fixed(Prefix, FixedRange.Substring(0, len), Next.Translate(len - FixedRange.Length)).Add(str, item);
+                    return new Fixed(slice.Slice(0, len), next.Translate(len - slice.Length)).Add(str, item);
                 }
                 else
-                    return new Node(Prefix,
+                    return new Node(slice.Prefix,
                         ImmutableDictionary<char, PrefixMatcher<T>>.Empty
-                        .Add(FixedRange[0], this.Translate(1)),false).Add(str, item);
+                        .Add(slice[0], this.Translate(1)), false).Add(str, item);
 
             }
             protected override PrefixMatcher<T> Translate(int offset)
             {
-                if (offset > FixedRange.Length)
+                if (offset > slice.Length)
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 if (offset == 0)
                     return this;
                 else if (offset < 0)
-                    return new Fixed(Prefix.Substring(0, Prefix.Length + offset), Prefix.Substring(Prefix.Length + offset) + FixedRange, Next);
-                else if (offset == FixedRange.Length)
-                    return Next;
+                    return new Fixed(slice.MoveLeftBoundary(offset), next);
+                else if (offset == slice.Length)
+                    return next;
                 else
-                    return new Fixed(Prefix + FixedRange.Substring(0, offset), FixedRange.Substring(offset), Next);
+                    return new Fixed(slice.Slice(offset), next);
             }
             public override IEnumerable<(string, T)> GetPrefixMatches()
-                => Next.GetPrefixMatches();
+                => next.GetPrefixMatches();
             protected override void BuildDebugString(StringBuilder sb, int indent)
             {
                 sb.Append(' ', indent);
-                sb.Append(FixedRange);
+                sb.Append(slice);
                 sb.AppendLine(" -> ");
-                Next.BuildDebugString(sb, indent + FixedRange.Length + 4);
+                next.BuildDebugString(sb, indent + slice.Length + 4);
             }
             /// <summary>
-            /// Checks the fixed range and if equal, delegates matching to the Next PrefixMatcher.
+            /// Checks the fixed range and if equal, delegates matching to the next PrefixMatcher.
             /// </summary>
             public override bool TryMatch(string str, out T result)
             {
-                if (SubstringMatchLength(str, FixedRange, Offset) == FixedRange.Length)
-                    return Next.TryMatch(str, out result);
+                if (str.Length < slice.PrefixWithSlice.Length)
+                {
+                    result = default(T);
+                    return false;
+                }
+                else if (new StringSlice(str, slice.Offset, slice.Length).SubstringMatchLength(slice) == slice.Length)
+                    return next.TryMatch(str, out result);
                 else
                 {
                     result = default(T);
@@ -294,55 +268,44 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// <summary>
             /// Constructor for an empty Node.
             /// </summary>
-            /// <param name="prefix">The prefix for the Node.</param>
-            public Node(string prefix)
+            /// <param name="slice">A prefix slice for the Node.</param>
+            public Node(StringSlice slice)
             {
-                Prefix = prefix;
-                Routes = ImmutableDictionary<char, PrefixMatcher<T>>.Empty;
+                this.slice = slice;
+                routes = ImmutableDictionary<char, PrefixMatcher<T>>.Empty;
                 hasValue = false;
                 value = default(T);
             }
             /// <summary>
             /// Constructor for a Node.
             /// </summary>
-            /// <param name="prefix">The prefix for the Node.</param>
+            /// <param name="slice">A prefix slice for the Node.</param>
             /// <param name="routes">The routes for the Node.</param>
             /// <param name="hasValue">Indicates whether the Node has a value for the prefix.</param>
             /// <param name="value">The value of the Node for the prefix.</param>
-            public Node(string prefix, ImmutableDictionary<char, PrefixMatcher<T>> routes, bool hasValue, T value = default(T))
+            public Node(StringSlice slice, ImmutableDictionary<char, PrefixMatcher<T>> routes, bool hasValue, T value = default(T))
             {
-                Prefix = prefix;
-                Routes = routes;
+                this.slice = slice;
+                this.routes = routes;
                 this.hasValue = hasValue;
                 this.value = value;
             }
             private readonly bool hasValue;
             private readonly T value;
-            /// <summary>
-            /// True if the Node has a value for the prefix.
-            /// </summary>
-            public bool HasValue => hasValue;
-            /// <summary>
-            /// The Value for the prefix if HasValue == true.
-            /// </summary>
-            public T Value => value;
-            public int Offset => Prefix.Length;
-            /// <summary>
-            /// Gets the Node's prefix.
-            /// </summary>
-            public string Prefix { get; }
-            public ImmutableDictionary<char, PrefixMatcher<T>> Routes { get; }
+            private readonly StringSlice slice;
+
+            private readonly ImmutableDictionary<char, PrefixMatcher<T>> routes;
 
             public override PrefixMatcher<T> Add(string str, T item)
             {
-                if (!str.StartsWith(Prefix))
+                if (!str.StartsWith(slice.Value))
                     throw new ArgumentOutOfRangeException(nameof(str));
-                if (str.Length == Offset)
-                    return new Node(Prefix, Routes, true, item);
-                else if (Routes.TryGetValue(str[Offset], out var next))
-                    return new Node(Prefix, Routes.SetItem(str[Offset], next.Add(str, item)), HasValue, Value);
+                if (str.Length == slice.Length)
+                    return new Node(slice, routes, true, item);
+                else if (routes.TryGetValue(str[slice.Length], out var next))
+                    return new Node(slice, routes.SetItem(str[slice.Length], next.Add(str, item)), hasValue, value);
                 else
-                    return new Node(Prefix, Routes.Add(str[Offset], new Leaf(str, Offset + 1, item)), HasValue, Value);
+                    return new Node(slice, routes.Add(str[slice.Length], new Leaf(new StringSlice(str, slice.Length + 1), item)), hasValue, value);
             }
             protected override PrefixMatcher<T> Translate(int offset)
             {
@@ -351,22 +314,23 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 if (offset == 0)
                     return this;
                 else
-                    return new Fixed(Prefix.Substring(0, Prefix.Length + offset), Prefix.Substring(Prefix.Length + offset), this);
+                    return new Fixed(slice.MoveLeftBoundary(slice.Length + offset), this);
+                    //return new Fixed(new StringSlice(slice.FullString, slice.Length + offset, -offset), this);
             }
 
             public override IEnumerable<(string, T)> GetPrefixMatches()
             {
-                return Routes.Values.SelectMany(s => s.GetPrefixMatches());
+                return routes.Values.SelectMany(s => s.GetPrefixMatches());
             }
             protected override void BuildDebugString(StringBuilder sb, int indent)
             {
-                if (HasValue)
+                if (hasValue)
                 {
                     sb.Append(' ', indent);
                     sb.Append(" () -> ");
-                    sb.AppendLine(Value?.ToString());
+                    sb.AppendLine(value?.ToString());
                 }
-                foreach (var kvp in Routes)
+                foreach (var kvp in routes)
                 {
                     sb.Append(' ', indent + 1);
                     sb.Append(kvp.Key);
@@ -380,27 +344,27 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             /// </summary>
             public override bool TryMatch(string str, out T result)
             {
-                if (str.Length == Prefix.Length)
+                if (str.Length == slice.Length)
                 {
-                    result = Value;
-                    return HasValue;
+                    result = value;
+                    return hasValue;
                 }
-                else if (str.Length > Prefix.Length)
+                else if (str.Length > slice.Length)
                 {
-                    if (Routes.TryGetValue(str[Offset], out var next))
+                    if (routes.TryGetValue(str[slice.Length], out var next))
                     {
                         if (next.TryMatch(str, out result))
                             return true;
                         else
                         {
-                            result = Value;
-                            return HasValue;
+                            result = value;
+                            return hasValue;
                         }
                     }
                     else
                     {
-                        result = Value;
-                        return HasValue;
+                        result = value;
+                        return hasValue;
                     }
                 }
                 else
