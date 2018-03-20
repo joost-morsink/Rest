@@ -423,7 +423,13 @@ namespace Biz.Morsink.Rest.AspNetCore
                 else
                     return (makeSegments(str), Query.None);
             }
-            IEnumerable<Segment> makeSegments(string path) => path.Split('/').Select(Segment.Escaped);
+            IEnumerable<Segment> makeSegments(string path)
+            {
+                if (path == "/")
+                    return Enumerable.Empty<Segment>();
+                else
+                    return path.Split('/').Select(Segment.Escaped).Skip(1);
+            }
         }
 
         /// <summary>
@@ -567,7 +573,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Gets a string representation for the Path.
         /// </summary>
-        public string PathString => string.Concat(pathBase, string.Join("/", segments), query.ToUriSuffix());
+        public string PathString => string.Concat(pathBase, "/" + string.Join("/", segments), query.ToUriSuffix());
         /// <summary>
         /// Turn the path into a remote path. Throws if the path is already remote.
         /// </summary>
