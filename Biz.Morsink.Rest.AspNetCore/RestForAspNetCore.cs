@@ -60,6 +60,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             try
             {
                 var (req, conv) = ReadRequest(context);
+                context.Items[nameof(IHttpRestConverter)] = conv;
+
                 if (req == null)
                 {
                     context.Response.StatusCode = STATUS_NOTFOUND;

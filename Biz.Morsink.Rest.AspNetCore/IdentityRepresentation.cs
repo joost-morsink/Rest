@@ -20,6 +20,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly IRestIdentityProvider identityProvider;
         private readonly RestPrefixContainer prefixes;
         private readonly bool useCuries;
+        private readonly ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor;
+        protected bool UseCuries => useCuries && currentHttpRestConverterAccessor.CurrentHttpRestConverter.SupportsCuries;
+
         private class representation
         {
             [Required]
@@ -32,11 +35,13 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="identityProvider">The Rest identity provider.</param>
         /// <param name="prefixes">A RestPrefixContainer.</param>
         /// <param name="options">Options for Rest for ASP.Net Core.</param>
-        public IdentityRepresentation(IRestIdentityProvider identityProvider, RestPrefixContainer prefixes, IOptions<RestAspNetCoreOptions> options)
+        public IdentityRepresentation(IRestIdentityProvider identityProvider, RestPrefixContainer prefixes, IOptions<RestAspNetCoreOptions> options, ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor)
         {
             this.identityProvider = identityProvider;
             this.prefixes = prefixes;
             useCuries = options.Value.UseCuries;
+            this.currentHttpRestConverterAccessor = currentHttpRestConverterAccessor;
+            
         }
         /// <summary>
         /// Gets the IIdentity value correspoding to the Href representation.
@@ -61,7 +66,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         public object GetRepresentation(object obj)
         {
             var path = identityProvider.ToPath((IIdentity)obj);
-            if (useCuries && prefixes.TryMatch(path, out var prefix))
+            if (UseCuries && prefixes.TryMatch(path, out var prefix))
                 path = $"[{prefix.Abbreviation}:{path.Substring(prefix.Prefix.Length)}]";
             return path == null ? null : new representation { Href = path };
         }

@@ -77,5 +77,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
         }
+        public override bool SupportsCuries => true;
     }
 }

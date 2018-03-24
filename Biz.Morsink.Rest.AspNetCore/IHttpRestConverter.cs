@@ -38,5 +38,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="context">The HttpContext for the request.</param>
         /// <returns>A Task describing the asynchronous progress of the serialization.</returns>
         Task SerializeResponse(RestResponse response, HttpContext context);
+        /// <summary>
+        /// Gets a boolean indicating if Curies are supported by this IHttpRestConverter.
+        /// </summary>
+        bool SupportsCuries { get; }
     }
 }

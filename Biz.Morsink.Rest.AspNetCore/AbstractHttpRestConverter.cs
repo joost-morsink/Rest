@@ -18,6 +18,12 @@ namespace Biz.Morsink.Rest.AspNetCore
     public abstract class AbstractHttpRestConverter : IHttpRestConverter
     {
         public IRestIdentityProvider IdentityProvider { get; }
+
+        /// <summary>
+        /// Gets a boolean indicating if Curies are supported by this IHttpRestConverter.
+        /// </summary>
+        public virtual bool SupportsCuries => false;
+
         /// <summary>
         /// Constructor.
         /// </summary>

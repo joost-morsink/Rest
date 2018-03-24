@@ -52,6 +52,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<TypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
             serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            serviceCollection.AddSingleton<ICurrentHttpRestConverterAccessor, CurrentHttpRestConverterAccessor>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
             serviceCollection.AddScoped(sp => sp.GetRequiredService<IRestIdentityProvider>().Prefixes.Copy());
 
