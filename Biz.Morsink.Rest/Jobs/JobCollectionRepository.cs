@@ -12,22 +12,35 @@ namespace Biz.Morsink.Rest.Jobs
     /// Repository for the Job collection. 
     /// Allows for creating new Job controllers.
     /// </summary>
-    public class JobCollectionRepository : RestRepository<RestJobCollection>, IRestPost<RestJobCollection, Empty, Empty, Empty>
+    public class JobCollectionRepository : RestRepository<RestJobCollection>, IRestPost<RestJobCollection, JobCollectionRepository.PostParameters, Empty, Empty>
     {
+        public class PostParameters
+        {
+            public bool Secure { get; set; }
+        }
         private readonly IRestJobStore jobstore;
+        private readonly IUser user;
+
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="jobstore">A Rest job store.</param>
-        public JobCollectionRepository(IRestJobStore jobstore)
+        /// <param name="user">The user registering the Job.</param>
+        public JobCollectionRepository(IRestJobStore jobstore, IUser user = null)
         {
             this.jobstore = jobstore;
+            this.user = user;
         }
 
-        public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, Empty parameters, Empty entity, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty entity, CancellationToken cancellationToken)
         {
-            var controller = await jobstore.CreateJob();
-            return Rest.Value(new Empty()).ToResponse().WithMetadata(new CreatedResource { Address = controller.Id });
+            if (parameters.Secure && user?.Principal == null)
+                return RestResult.BadRequest<Empty>("Cannot be secure without user").ToResponse();
+            var controller = await jobstore.CreateJob(parameters.Secure ? user?.Principal.Identity.Name : null);
+            return Rest.ValueBuilder(new Empty())
+                .WithLink(Link.Create("controller", controller.Id))
+                .BuildResponse()
+                .WithMetadata(new CreatedResource { Address = controller.JobId });
         }
     }
 }

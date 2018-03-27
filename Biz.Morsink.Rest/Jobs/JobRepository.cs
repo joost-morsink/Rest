@@ -14,14 +14,17 @@ namespace Biz.Morsink.Rest.Jobs
     public class JobRepository : RestRepository<RestJob>, IRestGet<RestJob, Empty>
     {
         private readonly IRestJobStore restJobStore;
+        private readonly IUser user;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="restJobStore">An IRestJobStore implementation for retrieving RestJobs.</param>
-        public JobRepository(IRestJobStore restJobStore)
+        /// <param name="user">The user registering the Job.</param>
+        public JobRepository(IRestJobStore restJobStore, IUser user = null)
         {
             this.restJobStore = restJobStore;
+            this.user = user;
         }
 
         /// <summary>
@@ -33,7 +36,7 @@ namespace Biz.Morsink.Rest.Jobs
         public async ValueTask<RestResponse<RestJob>> Get(IIdentity<RestJob> id, Empty parameters, CancellationToken cancellationToken)
         {
             var res = await restJobStore.GetJob(id);
-            if (res == null)
+            if (res == null || res.User != null && !string.Equals(res.User, user?.Principal.Identity.Name, StringComparison.InvariantCultureIgnoreCase))
                 return RestResult.NotFound<RestJob>().ToResponse();
 
             return res.Task.Status >= TaskStatus.RanToCompletion
