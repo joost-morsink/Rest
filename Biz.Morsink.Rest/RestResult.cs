@@ -45,7 +45,7 @@ namespace Biz.Morsink.Rest
         /// <param name="ex">An exceptipn describing the error.</param>
         /// <returns>A failed Rest result indicating an error occurred during processing.</returns>
         public static RestResult<T>.Failure.Error Error<T>(Exception ex) 
-            => new RestResult<T>.Failure.Error(ex);
+            => new RestResult<T>.Failure.Error(ExceptionInfo.Create(ex));
         /// <summary>
         /// Creates a pending result indicating the response is not yet available.
         /// </summary>
@@ -61,7 +61,7 @@ namespace Biz.Morsink.Rest
         /// <param name="ex">An exceptipn describing the error.</param>
         /// <returns>A failed Rest result indicating an error occurred during processing.</returns>
         public static IRestFailure Error(Type type, Exception ex)
-            => (IRestFailure)Activator.CreateInstance(typeof(RestResult<>.Failure.Error).MakeGenericType(type), ex, null, null);
+            => (IRestFailure)Activator.CreateInstance(typeof(RestResult<>.Failure.Error).MakeGenericType(type), ExceptionInfo.Create(ex), null, null);
     }
     /// <summary>
     /// This class represents a Rest result.
@@ -269,13 +269,13 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// This class represents an unexpected error occurred during processing of the request.
             /// </summary>
-            public class Error : Failure, IHasRestValue<Exception>
+            public class Error : Failure, IHasRestValue<ExceptionInfo>
             {
                 /// <summary>
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value containing an exception describing the unexpected error.</param>
-                public Error(RestValue<Exception> restValue)
+                public Error(RestValue<ExceptionInfo> restValue)
                 {
                     RestValue = restValue;
                 }
@@ -285,17 +285,17 @@ namespace Biz.Morsink.Rest
                 /// <param name="ex">An exception describing the unexpected error.</param>
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public Error(Exception ex, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
-                    : this(new RestValue<Exception>(ex, links, embeddings))
+                public Error(ExceptionInfo ex, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+                    : this(new RestValue<ExceptionInfo>(ex, links, embeddings))
                 { }
                 /// <summary>
                 /// Gets a Rest value for the exception describing the unexpected error.
                 /// </summary>
-                public RestValue<Exception> RestValue { get; }
+                public RestValue<ExceptionInfo> RestValue { get; }
                 /// <summary>
                 /// Gets the exception describing the unexpected error.
                 /// </summary>
-                public Exception Exception => RestValue.Value;
+                public ExceptionInfo Exception => RestValue.Value;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
                 /// <summary>
