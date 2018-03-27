@@ -8,6 +8,9 @@ using System.Xml;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
+using Biz.Morsink.Rest.AspNetCore.Utils;
+using Microsoft.Extensions.Options;
+
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     /// <summary>
@@ -23,8 +26,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// </summary>
         /// <param name="serializer">An XmlSerializer instance to use for serialization and deserialization.</param>
         /// <param name="identityProvider">A Rest identity provider for mapping urls to and from identity values.</param>
-        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider)
-            : base(identityProvider)
+        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider, IOptions<RestAspNetCoreOptions> options)
+            : base(identityProvider, options)
         {
             this.serializer = serializer;
         }
@@ -68,7 +71,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="httpResponse">The Http response.</param>
         /// <param name="response">The Rest response.</param>
         /// <param name="value">The Rest value to be serialized to the body.</param>
-        protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value)
+        /// <param name="prefixes">The Rest prefix container for this response.</param>
+        protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes)
         {
             UseLinkHeaders(httpResponse, value);
             UseSchemaLocationHeader(httpResponse, value);

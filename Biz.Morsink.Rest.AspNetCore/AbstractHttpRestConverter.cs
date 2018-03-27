@@ -9,6 +9,9 @@ using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.Primitives;
 using System.Linq;
+using Microsoft.Extensions.Options;
+using Biz.Morsink.Rest.AspNetCore.Utils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -19,6 +22,8 @@ namespace Biz.Morsink.Rest.AspNetCore
     {
         public IRestIdentityProvider IdentityProvider { get; }
 
+        private readonly IOptions<RestAspNetCoreOptions> options;
+
         /// <summary>
         /// Gets a boolean indicating if Curies are supported by this IHttpRestConverter.
         /// </summary>
@@ -28,9 +33,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Constructor.
         /// </summary>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider)
+        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider, IOptions<RestAspNetCoreOptions> options)
         {
             IdentityProvider = identityProvider;
+            this.options = options;
         }
         /// <summary>
         /// Determines if the converter applies to the given HttpContext.
@@ -87,7 +93,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
             if (rv != null)
             {
-                ApplyHeaders(context.Response, response, rv);
+                ApplyHeaders(context.Response, response, rv,
+                    SupportsCuries && options.Value.UseCuries
+                    ? context.RequestServices.GetRequiredService<RestPrefixContainer>()
+                    : null);
                 await WriteValue(context.Response.Body, rv);
             }
         }
@@ -112,6 +121,18 @@ namespace Biz.Morsink.Rest.AspNetCore
             if (includeSchema)
                 links.Add($"<{IdentityProvider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType))}>;rel=describedby");
             response.Headers["Link"] = new StringValues(links.ToArray());
+        }
+        /// <summary>
+        /// Adds 'Curie' HTTP headers for all the curies for the current response.
+        /// </summary>
+        /// <param name="response">The HTTP response.</param>
+        /// <param name="prefixes">The Rest prefix container.</param>
+        protected void UseCurieHeaders(HttpResponse response, RestPrefixContainer prefixes)
+        {
+            if (prefixes == null)
+                return;
+
+            response.Headers["Curie"] = new StringValues(prefixes.Select(p => $"{p.Abbreviation}={p.Prefix}").ToArray());
         }
         /// <summary>
         /// Determines if the request has a specified header (optionally with a specfied value)
@@ -143,7 +164,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="httpResponse">The HTTP response to apply the headers to.</param>
         /// <param name="response">The Rest response.</param>
         /// <param name="value">The Rest response's underlying Rest value.</param>
-        protected abstract void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value);
+        /// <param name="prefixes">The Rest prefix container for this response.</param>
+        protected abstract void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes);
         /// <summary>
         /// Override to write the body value to a Stream asynchronously.
         /// </summary>

@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddStructure<BlogRepository.Structure>()
                 .AddRepository<HomeRepository>()
                 );
-            services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });
+            services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = true; });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }

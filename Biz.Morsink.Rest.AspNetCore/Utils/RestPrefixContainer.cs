@@ -1,5 +1,6 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
     /// <summary>
     /// A container for Rest prefix mappings.
     /// </summary>
-    public class RestPrefixContainer
+    public class RestPrefixContainer : IEnumerable<RestPrefix>
     {
         private ImmutableDictionary<string, RestPrefix> byPrefix;
         private ImmutableDictionary<string, RestPrefix> byAbbrev;
@@ -114,5 +115,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             return byAbbrev.ContainsKey(res) ? NextId() : res;
         }
 
+            
+        public IEnumerator<RestPrefix> GetEnumerator()
+            => byAbbrev.Values.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
     }
 }
