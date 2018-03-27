@@ -12,6 +12,7 @@ using System.Linq;
 using Microsoft.Extensions.Options;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -20,6 +21,12 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public abstract class AbstractHttpRestConverter : IHttpRestConverter
     {
+        private static readonly char[] EQUALS = new[] { '=' };
+        private const string Curie = nameof(Curie);
+        private const string Link = nameof(Link);
+        private const string Location = nameof(Location);
+        private const string SchemaLocation = "Schema-Location";
+
         public IRestIdentityProvider IdentityProvider { get; }
 
         private readonly IOptions<RestAspNetCoreOptions> options;
@@ -60,6 +67,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                     return ms.ToArray();
                 }
             });
+            if (SupportsCuries)
+                ParseCurieHeaders(context.Request, context.RequestServices.GetRequiredService<RestPrefixContainer>());
             return new RestRequest(req.Capability, req.Address, req.Parameters, ty => ParseBody(ty, body.Value), req.Metadata);
         }
         /// <summary>
@@ -87,7 +96,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             if (response.UntypedResult.IsPending)
             {
                 context.Response.StatusCode = 202;
-                context.Response.Headers["Location"] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
+                context.Response.Headers[Location] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
             }
 
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
@@ -107,7 +116,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="rv">The Rest value.</param>
         protected void UseSchemaLocationHeader(HttpResponse response, IRestValue rv)
         {
-            response.Headers["Schema-Location"] = new StringValues(IdentityProvider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType)));
+            response.Headers[SchemaLocation] = new StringValues(IdentityProvider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType)));
         }
         /// <summary>
         /// Adds 'Link' HTTP headers for all the links in the Rest value.
@@ -120,7 +129,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             var links = rv.Links.Select(l => $"<{IdentityProvider.ToPath(l.Target)}>;rel={l.RelType}").ToList();
             if (includeSchema)
                 links.Add($"<{IdentityProvider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType))}>;rel=describedby");
-            response.Headers["Link"] = new StringValues(links.ToArray());
+            response.Headers[Link] = new StringValues(links.ToArray());
         }
         /// <summary>
         /// Adds 'Curie' HTTP headers for all the curies for the current response.
@@ -132,7 +141,18 @@ namespace Biz.Morsink.Rest.AspNetCore
             if (prefixes == null)
                 return;
 
-            response.Headers["Curie"] = new StringValues(prefixes.Select(p => $"{p.Abbreviation}={p.Prefix}").ToArray());
+            response.Headers[Curie] = new StringValues(prefixes.Select(p => $"{p.Abbreviation}={p.Prefix}").ToArray());
+        }
+        protected void ParseCurieHeaders(HttpRequest request, RestPrefixContainer prefixes)
+        {
+            if(request.Headers.TryGetValue(Curie , out var curies)){
+                foreach(var curie in curies)
+                {
+                    var parts = curie.Split(EQUALS, 2);
+                    if (parts.Length == 2)
+                        prefixes.Register(new RestPrefix(parts[1], parts[0]));
+                }
+            }
         }
         /// <summary>
         /// Determines if the request has a specified header (optionally with a specfied value)
@@ -199,11 +219,11 @@ namespace Biz.Morsink.Rest.AspNetCore
                         context.Response.StatusCode = 304;
                         break;
                     case RestRedirectType.Permanent:
-                        context.Response.Headers["Location"] = IdentityProvider.ToPath(redirect.Target);
+                        context.Response.Headers[Location] = IdentityProvider.ToPath(redirect.Target);
                         context.Response.StatusCode = 308;
                         break;
                     case RestRedirectType.Temporary:
-                        context.Response.Headers["Location"] = IdentityProvider.ToPath(redirect.Target);
+                        context.Response.Headers[Location] = IdentityProvider.ToPath(redirect.Target);
                         context.Response.StatusCode = 307;
                         break;
                 }
