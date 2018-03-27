@@ -8,7 +8,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Service interface to get the currently used IHttpRestConverter instance.
     /// </summary>
-    public class CurrentHttpRestConverterAccessor
+    public class CurrentHttpRestConverterAccessor : ICurrentHttpRestConverterAccessor
     {
         private readonly IHttpContextAccessor contextAccessor;
         /// <summary>
@@ -22,6 +22,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Gets the actual currently used IHttpRestConverter instance.
         /// </summary>
-        public IHttpRestConverter Current => contextAccessor.HttpContext.Items[nameof(IHttpRestConverter)] as IHttpRestConverter;
+        public IHttpRestConverter CurrentHttpRestConverter => contextAccessor.HttpContext.Items[nameof(IHttpRestConverter)] as IHttpRestConverter;
     }
 }
