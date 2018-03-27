@@ -38,6 +38,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddStructure<BlogRepository.Structure>()
                 .AddStructure<ExceptionRepository.Structure>()
+                .AddStructure<OpenApiRepository.Structure>()
                 .AddRepository<HomeRepository>()
                 );
             services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });

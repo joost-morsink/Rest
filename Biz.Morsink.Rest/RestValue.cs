@@ -15,6 +15,15 @@ namespace Biz.Morsink.Rest
     public struct RestValue<T> : IRestValue
     {
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        public RestValue(T value)
+            : this(value, null, null)
+        {
+
+        }
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="value">An underlying (main) value.</param>
@@ -61,8 +70,8 @@ namespace Biz.Morsink.Rest
             return new RestValue<T>(Value, l, e);
         }
         IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<object>> embeddings)
-            => Manipulate(links == null ? (Func<RestValue<T>,IEnumerable<Link>>)null : rv => links(rv), 
-                embeddings == null ? (Func<RestValue<T>,IEnumerable<object>>)null : rv => embeddings(rv));
+            => Manipulate(links == null ? (Func<RestValue<T>, IEnumerable<Link>>)null : rv => links(rv),
+                embeddings == null ? (Func<RestValue<T>, IEnumerable<object>>)null : rv => embeddings(rv));
         /// <summary>
         /// Converts the value to a successful RestResult.
         /// </summary>

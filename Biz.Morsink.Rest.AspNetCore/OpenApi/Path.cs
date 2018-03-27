@@ -1,7 +1,9 @@
-﻿namespace Biz.Morsink.Rest.AspNetCore.OpenApi
+﻿using Newtonsoft.Json;
+
+namespace Biz.Morsink.Rest.AspNetCore.OpenApi
 {
     public class Path
-    {
+    { 
         public string Ref {get;set;}
         public string Summary { get; set; }
         public string Description { get; set; }
