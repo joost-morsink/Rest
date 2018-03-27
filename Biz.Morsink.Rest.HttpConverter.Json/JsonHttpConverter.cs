@@ -51,7 +51,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             using (var jtr = new JsonTextReader(sr))
             {
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-                return ser.Deserialize(jtr, t);
+                try
+                {
+                    return ser.Deserialize(jtr, t);
+                }
+                catch (Exception e)
+                {
+                    throw new RestFailureException(RestResult.BadRequest<object>($"Parse error: {e.Message}"),e.Message, e);
+                }
             }
         }
 
