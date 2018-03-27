@@ -185,7 +185,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, Type type, string path, Type[] componentTypes = null, Type wildcardType = null)
             => builder.AddPathMapping(new RestPathMapping(type, path, componentTypes, wildcardType));
-        
+
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -396,9 +396,15 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="builder">An IRestServicesBuilder implementation.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddDefaultIdentityProvider(this IRestServicesBuilder builder)
+        public static IRestServicesBuilder AddDefaultIdentityProvider(this IRestServicesBuilder builder, string localPrefix = null, params RestPrefix[] prefixes)
         {
-            builder.ServiceCollection.AddSingleton<IRestIdentityProvider, DefaultAspRestIdentityProvider>();
+            builder.ServiceCollection.AddSingleton<IRestIdentityProvider, DefaultAspRestIdentityProvider>(sp =>
+            {
+                var res = new DefaultAspRestIdentityProvider(localPrefix);
+                foreach (var prefix in prefixes)
+                    res.Prefixes.Register(prefix);
+                return res;
+            });
             return builder;
         }
         /// <summary>

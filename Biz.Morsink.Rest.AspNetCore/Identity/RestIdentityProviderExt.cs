@@ -34,7 +34,12 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="id"></param>
         /// <returns></returns>
         public static string ToPath(this IRestIdentityProvider provider, IIdentity id)
-            => provider.ToGeneralIdentity(id)?.Value.ToString();
-
+        {
+            var generalIdVal = provider.ToGeneralIdentity(id)?.Value;
+            if (generalIdVal is RestPath restPath)
+                return restPath.PathString;
+            else
+                return generalIdVal?.ToString();
+        }
     }
 }

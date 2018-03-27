@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.Schema;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
 {
     class DefaultAspRestIdentityProvider : RestIdentityProvider
     {
-        public DefaultAspRestIdentityProvider() : base()
+        public DefaultAspRestIdentityProvider(string localPrefix = null) : base(localPrefix)
         {
             BuildEntry(typeof(TypeDescriptor)).WithPath("/schema/*").Add();
         }

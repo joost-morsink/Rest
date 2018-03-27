@@ -44,7 +44,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         private const string OPTIONS = nameof(OPTIONS);
 
         private static string SchemaFor<T>()
-            => "/schema/" + typeof(T).ToString().Replace(".", "%2E");
+            => "http://localhost:5000/schema/" + typeof(T).ToString().Replace(".", "%2E");
 
 
         private static ImmutableDictionary<string, string> DefaultHeaders = ImmutableDictionary<string, string>.Empty.Add("Accept", "application/json");
@@ -98,7 +98,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         }
         private Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, IReadOnlyDictionary<string, string> headers)
         {
-            var req = new HttpRequestMessage(method, URL + path);
+
+            var req = new HttpRequestMessage(method, path.StartsWith(URL) ? path : URL + path);
 
             headers = headers ?? DefaultHeaders;
             foreach (var kvp in headers)
@@ -108,7 +109,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         }
         private async Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, object body, IReadOnlyDictionary<string, string> headers)
         {
-            var req = new HttpRequestMessage(method, URL + path);
+            var req = new HttpRequestMessage(method, path.StartsWith(URL) ? path : URL + path);
 
             headers = headers ?? DefaultHeaders;
             foreach (var kvp in headers)
@@ -178,7 +179,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsNotNull(adm);
 
             Assert.AreEqual(SchemaFor<Home>(), desc.Address);
-            Assert.AreEqual("/person/1", adm.Address);
+            Assert.IsTrue(adm.Address.EndsWith("/person/1"));
         }
         [TestMethod]
         public async Task Http_CheckPerson()

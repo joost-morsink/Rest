@@ -402,13 +402,34 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A parsed RestPath instance.</returns>
         public static RestPath Parse(string pathString, Type forType = null)
         {
-            var qidx = pathString.IndexOf('?');
-            if (qidx >= 0)
-                return new RestPath(makeSegments(pathString.Substring(0, qidx)), Query.Parse(pathString.Substring(qidx + 1)), forType);
+            if (pathString.StartsWith("http://") || pathString.StartsWith("https://"))
+            {
+                var start = pathString.IndexOf('/', pathString.IndexOf(':') + 3);
+                var pathBase = pathString.Substring(0, start);
+                var (segments, query) = parseLocal(pathString.Substring(start));
+                return new RestPath(pathBase, segments, query, forType);
+            }
             else
-                return new RestPath(makeSegments(pathString), Query.None, forType);
+            {
+                var (segments, query) = parseLocal(pathString);
+                return new RestPath(segments, query, forType);
+            }
 
-            IEnumerable<Segment> makeSegments(string path) => path.Split('/').Select(Segment.Escaped);
+            (IEnumerable<Segment>, Query) parseLocal(string str)
+            {
+                var qidx = str.IndexOf('?');
+                if (qidx >= 0)
+                    return (makeSegments(str.Substring(0, qidx)), Query.Parse(str.Substring(qidx + 1)));
+                else
+                    return (makeSegments(str), Query.None);
+            }
+            IEnumerable<Segment> makeSegments(string path)
+            {
+                if (path == "/")
+                    return Enumerable.Empty<Segment>();
+                else
+                    return path.Split('/').Select(Segment.Escaped).Skip(1);
+            }
         }
 
         /// <summary>
@@ -552,7 +573,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Gets a string representation for the Path.
         /// </summary>
-        public string PathString => string.Join("/", segments) + query.ToUriSuffix();
+        public string PathString => string.Concat(pathBase, "/" + string.Join("/", segments), query.ToUriSuffix());
         /// <summary>
         /// Turn the path into a remote path. Throws if the path is already remote.
         /// </summary>

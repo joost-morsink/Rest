@@ -13,8 +13,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         public void RestPath_Trivial()
         {
             var p = RestPath.Parse("/api/person/1", null);
-            Assert.AreEqual(4, p.Count, "Count property should count all parts.");
-            Assert.IsTrue(p[0].Content == "" && p[1].Content == "api" && p[2].Content == "person" && p[3].Content == "1", "The parsed RestPath should match the parts in number and order of the parts in the original RestPath string.");
+            Assert.AreEqual(3, p.Count, "Count property should count all parts.");
+            Assert.IsTrue(p[0].Content == "api" && p[1].Content == "person" && p[2].Content == "1", "The parsed RestPath should match the parts in number and order of the parts in the original RestPath string.");
         }
         [TestMethod]
         public void RestPath_NoStar()
@@ -61,7 +61,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         public void RestPath_QueryString()
         {
             var p = RestPath.Parse("/api/person?search=Morsink&limit=10&skip=0");
-            Assert.AreEqual(3, p.Count);
+            Assert.AreEqual(2, p.Count);
             Assert.AreEqual(3, p.QueryString.Count);
             var q = RestPath.Parse("/api/person?*");
             Assert.IsTrue(q.QueryString.IsWildcard);

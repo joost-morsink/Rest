@@ -26,7 +26,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
-                .AddDefaultIdentityProvider()
+                .AddDefaultIdentityProvider("http://localhost:5000", new RestPrefix("http://localhost:5000", "api"))
                 .AddCache<RestMemoryCache>()
                 .AddJobs()
                 .UseRequestHandler((sp, hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
@@ -39,6 +39,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddStructure<BlogRepository.Structure>()
                 .AddRepository<HomeRepository>()
                 );
+            services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }

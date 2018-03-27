@@ -13,6 +13,12 @@ namespace Biz.Morsink.Rest
         /// Gets the reason for failure of the Rest request.
         /// </summary>
         RestFailureReason Reason { get; }
+        /// <summary>
+        /// Converts the failure value to a typed result.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        RestResult<T> Select<T>();
     }
 
 }

@@ -316,6 +316,7 @@ namespace Biz.Morsink.Rest
             /// <typeparam name="U">The new underlying successful value type.</typeparam>
             /// <returns>A new failure with a different underlying successful value type.</returns>
             public abstract RestResult<U>.Failure Select<U>();
+            RestResult<U> IRestFailure.Select<U>() => Select<U>();
             /// <summary>
             /// Gets the reason for failure of the Rest request.
             /// </summary>

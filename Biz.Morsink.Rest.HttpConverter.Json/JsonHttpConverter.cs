@@ -12,6 +12,7 @@ using Microsoft.Extensions.Primitives;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
+using Biz.Morsink.Rest.AspNetCore.Utils;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -26,7 +27,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestIdentityProvider provider) : base(provider)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
         {
             this.options = options;
         }
@@ -50,7 +51,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             using (var jtr = new JsonTextReader(sr))
             {
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-                return ser.Deserialize(jtr, t);
+                try
+                {
+                    return ser.Deserialize(jtr, t);
+                }
+                catch (Exception e)
+                {
+                    throw new RestFailureException(RestResult.BadRequest<object>($"Parse error: {e.Message}"),e.Message, e);
+                }
             }
         }
 
@@ -58,10 +66,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             httpResponse.ContentType = "application/json";
         }
-        protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value)
+        protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes)
         {
             UseSchemaLocationHeader(httpResponse, value);
             UseLinkHeaders(httpResponse, value);
+            UseCurieHeaders(httpResponse, prefixes);
         }
         protected override async Task WriteValue(Stream bodyStream, IRestValue value)
         {
@@ -77,5 +86,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
         }
+        public override bool SupportsCuries => true;
     }
 }

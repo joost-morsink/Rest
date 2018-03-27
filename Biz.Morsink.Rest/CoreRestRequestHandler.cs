@@ -171,20 +171,34 @@ namespace Biz.Morsink.Rest
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, E, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
-            var req = request.ParseBody<E>();
-            var res = await action(request.Address as IIdentity<T>, param, req.Body, request.CancellationToken);
-            var result = await repo.ProcessResponse(res);
-            return result;
+            try
+            {
+                var action = (Func<IIdentity<T>, P, E, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
+                var req = request.ParseBody<E>();
+                var res = await action(request.Address as IIdentity<T>, param, req.Body, request.CancellationToken);
+                var result = await repo.ProcessResponse(res);
+                return result;
+            }
+            catch (RestFailureException rfe)
+            {
+                return rfe.Failure.Select<R>().ToResponse();
+            }
         }
         private async ValueTask<RestResponse> Handle<P, R>(IRestRepository repo, RestRequest request, RestCapability<T> capability)
         {
             if (!converter.Convert(request.Parameters.AsDictionary()).TryTo(out P param))
                 return RestResult.BadRequest<R>("Parameter").ToResponse();
-            var action = (Func<IIdentity<T>, P, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
-            var res = await action(request.Address as IIdentity<T>, param, request.CancellationToken);
-            var result = await repo.ProcessResponse(res);
-            return result;
+            try
+            {
+                var action = (Func<IIdentity<T>, P, CancellationToken, ValueTask<RestResponse<R>>>)capability.CreateDelegate();
+                var res = await action(request.Address as IIdentity<T>, param, request.CancellationToken);
+                var result = await repo.ProcessResponse(res);
+                return result;
+            }
+            catch (RestFailureException rfe)
+            {
+                return rfe.Failure.Select<R>().ToResponse();
+            }
         }
     }
 }
