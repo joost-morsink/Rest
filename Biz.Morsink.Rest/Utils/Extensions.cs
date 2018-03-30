@@ -35,6 +35,9 @@ namespace Biz.Morsink.Rest.Utils
         public static bool IsAllowedBy(this Link link, IAuthorizationProvider provider, IUser user)
             => provider == null || provider.IsAllowed(user?.Principal, link.Target, getCapabilityString(link.Capability));
 
+        public static string GetCapabilityString(this Link link)
+            => link.Capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
+
         private static string getCapabilityString(Type capability)
             => capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
 

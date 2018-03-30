@@ -106,5 +106,10 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             }
             return res;
         }
+        internal static IEnumerable<RestPath.Segment> GetSegments(this RestPath rp)
+        {
+            for (int i = 0; i < rp.Count; i++)
+                yield return rp[i];
+        }
     }
 }

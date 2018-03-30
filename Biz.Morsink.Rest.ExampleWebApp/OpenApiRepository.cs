@@ -22,15 +22,16 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         [RestGet]
         public Document Get(IIdentity<Document> id)
         {
-            var apidesc = new RestApiDescription(serviceProvider.GetServices<IRestRepository>(), serviceProvider.GetRequiredService<TypeDescriptorCreator>());
-            return Document.Create(apidesc, serviceProvider.GetServices<IRestPathMapping>());
+            var typeDescriptorCreator = serviceProvider.GetRequiredService<TypeDescriptorCreator>();
+            var apidesc = new RestApiDescription(serviceProvider.GetServices<IRestRepository>(),typeDescriptorCreator );
+            return Document.Create(apidesc, serviceProvider.GetServices<IRestPathMapping>(), typeDescriptorCreator, serviceProvider.GetRequiredService<IRestIdentityProvider>());
         }
         public class Structure : IRestStructure
         {
             void IRestStructure.RegisterComponents(IServiceCollection serviceCollection, ServiceLifetime lifetime)
             {
                 serviceCollection.AddAttributedRestRepository<OpenApiRepository>(lifetime)
-                    .AddRestPathMapping<Document>("/openapi?*");
+                    .AddRestPathMapping<Document>("/openapi+");
             }
         }
     }

@@ -57,7 +57,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public static IServiceCollection AddJsonHttpConverter(this IServiceCollection serviceCollection, Func<IJsonHttpConverterBuilder, IJsonHttpConverterBuilder> builder = null)
         {
             serviceCollection.AddSingleton<IHttpRestConverter, JsonHttpConverter>();
-            serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>(); // Or: serviceCollection.AddJsonSchemaTranslator<IdentityConverter>();
             serviceCollection.AddJsonSchemaTranslator<TypeDescriptorConverter>();
             builder?.Invoke(new RestJsonHttpConverterBuilder(serviceCollection));
             if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IContractResolver)))

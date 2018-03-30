@@ -5,6 +5,7 @@ using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
@@ -23,11 +24,11 @@ namespace Biz.Morsink.Rest.AspNetCore
             public IReadOnlyList<object> Embeddings { get; set; }
             public IReadOnlyList<Link> Links { get; set; }
             [Required]
-            public TypeKeyedDictionary Metadata { get; set; }
+            public Dictionary<string, object> Metadata { get; set; }
         }
         public object GetRepresentable(object rep)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public Type GetRepresentableType(Type type)
@@ -42,9 +43,9 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return new representation
                 {
                     Id = res.Id,
-                    Type = res.Job.Task.Result.IsSuccess ? "Success": res.Job.Task.Result.UntypedResult.AsFailure().Reason.ToString(),
+                    Type = res.Job.Task.Result.IsSuccess ? "Success" : res.Job.Task.Result.UntypedResult.AsFailure().Reason.ToString(),
                     IsSuccess = res.Job.Task.Result.UntypedResult.IsSuccess,
-                    Metadata = res.Job.Task.Result.Metadata,
+                    Metadata = res.Job.Task.Result.Metadata.AsEnumerable().ToDictionary(kvp => kvp.Key.Name, kvp => kvp.Value),
                     Value = rv?.RestValue.Value,
                     Embeddings = rv?.RestValue.Embeddings,
                     Links = rv?.RestValue.Links

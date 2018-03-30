@@ -8,6 +8,6 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         public string Description { get; set; }
         public List<OrReference<Parameter>> Parameters { get; set; } = new List<OrReference<Parameter>>();
         public RequestBody RequestBody { get; set; }
-        public Dictionary<string, Response> Responses { get; set; }
+        public Dictionary<string, Response> Responses { get; set; } = new Dictionary<string, Response>();
     }
 }
