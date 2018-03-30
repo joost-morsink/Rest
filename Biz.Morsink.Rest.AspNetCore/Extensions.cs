@@ -31,9 +31,26 @@ namespace Biz.Morsink.Rest.AspNetCore
         public static IServiceCollection AddRestRepository<R>(this IServiceCollection serviceCollection, ServiceLifetime lifetime = ServiceLifetime.Scoped)
             where R : IRestRepository
         {
+            var entityType = typeof(R).GetGeneric(typeof(IRestRepository<>));
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository), typeof(R), lifetime));
-            serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(typeof(R).GetGeneric(typeof(IRestRepository<>))), typeof(R), lifetime));
+            serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(entityType), typeof(R), lifetime));
+            foreach (var attr in typeof(R).GetTypeInfo().GetCustomAttributes<RestPathAttribute>())
+                serviceCollection.AddRestPathMapping(entityType, attr.Path, attr.ComponentTypes, attr.WildcardType);
+           
             return serviceCollection;
+        }
+        /// <summary>
+        /// This method adds a repository to the service collection as IRestRepository and IRestRepository&lt;T&gt;.
+        /// </summary>
+        /// <typeparam name="R">The type of the Rest repository.</typeparam>
+        /// <param name="builder">An IRestServicesBuilder instance.</param>
+        /// <param name="lifetime">The lifetime scope of the repository.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddRepository<R>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where R : IRestRepository
+        {
+            builder.ServiceCollection.AddRestRepository<R>(lifetime);
+            return builder;
         }
         /// <summary>
         /// This method adds an attributed container's rest repositories to the service collection.
@@ -87,19 +104,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             structure.RegisterComponents(serviceCollection, lifetime);
             return serviceCollection;
-        }
-        /// <summary>
-        /// This method adds a repository to the service collection as IRestRepository and IRestRepository&lt;T&gt;.
-        /// </summary>
-        /// <typeparam name="R">The type of the Rest repository.</typeparam>
-        /// <param name="builder">An IRestServicesBuilder instance.</param>
-        /// <param name="lifetime">The lifetime scope of the repository.</param>
-        /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddRepository<R>(this IRestServicesBuilder builder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
-            where R : IRestRepository
-        {
-            builder.ServiceCollection.AddRestRepository<R>(lifetime);
-            return builder;
         }
         /// <summary>
         /// Adds a path mapping to the service collection.

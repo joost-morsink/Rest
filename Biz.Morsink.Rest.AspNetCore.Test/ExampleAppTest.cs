@@ -402,11 +402,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             var resp = await Post(client, "/job", new object());
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
-            Assert.IsTrue(resp.Headers.TryGetValues("Location", out var vals) && vals.Any());
-            var addr = vals.First();
+            Assert.IsTrue(resp.Headers.TryGetValues("Link", out var vals) && vals.Any());
+            var link = vals.Select(ParseLink).Where(l => l!=null && l.Reltype=="controller").First();
 
             // Get the controller
-            resp = await Get(client, addr);
+            resp = await Get(client, link.Address);
             var json = await GetJson(resp);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
