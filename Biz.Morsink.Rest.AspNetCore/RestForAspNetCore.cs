@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -27,6 +28,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Value for the internal server error HTTP status.
         /// </summary>
         public const int STATUS_INTERNALSERVERERROR = 500;
+        /// <summary>
+        /// Value for the unsupported media type HTTP status.
+        /// </summary>
+        public const int STATUS_UNSUPPORTED_MEDIA_TYPE = 415;
 
         private readonly IRestRequestHandler handler;
         private readonly IHttpRestConverter[] converters;
@@ -81,7 +86,11 @@ namespace Biz.Morsink.Rest.AspNetCore
                     }
                 }
             }
-            catch
+            catch (UnsupportedMediaTypeException)
+            {
+                context.Response.StatusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
+            }
+            catch(Exception)
             {
                 context.Response.StatusCode = STATUS_INTERNALSERVERERROR;
                 await context.Response.WriteAsync("An error occured.");
