@@ -58,6 +58,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                             Name = p.Key,
                             Description = p.Key,
                             In = "query",
+                            Required = false,
                             Schema = GetSchemaForTypeDescriptor(p.Value.Type)
                         })));
                     }
@@ -71,6 +72,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                             Name = $"id{i}",
                             Description = $"Id for {p.Name}",
                             In = "path",
+                            Required = true,
                             Schema = new Schema { Type = "string" }
                         })));
                 }
@@ -167,7 +169,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
 
                 var doc = new Document
                 {
-                    OpenApi = "3.0.1",
+                    OpenApi = "3.0.0",
                     Paths = apiDescription.EntityTypes
                         .Where(et => mapDict.ContainsKey(et.Key))
                         .Select(et => new
