@@ -99,6 +99,7 @@ namespace Biz.Morsink.Rest
                 return null;
 
             var method = iti.DeclaredMethods.Single();
+            
 
             var par = method.GetParameters().Skip(1).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();
             var body = method.GetParameters().Skip(2).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();
@@ -108,7 +109,7 @@ namespace Biz.Morsink.Rest
                 && method.ReturnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(RestResponse<>)
                 ? method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0]
                 : null;
-            return new RestCapabilityDescriptor(key.Name, key.EntityType, par, body, result, interfaceType);
+            return new RestCapabilityDescriptor(key.Name, key.EntityType, par, body, result, interfaceType, null);
         }
         /// <summary>
         /// Constructor.
@@ -119,13 +120,15 @@ namespace Biz.Morsink.Rest
         /// <param name="bodyType">The body type for the capability.</param>
         /// <param name="resultType">The result type for the capability.</param>
         /// <param name="interfaceType">The Rest capability interface's type.</param>
-        public RestCapabilityDescriptor(string name, Type entityType, Type parameterType, Type bodyType, Type resultType, Type interfaceType)
+        /// <param name="method">The implementation method for the capability.</param>
+        public RestCapabilityDescriptor(string name, Type entityType, Type parameterType, Type bodyType, Type resultType, Type interfaceType, MethodInfo method)
             : base(name, entityType)
         {
             ParameterType = parameterType;
             BodyType = bodyType;
             ResultType = resultType;
             InterfaceType = interfaceType;
+            Method = method;
         }
         /// <summary>
         /// Gets the parameter type.
@@ -143,6 +146,10 @@ namespace Biz.Morsink.Rest
         /// Gets the interface type.
         /// </summary>
         public Type InterfaceType { get; }
+        /// <summary>
+        /// Gets the implementation method.
+        /// </summary>
+        public MethodInfo Method { get; }
 
         /// <summary>
         /// Creates a Func delegate for the capability method on the specified target instance.
@@ -166,6 +173,12 @@ namespace Biz.Morsink.Rest
                     typeof(CancellationToken),
                     typeof(ValueTask<>).MakeGenericType(typeof(RestResponse<>).MakeGenericType(ResultType))), target);
         }
-
+        /// <summary>
+        /// Sets the Method property on a new descriptor object.
+        /// </summary>
+        /// <param name="methodInfo">The implementation method.</param>
+        /// <returns>A new RestCapabilityDescriptor with given implementation method.</returns>
+        public RestCapabilityDescriptor WithMethod(MethodInfo methodInfo)
+            => new RestCapabilityDescriptor(Name, EntityType, ParameterType, BodyType, ResultType, InterfaceType, methodInfo);
     }
 }

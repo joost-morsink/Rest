@@ -35,9 +35,11 @@ namespace Biz.Morsink.Rest
                 var ti = this.GetType().GetTypeInfo();
                 return from itf in ti.ImplementedInterfaces
                        where CAPABILITY_TYPEINFO.IsAssignableFrom(itf) && itf.GetTypeInfo() != CAPABILITY_TYPEINFO
+                       let map = ti.GetInterfaceMap(itf)
                        let desc = RestCapabilityDescriptor.Create(itf)
                        where desc != null
-                       select new RestCapability<T>(desc, (IRestCapability<T>)this);
+                       let meth = map.TargetMethods.Length == 1 ? map.TargetMethods[0] : null
+                       select new RestCapability<T>(desc.WithMethod(meth), (IRestCapability<T>)this);
             }
         }
         /// <summary>
@@ -48,11 +50,13 @@ namespace Biz.Morsink.Rest
         protected void Register<C>(C capability)
             where C : IRestCapability<T>
         {
-            var capGroups = from itf in typeof(C).GetTypeInfo().ImplementedInterfaces
-                                where itf.GetTypeInfo() != CAPABILITY_TYPEINFO && CAPABILITY_TYPEINFO.IsAssignableFrom(itf.GetTypeInfo())
-                                let cap = RestCapabilityDescriptor.Create(itf)
-                                group cap by (RestCapabilityDescriptorKey)cap into g
-                                select new { Key = g.Key, Value = g.Select(c => new RestCapability<T>(c, capability)) };
+            var ti = typeof(C).GetTypeInfo();
+            var capGroups = from itf in ti.ImplementedInterfaces
+                            where itf.GetTypeInfo() != CAPABILITY_TYPEINFO && CAPABILITY_TYPEINFO.IsAssignableFrom(itf.GetTypeInfo())
+                            let map = ti.GetInterfaceMap(itf)
+                            let cap = RestCapabilityDescriptor.Create(itf)
+                            group (cap, map) by (RestCapabilityDescriptorKey)cap into g
+                            select new { Key = g.Key, Value = g.Select(c => new RestCapability<T>(c.cap.WithMethod(c.map.TargetMethods[0]), capability)) };
             foreach (var capGroup in capGroups)
             {
                 if (capabilities.TryGetValue(capGroup.Key, out var lst))
@@ -79,7 +83,17 @@ namespace Biz.Morsink.Rest
                 else
                     capabilities = capabilities.Add(capGroup.Key, capGroup.Value.ToImmutableList());
             }
-
+        }
+        protected void RegisterSingle(RestCapability<T> capability)
+        {
+            if (capabilities.TryGetValue(capability.Descriptor, out var lst))
+                capabilities = capabilities.SetItem(capability.Descriptor, lst.Add(capability));
+            else
+                capabilities = capabilities.Add(capability.Descriptor, ImmutableList<RestCapability<T>>.Empty.Add(capability));
+        }
+        protected void RegisterSingle(RestCapabilityDescriptor capabilityDescriptor, IRestCapability<T> capability)
+        {
+            RegisterSingle(new RestCapability<T>(capabilityDescriptor, capability));
         }
         /// <summary>
         /// Gets capability descriptors for all the capabilities the repository provides.

@@ -77,7 +77,7 @@ namespace Biz.Morsink.Rest
         }
         private static Func<C, IRestRepository<T>> CreateRepositoryFactory<C, T>(IEnumerable<(MethodInfo, RestAttribute)> methods)
         {
-            var capabilities = new List<Func<C, IRestCapability<T>>>();
+            var capabilities = new List<Func<C, RestCapability<T>>>();
             foreach (var (method, attr) in methods)
             {
                 switch (attr.Capability)
@@ -231,41 +231,56 @@ namespace Biz.Morsink.Rest
                     => func(container, target, parameters, Request, cancellationToken);
             }
         }
-        private static Func<C, IRestCapability<T>> MakeGet<C, T>(MethodInfo methodInfo)
+        private static Func<C, RestCapability<T>> MakeGet<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, false);
             if (r.InnerReturn != typeof(T))
                 throw new ArgumentException("Get method should return an entity of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestGetMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
-            return maker.Make;
+
+            return c => new RestCapability<T>(
+                new RestCapabilityDescriptor("GET", typeof(T), r.Parameter, null, typeof(T), typeof(IRestGet<,>).MakeGenericType(typeof(T), r.Parameter), methodInfo),
+                maker.Make(c));
         }
-        private static Func<C, IRestCapability<T>> MakePut<C, T>(MethodInfo methodInfo)
+        private static Func<C, RestCapability<T>> MakePut<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, true);
             if (r.InnerReturn != typeof(T))
                 throw new ArgumentException("Put method should return an entity of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
-            return maker.Make;
+
+            return c => new RestCapability<T>(
+                new RestCapabilityDescriptor("PUT", typeof(T), r.Parameter, typeof(T), typeof(T), typeof(IRestPut<,>).MakeGenericType(typeof(T), r.Parameter), methodInfo),
+                maker.Make(c));
         }
-        private static Func<C, IRestCapability<T>> MakePatch<C, T>(MethodInfo methodInfo)
+        private static Func<C, RestCapability<T>> MakePatch<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, true);
             if (r.InnerReturn != typeof(T))
                 throw new ArgumentException("Patch method should return an entity of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter, r.Body), r.Function);
-            return maker.Make;
+
+            return c => new RestCapability<T>(
+                new RestCapabilityDescriptor("PATCH", typeof(T), r.Parameter, r.Body, typeof(T), typeof(IRestPatch<,,>).MakeGenericType(typeof(T), r.Parameter, r.Body), methodInfo),
+                maker.Make(c));
         }
-        private static Func<C, IRestCapability<T>> MakePost<C, T>(MethodInfo methodInfo)
+        private static Func<C, RestCapability<T>> MakePost<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, true);
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPostMaker<,,,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter, r.Body, r.InnerReturn), r.Function);
-            return maker.Make;
+
+            return c => new RestCapability<T>(
+                new RestCapabilityDescriptor("POST", typeof(T), r.Parameter, r.Body, r.InnerReturn, typeof(IRestPost<,,,>).MakeGenericType(typeof(T), r.Parameter, r.Body, r.InnerReturn), methodInfo),
+                maker.Make(c));
         }
-        private static Func<C, IRestCapability<T>> MakeDelete<C, T>(MethodInfo methodInfo)
+        private static Func<C, RestCapability<T>> MakeDelete<C, T>(MethodInfo methodInfo)
         {
             var r = MakeFunc<C, T>(methodInfo, false);
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestDeleteMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
-            return maker.Make;
+
+            return c => new RestCapability<T>(
+                new RestCapabilityDescriptor("DELETE", typeof(T), r.Parameter, null, typeof(object), typeof(IRestDelete<,>).MakeGenericType(typeof(T), r.Parameter), methodInfo),
+                maker.Make(c));
         }
         #endregion
 
@@ -447,12 +462,12 @@ namespace Biz.Morsink.Rest
 
         private class Repository<T> : RestRepository<T>
         {
-            private readonly IRestCapability<T>[] capabilities;
-            public Repository(IEnumerable<IRestCapability<T>> capabilities)
+            private readonly RestCapability<T>[] capabilities;
+            public Repository(IEnumerable<RestCapability<T>> capabilities)
             {
                 this.capabilities = capabilities.ToArray();
                 foreach (var cap in capabilities)
-                    RegisterDynamic(cap);
+                    RegisterSingle(cap);
             }
 
         }

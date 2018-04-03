@@ -41,6 +41,8 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 var res = new Operation();
                 var restPath = RestPath.Parse(mapping.RestPath);
                 var typeDescriptor = typeDescriptorCreator.GetDescriptor(capDesc.ParameterType);
+                if (capDesc.Method != null)
+                    res.Description = $"Mapped to method {capDesc.Method.Name} on {capDesc.Method.DeclaringType.Name}";
 
                 processParameters();
                 processBody();
