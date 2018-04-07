@@ -33,6 +33,7 @@ namespace Biz.Morsink.Rest.Jobs
         /// <param name="id">The identity value for the RestJob.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest response, possibly containing the RestJob with the specified identity value.</returns>
+        [RestDocumentation("Gets the status for some Rest Job.")]
         public async ValueTask<RestResponse<RestJob>> Get(IIdentity<RestJob> id, Empty parameters, CancellationToken cancellationToken)
         {
             var res = await restJobStore.GetJob(id);

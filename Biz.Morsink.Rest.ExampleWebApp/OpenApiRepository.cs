@@ -20,6 +20,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             this.serviceProvider = serviceProvider;
         }
         [RestGet]
+        [RestDocumentation("This Get operation should return an OpenAPI Specification version 3.0. It should be the one you're looking at right now.")]
         public Document Get(IIdentity<Document> id)
         {
             var typeDescriptorCreator = serviceProvider.GetRequiredService<TypeDescriptorCreator>();

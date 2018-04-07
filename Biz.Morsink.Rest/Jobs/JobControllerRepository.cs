@@ -20,6 +20,7 @@ namespace Biz.Morsink.Rest.Jobs
             this.store = store;
         }
 
+        [RestDocumentation(@"Gets the controller for a certain Rest Job.")]
         public async ValueTask<RestResponse<RestJobController>> Get(IIdentity<RestJobController> id, Empty parameters, CancellationToken cancellationToken)
         {
             var ctrl = await store.GetController(id);

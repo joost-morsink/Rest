@@ -23,6 +23,7 @@ namespace Biz.Morsink.Rest.Jobs
         {
             this.store = store;
         }
+        [RestDocumentation("Messages posted to this endpoint finish the addressed Rest Job.")]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobFinished> target, Empty parameters, RestJobFinished entity, CancellationToken cancellationToken)
         {
             if (entity.Id != null && !target.Equals(entity.Id))

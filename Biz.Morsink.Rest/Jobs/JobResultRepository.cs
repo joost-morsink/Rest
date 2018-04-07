@@ -32,6 +32,7 @@ namespace Biz.Morsink.Rest.Jobs
         /// <param name="id">The identity value of the RestJobResult.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest reponse that might contain a RestJobResult.</returns>
+        [RestDocumentation("Gets the result of a finished Rest Job. The result is packaged in a wrapper object.")]
         public async ValueTask<RestResponse<RestJobResult>> Get(IIdentity<RestJobResult> id, Empty parameters, CancellationToken cancellationToken)
         {
             var res = await restJobStore.GetJob(id.Provider.Creator<RestJob>().Create(id.Value));

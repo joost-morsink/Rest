@@ -5,6 +5,7 @@ using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.OpenApi
@@ -42,7 +43,12 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 var restPath = RestPath.Parse(mapping.RestPath);
                 var typeDescriptor = typeDescriptorCreator.GetDescriptor(capDesc.ParameterType);
                 if (capDesc.Method != null)
-                    res.Description = $"Mapped to method {capDesc.Method.Name} on {capDesc.Method.DeclaringType.Name}";
+                {
+                    var docAttrs = capDesc.Method.GetCustomAttributes<RestDocumentationAttribute>();
+                    res.Description = docAttrs.Where(a => a.Format == "text/plain" || a.Format == "text/markdown")
+                        .Select(a => a.Documentation).FirstOrDefault()
+                        ?? $"Mapped to method {capDesc.Method.Name} on {capDesc.Method.DeclaringType.Name}";
+                }
 
                 processParameters();
                 processBody();

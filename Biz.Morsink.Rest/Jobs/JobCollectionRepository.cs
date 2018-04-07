@@ -32,6 +32,7 @@ namespace Biz.Morsink.Rest.Jobs
             this.user = user;
         }
 
+        [RestDocumentation("Administers a new 'Job' in the Job repository.")]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty entity, CancellationToken cancellationToken)
         {
             if (parameters.Secure && user?.Principal == null)
