@@ -34,7 +34,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
                 .AddXmlHttpConverter()
                 // Configure Repositories
-                .AddStructure<PersonStructure.Structure>(ServiceLifetime.Singleton)
+                .AddStructure<PersonRepository.Structure>()
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddStructure<BlogRepository.Structure>()
                 .AddStructure<ExceptionRepository.Structure>()

@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.Jobs
     /// <summary>
     /// Repository for Rest jobs.
     /// </summary>
+    [RestDocumentation("Rest Job repository.")]
     public class JobRepository : RestRepository<RestJob>, IRestGet<RestJob, Empty>
     {
         private readonly IRestJobStore restJobStore;

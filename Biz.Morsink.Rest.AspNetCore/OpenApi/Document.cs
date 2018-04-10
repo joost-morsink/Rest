@@ -1,9 +1,12 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore.Identity;
 using Biz.Morsink.Rest.AspNetCore.Utils;
+using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -34,6 +37,15 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 this.typeDescriptorCreator = typeDescriptorCreator;
                 this.idProvider = idProvider;
             }
+            private static string CamelCase(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                    return name;
+                if (char.IsUpper(name[0]))
+                    return char.ToLower(name[0]) + name.Substring(1);
+                else
+                    return name;
+            }
             private static Operation GetOrNull(Dictionary<string, Operation> dict, string key)
                 => dict.TryGetValue(key, out var res) ? res : null;
 
@@ -44,9 +56,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 var typeDescriptor = typeDescriptorCreator.GetDescriptor(capDesc.ParameterType);
                 if (capDesc.Method != null)
                 {
-                    var docAttrs = capDesc.Method.GetCustomAttributes<RestDocumentationAttribute>();
-                    res.Description = docAttrs.Where(a => a.Format == "text/plain" || a.Format == "text/markdown")
-                        .Select(a => a.Documentation).FirstOrDefault()
+                    res.Description = capDesc.Method.GetRestDocumentation()
                         ?? $"Mapped to method {capDesc.Method.Name} on {capDesc.Method.DeclaringType.Name}";
                 }
 
@@ -63,13 +73,24 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                     {
                         res.Parameters.AddRange(r.Properties.Select(p => new OrReference<Parameter>(new Parameter
                         {
-                            Name = p.Key,
-                            Description = p.Key,
+                            Name = CamelCase(p.Key),
+                            Description = string.Join(Environment.NewLine, capDesc.ParameterType.GetProperty(p.Key)
+                                ?.GetRestDocumentation()),
                             In = "query",
-                            Required = false,
+                            Required = p.Value.Required,
                             Schema = GetSchemaForTypeDescriptor(p.Value.Type)
                         })));
                     }
+                    if (capDesc.Method != null)
+                        res.Parameters.AddRange(capDesc.Method.GetRestParameterProperties().Select(p =>
+                        new OrReference<Parameter>(new Parameter
+                        {
+                            Name = CamelCase(p.Name),
+                            Description = p.GetRestDocumentation(),
+                            In = "query",
+                            Required = p.IsRequired(),
+                            Schema = GetSchemaForType(p.PropertyType)
+                        })));
 
                     res.Parameters.AddRange(mapping.ComponentTypes
                         .Zip(restPath.GetSegments().Where(s => s.IsComponent), (c, s) => new { s.IsWildcard, Component = c })
@@ -103,7 +124,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 {
                     if (capDesc.ResultType != null && capDesc.ResultType != typeof(Empty))
                     {
-                        res.Responses["200"] = new Response
+                        res.Responses[capDesc.Method?.HasMetaDataOutAttribute<CreatedResource>() == true ? "201" : "200"] = new Response
                         {
                             Content = {
                                 ["application/json"] = new Content {
@@ -125,6 +146,8 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 {
                     if (typeDescriptor is TypeDescriptor.Primitive.Numeric)
                         return new Schema { Type = "number" };
+                    else if (typeDescriptor is TypeDescriptor.Primitive.Boolean)
+                        return new Schema { Type = "boolean" };
                     else
                         return new Schema { Type = "string" };
                 }
@@ -139,6 +162,8 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 {
                     if (typeDescriptor is TypeDescriptor.Primitive.Numeric)
                         return new Schema { Type = "number" };
+                    else if (typeDescriptor is TypeDescriptor.Primitive.Boolean)
+                        return new Schema { Type = "boolean" };
                     else
                         return new Schema { Type = "string" };
                 }
@@ -178,13 +203,18 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 var doc = new Document
                 {
                     OpenApi = "3.0.0",
-                    Paths = apiDescription.EntityTypes
+                    Paths = new SortedDictionary<string, Path>(apiDescription.EntityTypes
                         .Where(et => mapDict.ContainsKey(et.Key))
                         .Select(et => new
                         {
                             Mapping = mapDict[et.Key],
                             Url = MakeApiPath(mapDict[et.Key].RestPath),
-                            Dict = et.ToDictionary(e => e.Name, e => GetOperationForCapability(e, mapDict[et.Key]))
+                            Dict = et.ToDictionary(e => e.Name, e => GetOperationForCapability(e, mapDict[et.Key])),
+                            Docs = et.Select(e => e.Method?.DeclaringType)
+                                .Where(t => t != null)
+                                .Distinct()
+                                .SelectMany(t => t.GetCustomAttributes<RestDocumentationAttribute>())
+                                .GetRestDocumentation()
                         })
                         .Select(d => new
                         {
@@ -192,6 +222,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                             Path = new Path
                             {
                                 Summary = $"For restpath {d.Mapping.RestPath}",
+                                Description = d.Docs,
                                 Get = GetOrNull(d.Dict, GET),
                                 Put = GetOrNull(d.Dict, PUT),
                                 Post = GetOrNull(d.Dict, POST),
@@ -199,7 +230,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                                 Delete = GetOrNull(d.Dict, DELETE)
                             }
                         })
-                        .ToDictionary(p => p.Url, p => p.Path)
+                        .ToDictionary(p => p.Url, p => p.Path))
                 };
                 return doc;
             }
@@ -215,7 +246,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         public string OpenApi { get; set; }
         public Info Info { get; set; }
         public List<Server> Servers { get; set; } = new List<Server>();
-        public Dictionary<string, Path> Paths { get; set; } = new Dictionary<string, Path>();
+        public SortedDictionary<string, Path> Paths { get; set; } = new SortedDictionary<string, Path>();
         public Components Components { get; set; }
     }
 }

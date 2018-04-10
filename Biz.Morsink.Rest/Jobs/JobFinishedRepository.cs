@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.Jobs
     /// <summary>
     /// Repository for finishing jobs.
     /// </summary>
+    [RestDocumentation("Repository for finished messages on Rest Jobs.")]
     public class JobFinishedRepository : RestRepository<RestJobFinished>, IRestPost<RestJobFinished, Empty, RestJobFinished, Empty>
     {
         private IRestJobStore store;

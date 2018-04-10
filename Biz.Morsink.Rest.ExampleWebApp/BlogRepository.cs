@@ -12,6 +12,7 @@ using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
+    [RestDocumentation("Repository for blogs.")]
     public class BlogRepository
     {
         private static int counter = 0;

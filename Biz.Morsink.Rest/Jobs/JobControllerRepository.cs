@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.Jobs
     /// <summary>
     /// Job controller repository -> work in progress
     /// </summary>
+    [RestDocumentation("Repository for Job controllers")]
     public class JobControllerRepository : RestRepository<RestJobController>, IRestGet<RestJobController, Empty>
     {
         private readonly IRestJobStore store;
