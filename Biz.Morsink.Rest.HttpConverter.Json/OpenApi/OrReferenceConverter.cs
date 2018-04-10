@@ -7,12 +7,20 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
-{
+{ 
+    /// <summary>
+    /// JsonConverter for OrReference&lt;T&gt;
+    /// </summary>
+    /// <typeparam name="T">The generic parameter for OrReference.</typeparam>
     public class OrReferenceConverter<T> : JsonConverter, IJsonSchemaTranslator<OrReference<T>>
     {
         private readonly IJsonSchemaProvider schemaProvider;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="schemaProvider">A schema provider.</param>
+        /// <param name="typeDescriptorCreator">A type descriptor creator.</param>
         public OrReferenceConverter(IJsonSchemaProvider schemaProvider, TypeDescriptorCreator typeDescriptorCreator)
         {
             this.schemaProvider = schemaProvider;

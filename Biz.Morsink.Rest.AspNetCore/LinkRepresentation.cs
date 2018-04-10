@@ -8,28 +8,52 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
-
+    /// <summary>
+    /// Type representation for Link.
+    /// </summary>
     public class LinkRepresentation : ITypeRepresentation
     {
+        /// <summary>
+        /// The representation class.
+        /// </summary>
         private class Representation
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
             public Representation()
             {
 
             }
-            public Representation(Link lnk)
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="link">The link to represent.</param>
+            public Representation(Link link)
             {
-                Capability = lnk.GetCapabilityString();
-                Target = lnk.Target;
-                RelType = lnk.RelType;
-                Parameters = lnk.Parameters;
+                Capability = link.GetCapabilityString();
+                Target = link.Target;
+                RelType = link.RelType;
+                Parameters = link.Parameters;
             }
+            /// <summary>
+            /// The capability for the link.
+            /// </summary>
             [Required]
             public string Capability { get; set; }
+            /// <summary>
+            /// The target of the link.
+            /// </summary>
             [Required]
             public IIdentity Target { get; set; }
+            /// <summary>
+            /// The 'reltype' for the link.
+            /// </summary>
             [Required]
             public string RelType { get; set; }
+            /// <summary>
+            /// Optional parameters for the link.
+            /// </summary>
             public object Parameters { get; set; }
         }
 

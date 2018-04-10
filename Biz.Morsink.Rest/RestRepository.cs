@@ -84,6 +84,10 @@ namespace Biz.Morsink.Rest
                     capabilities = capabilities.Add(capGroup.Key, capGroup.Value.ToImmutableList());
             }
         }
+        /// <summary>
+        /// Register a single explicitly specified capability.
+        /// </summary>
+        /// <param name="capability">The capability to register.</param>
         protected void RegisterSingle(RestCapability<T> capability)
         {
             if (capabilities.TryGetValue(capability.Descriptor, out var lst))
@@ -91,6 +95,11 @@ namespace Biz.Morsink.Rest
             else
                 capabilities = capabilities.Add(capability.Descriptor, ImmutableList<RestCapability<T>>.Empty.Add(capability));
         }
+        /// <summary>
+        /// Register a single explicitly specified capability.
+        /// </summary>
+        /// <param name="capabilityDescriptor">A capability descriptor for the capability.</param>
+        /// <param name="capability">The actual capability implementation instance.</param>
         protected void RegisterSingle(RestCapabilityDescriptor capabilityDescriptor, IRestCapability<T> capability)
         {
             RegisterSingle(new RestCapability<T>(capabilityDescriptor, capability));

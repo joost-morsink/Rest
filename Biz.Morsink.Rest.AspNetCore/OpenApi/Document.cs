@@ -13,6 +13,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.OpenApi
 {
+    /// <summary>
+    /// Class representing an OpenAPI Specification version 3.0 document.
+    /// </summary>
     public class Document
     {
         private const string GET = nameof(GET);
@@ -20,7 +23,9 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         private const string POST = nameof(POST);
         private const string PATCH = nameof(PATCH);
         private const string DELETE = nameof(DELETE);
-
+        /// <summary>
+        /// A nested class responsible for creating Document objects.
+        /// </summary>
         public class Creator
         {
             private readonly RestApiDescription apiDescription;
@@ -29,6 +34,13 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             private readonly TypeDescriptorCreator typeDescriptorCreator;
             private readonly IRestIdentityProvider idProvider;
 
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="apiDescription">A description of the api to generate a OAS 3 document for.</param>
+            /// <param name="mappings">All rest path mappings.</param>
+            /// <param name="typeDescriptorCreator">A TypeDescriptorCreator.</param>
+            /// <param name="idProvider">A Rest Identity Provider.</param>
             public Creator(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, TypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
             {
                 this.apiDescription = apiDescription;
@@ -196,10 +208,12 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 }
                 return sb.ToString();
             }
-
+            /// <summary>
+            /// Creates the OpenAPI Specification version 3.0 document for the api description supplied on construction of the Creator.
+            /// </summary>
+            /// <returns>An OpenAPI Specification version 3.0 document.</returns>
             public Document Create()
             {
-
                 var doc = new Document
                 {
                     OpenApi = "3.0.0",
@@ -236,17 +250,39 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             }
 
         }
-
+        /// <summary>
+        /// Creates an OpenAPI Specification version 3.0 document.
+        /// </summary>
+        /// <param name="apiDescription">The Rest API description to generate the document for.</param>
+        /// <param name="mappings">All Rest Path mappings for the API.</param>
+        /// <param name="typeDescriptorCreator">The TypeDescriptorCreator.</param>
+        /// <param name="idProvider">The Rest Identity Provider.</param>
+        /// <returns></returns>
         public static Document Create(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, TypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
         {
             var c = new Creator(apiDescription, mappings, typeDescriptorCreator, idProvider);
             return c.Create();
         }
-
+        /// <summary>
+        /// A version string containing the version for OpenApi.
+        /// Should be set to "3.0.0" 
+        /// </summary>
         public string OpenApi { get; set; }
+        /// <summary>
+        /// An info object containing metadata for the API.
+        /// </summary>
         public Info Info { get; set; }
+        /// <summary>
+        /// A List of servers.
+        /// </summary>
         public List<Server> Servers { get; set; } = new List<Server>();
+        /// <summary>
+        /// Description of all the paths .
+        /// </summary>
         public SortedDictionary<string, Path> Paths { get; set; } = new SortedDictionary<string, Path>();
+        /// <summary>
+        /// Reusable components for this document.
+        /// </summary>
         public Components Components { get; set; }
     }
 }

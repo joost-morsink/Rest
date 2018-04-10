@@ -7,17 +7,29 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
+    /// <summary>
+    /// Implementation for the IJsonSchemaProvider interface.
+    /// An IServiceProvider is needed to construct this class to break circular dependencies.
+    /// </summary>
     public class JsonSchemaProvider : IJsonSchemaProvider
     {
         private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="serviceProvider">A service provider for dependencies.</param>
         public JsonSchemaProvider(IServiceProvider serviceProvider)
         {
             translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() => serviceProvider.GetServices<IJsonSchemaTranslator>());
             typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
         }
-
+        /// <summary>
+        /// This method should return the corresponding JsonSchema object for some TypeDescriptor.
+        /// </summary>
+        /// <param name="typeDescriptor">The type descriptor to get a schema for.</param>
+        /// <returns>A JsonSchema object that corresponds to the given TypeDescriptor.</returns>
         public JsonSchema GetSchema(TypeDescriptor typeDescriptor)
         {
             var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(typeDescriptor) == true);

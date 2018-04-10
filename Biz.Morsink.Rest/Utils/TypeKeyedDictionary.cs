@@ -57,6 +57,10 @@ namespace Biz.Morsink.Rest.Utils
             if (TryGet(out T t))
                 act(t);
         }
+        /// <summary>
+        /// Gets the collection as an IEnumerable&lt;KeyValuePair&lt;Type, object&gt;&gt;.
+        /// </summary>
+        /// <returns>The collection as an IEnumerable&lt;KeyValuePair&lt;Type, object&gt;&gt;.</returns>
         public IEnumerable<KeyValuePair<Type, object>> AsEnumerable()
             => objects;
     }
