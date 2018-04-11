@@ -8,6 +8,7 @@ using Biz.Morsink.Rest.Metadata;
 using System.Threading;
 using Biz.Morsink.Rest.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
+using Biz.Morsink.DataConvert;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -93,8 +94,12 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         [RestParameter(typeof(SimpleSearchParameters))]
         [RestParameter(typeof(CollectionParameters))]
         public async ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id)
-            => Rest.Value(await resources.GetCollection(id)).ToResponse();
-
+        {
+            var collectionParameters = id.Provider.GetConverter(typeof(PersonCollection), false).Convert(id.Value).To<CollectionParameters>();
+            if (collectionParameters != null && (collectionParameters.Limit <= 0 || collectionParameters.Skip < 0))
+                return RestResult.BadRequest<PersonCollection>(new object()).ToResponse();
+            return Rest.Value(await resources.GetCollection(id)).ToResponse();
+        }
         /// <summary>
         /// Post implementation of a Person to a PersonCollection.
         /// </summary>
@@ -120,7 +125,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 serviceCollection.AddAttributedRestRepository<PersonRepository>(lifetime)
                     .AddSingleton<IRestResourceCollection<PersonCollection, Person>, PersonSource>()
                     .AddRestPathMapping<Person>("/person/*")
-                    .AddRestPathMapping<PersonCollection>("/person?*", wildcardType: typeof(PersonCollection.Parameters));
+                    .AddRestPathMapping<PersonCollection>("/person?*", wildcardType: typeof(PersonCollection.Parameters))
+                    .AddScoped<IDynamicLinkProvider<PersonCollection>, PersonCollectionLinks>()
+                    ;
             }
         }
     }
