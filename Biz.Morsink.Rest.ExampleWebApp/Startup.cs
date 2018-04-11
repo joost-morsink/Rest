@@ -38,8 +38,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddStructure<BlogRepository.Structure>()
                 .AddStructure<ExceptionRepository.Structure>()
-                .AddStructure<OpenApiRepository.Structure>()
                 .AddRepository<HomeRepository>()
+                .AddOpenApi()
                 );
             services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();

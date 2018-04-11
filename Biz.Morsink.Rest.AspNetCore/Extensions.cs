@@ -468,5 +468,32 @@ namespace Biz.Morsink.Rest.AspNetCore
             });
             return builder;
         }
+        /// <summary>
+        /// Adds the OpenApiRepository endpoint to the service collection.
+        /// </summary>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <param name="path">The endpoint path for the OpenAPI Specification document.</param>
+        /// <param name="lifetime">The lifetime scope for the repository.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddRestOpenApi(this IServiceCollection serviceCollection, string path = "/openapi+", ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            serviceCollection.AddAttributedRestRepository<OpenApi.OpenApiRepository>();
+            if (!path.EndsWith("+"))
+                path += "+";
+            serviceCollection.AddRestPathMapping<OpenApi.Document>(path);
+            return serviceCollection;
+        }
+        /// <summary>
+        /// Adds the OpenApiRepository endpoint to the rest services builder.
+        /// </summary>
+        /// <param name="builder">An IRestServicesBuilder implementation/</param>
+        /// <param name="path">The endpoint path for the OpenAPI Specification document.</param>
+        /// <param name="lifetime">The lifetime scope for the repository.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddOpenApi(this IRestServicesBuilder builder, string path = "/openapi+", ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            builder.ServiceCollection.AddRestOpenApi(path, lifetime);
+            return builder;
+        }
     }
 }

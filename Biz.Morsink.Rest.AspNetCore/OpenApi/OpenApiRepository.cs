@@ -9,16 +9,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest.ExampleWebApp
+namespace Biz.Morsink.Rest.AspNetCore.OpenApi
 {
-    public class OpenApiRepository
+    /// <summary>
+    /// Repository for an OpenAPI Specification version 3.0 document.
+    /// </summary>
+    class OpenApiRepository
     {
         private readonly IServiceProvider serviceProvider;
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="serviceProvider">A service provider.</param>
         public OpenApiRepository(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
+        /// <summary>
+        /// Gets the OAS document.
+        /// </summary>
+        /// <param name="id">Dummy identity.</param>
+        /// <returns>An OpenAPI Specification version 3.0 document.</returns>
         [RestGet]
         [RestDocumentation("This Get operation should return an OpenAPI Specification version 3.0. It should be the one you're looking at right now.")]
         public Document Get(IIdentity<Document> id)
@@ -26,14 +37,6 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             var typeDescriptorCreator = serviceProvider.GetRequiredService<TypeDescriptorCreator>();
             var apidesc = new RestApiDescription(serviceProvider.GetServices<IRestRepository>(),typeDescriptorCreator );
             return Document.Create(apidesc, serviceProvider.GetServices<IRestPathMapping>(), typeDescriptorCreator, serviceProvider.GetRequiredService<IRestIdentityProvider>());
-        }
-        public class Structure : IRestStructure
-        {
-            void IRestStructure.RegisterComponents(IServiceCollection serviceCollection, ServiceLifetime lifetime)
-            {
-                serviceCollection.AddAttributedRestRepository<OpenApiRepository>(lifetime)
-                    .AddRestPathMapping<Document>("/openapi+");
-            }
         }
     }
 }
