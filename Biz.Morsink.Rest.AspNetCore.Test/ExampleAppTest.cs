@@ -282,7 +282,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             var json = await GetJson(resp);
 
             Assert.IsNotNull(json[dollarRef]);
-            Assert.AreEqual("http://json-schema.org/draft-04/schema#", json[dollarRef].Value<string>());
+            Assert.AreEqual("http://json-schema.org/draft-07/schema#", json[dollarRef].Value<string>());
         }
 
         [TestMethod]

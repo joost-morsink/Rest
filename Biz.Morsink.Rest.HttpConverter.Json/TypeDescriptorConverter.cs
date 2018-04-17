@@ -68,6 +68,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             => this;
 
         JsonSchema ISchemaTranslator<JsonSchema>.GetSchema()
-            => new JsonSchema(new JObject(new JProperty("$ref", JsonSchemaTypeDescriptorVisitor.JSON_SCHEMA_VERSION)));
+            => new JsonSchema(new JObject(new JProperty("$ref", JsonSchema.JSON_SCHEMA_VERSION)));
     }
 }

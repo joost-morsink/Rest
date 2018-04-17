@@ -13,6 +13,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class JsonSchema
     {
         /// <summary>
+        /// Gets the url ($ref) for Json schema (draft-07).
+        /// </summary>
+        public const string JSON_SCHEMA_VERSION = "http://json-schema.org/draft-07/schema#";
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public JsonSchema(JObject schema)

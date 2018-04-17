@@ -39,7 +39,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns></returns>
         public JsonSchema GetSchema()
             => new JsonSchema(new JObject(
-                new JProperty("$schema", JsonSchemaTypeDescriptorVisitor.JSON_SCHEMA_VERSION),
+                new JProperty("$schema", JsonSchema.JSON_SCHEMA_VERSION),
                 new JProperty("properties", new JObject()),
                 new JProperty("required", new JArray())));
     }
