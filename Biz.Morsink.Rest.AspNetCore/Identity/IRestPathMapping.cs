@@ -22,8 +22,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// </summary>
         Type[] ComponentTypes { get; }
         /// <summary>
-        /// Gets an optional WildcardType for the query string.
+        /// Gets set of optional WildcardTypes for the query string.
         /// </summary>
-        Type WildcardType { get; }
+        Type[] WildcardTypes { get; }
     }
 }

@@ -35,7 +35,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository), typeof(R), lifetime));
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(entityType), typeof(R), lifetime));
             foreach (var attr in typeof(R).GetTypeInfo().GetCustomAttributes<RestPathAttribute>())
-                serviceCollection.AddRestPathMapping(entityType, attr.Path, attr.ComponentTypes, attr.WildcardType);
+                serviceCollection.AddRestPathMapping(entityType, attr.Path, attr.ComponentTypes, attr.WildcardTypes);
            
             return serviceCollection;
         }
@@ -123,10 +123,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <param name="path">The path of the mapping.</param>
         /// <param name="componentTypes">The component types of the identity value.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping<T>(this IRestServicesBuilder builder, string path, Type[] componentTypes = null, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardType));
+        public static IRestServicesBuilder AddPathMapping<T>(this IRestServicesBuilder builder, string path, Type[] componentTypes = null, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -134,10 +134,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="U">The second component type.</typeparam>
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping<T, U>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(typeof(U), path, new[] { typeof(T), typeof(U) }, wildcardType));
+        public static IRestServicesBuilder AddPathMapping<T, U>(this IRestServicesBuilder builder, string path, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(typeof(U), path, new[] { typeof(T), typeof(U) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -146,10 +146,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="V">The third component type.</typeparam>
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping<T, U, V>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(typeof(V), path, new[] { typeof(T), typeof(U), typeof(V) }, wildcardType));
+        public static IRestServicesBuilder AddPathMapping<T, U, V>(this IRestServicesBuilder builder, string path, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(typeof(V), path, new[] { typeof(T), typeof(U), typeof(V) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -159,10 +159,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="W">The fourth component type.</typeparam>
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping<T, U, V, W>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(typeof(W), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W) }, wildcardType));
+        public static IRestServicesBuilder AddPathMapping<T, U, V, W>(this IRestServicesBuilder builder, string path, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(typeof(W), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -173,10 +173,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="X">The fifth component type.</typeparam>
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping<T, U, V, W, X>(this IRestServicesBuilder builder, string path, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(typeof(X), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W), typeof(X) }, wildcardType));
+        public static IRestServicesBuilder AddPathMapping<T, U, V, W, X>(this IRestServicesBuilder builder, string path, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(typeof(X), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W), typeof(X) }, wildcardTypes));
 
         /// <summary>
         /// Adds a path mapping to the service collection.
@@ -185,10 +185,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="type">The type the mapping is for.</param>
         /// <param name="path">The path of the mapping.</param>
         /// <param name="componentTypes">The component types of the identity value.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, Type type, string path, Type[] componentTypes = null, Type wildcardType = null)
-            => builder.AddPathMapping(new RestPathMapping(type, path, componentTypes, wildcardType));
+        public static IRestServicesBuilder AddPathMapping(this IRestServicesBuilder builder, Type type, string path, Type[] componentTypes = null, params Type[] wildcardTypes)
+            => builder.AddPathMapping(new RestPathMapping(type, path, componentTypes, wildcardTypes));
 
         /// <summary>
         /// Adds a path mapping to the service collection.
@@ -208,10 +208,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="builder">An IServiceCollection instance.</param>
         /// <param name="path">The path of the mapping.</param>
         /// <param name="componentTypes">The component types of the identity value.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T>(this IServiceCollection serviceCollection, string path, Type[] componentTypes = null, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardType));
+        public static IServiceCollection AddRestPathMapping<T>(this IServiceCollection serviceCollection, string path, Type[] componentTypes = null, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, componentTypes, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -219,10 +219,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="U">The second component type.</typeparam>
         /// <param name="builder">An IServiceCollection instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T, U>(this IServiceCollection serviceCollection, string path, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(U), path, new[] { typeof(T), typeof(U) }, wildcardType));
+        public static IServiceCollection AddRestPathMapping<T, U>(this IServiceCollection serviceCollection, string path, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(U), path, new[] { typeof(T), typeof(U) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -231,10 +231,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="V">The third component type.</typeparam>
         /// <param name="builder">An IServiceCollection instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T, U, V>(this IServiceCollection serviceCollection, string path, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(V), path, new[] { typeof(T), typeof(U), typeof(V) }, wildcardType));
+        public static IServiceCollection AddRestPathMapping<T, U, V>(this IServiceCollection serviceCollection, string path, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(V), path, new[] { typeof(T), typeof(U), typeof(V) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -244,10 +244,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="W">The fourth component type.</typeparam>
         /// <param name="builder">An IServiceCollection instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
-        /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T, U, V, W>(this IServiceCollection serviceCollection, string path, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(W), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W) }, wildcardType));
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+        /// <returns>The builder.</returns> 
+        public static IServiceCollection AddRestPathMapping<T, U, V, W>(this IServiceCollection serviceCollection, string path, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(W), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -258,10 +258,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="X">The fifth component type.</typeparam>
         /// <param name="builder">An IServiceCollection instance.</param>
         /// <param name="path">The path of the mapping.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T, U, V, W, X>(this IServiceCollection serviceCollection, string path, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(X), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W), typeof(X) }, wildcardType));
+        public static IServiceCollection AddRestPathMapping<T, U, V, W, X>(this IServiceCollection serviceCollection, string path, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(X), path, new[] { typeof(T), typeof(U), typeof(V), typeof(W), typeof(X) }, wildcardTypes));
 
         /// <summary>
         /// Adds a path mapping to the service collection.
@@ -270,10 +270,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="type">The type the mapping is for.</param>
         /// <param name="path">The path of the mapping.</param>
         /// <param name="componentTypes">The component types of the identity value.</param>
-        /// <param name="wildcardType">An optional wildcard type for the query string.</param>
+        /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping(this IServiceCollection serviceCollection, Type type, string path, Type[] componentTypes = null, Type wildcardType = null)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(type, path, componentTypes, wildcardType));
+        public static IServiceCollection AddRestPathMapping(this IServiceCollection serviceCollection, Type type, string path, Type[] componentTypes = null, Type[] wildcardTypes = null)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(type, path, componentTypes, wildcardTypes));
 
         /// <summary>
         /// Adds a structure to the service collection.

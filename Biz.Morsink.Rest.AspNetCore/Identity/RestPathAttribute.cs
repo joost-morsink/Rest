@@ -27,11 +27,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// <param name="path">The path for the repository.</param>
         /// <param name="componentTypes">The component entity types of the underlying identity value.</param>
         /// <param name="wildcardType">The querystring wildcard datatype, if applicable.</param>
-        public RestPathAttribute(string path, Type[] componentTypes, Type wildcardType)
+        public RestPathAttribute(string path, Type[] componentTypes, Type[] wildcardTypes)
         {
             Path = path;
             ComponentTypes = componentTypes;
-            WildcardType = wildcardType;
+            WildcardTypes = wildcardTypes;
         }
         /// <summary>
         /// Gets the path for the repository.
@@ -42,8 +42,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// </summary>
         public Type[] ComponentTypes { get; set; }
         /// <summary>
-        /// Gets the querystring wildcard datatype, if applicable.
+        /// Gets a set of querystring wildcard datatypes, if applicable.
         /// </summary>
-        public Type WildcardType { get; set; }
+        public Type[] WildcardTypes { get; set; }
     }
 }

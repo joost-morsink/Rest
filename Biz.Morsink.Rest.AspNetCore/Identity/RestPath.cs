@@ -181,7 +181,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Creates a 'wildcard' querystring.
             /// </summary>
-            public static Query Wildcard(Type wildcardType = null) => new Query(true, wildcardType);
+            public static Query Wildcard(Type[] wildcardTypes = null) => new Query(true, wildcardTypes);
             /// <summary>
             /// Creates an absent querystring.
             /// </summary>
@@ -223,17 +223,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             }
 
             private readonly bool wildcard;
-            private readonly Type wildcardType;
+            private readonly Type[] wildcardTypes;
             private readonly QueryDict values;
             private Query(QueryDict values)
             {
                 this.values = values;
                 wildcard = false;
-                wildcardType = null;
+                wildcardTypes = null;
             }
-            private Query(bool wildcard, Type wildcardType)
+            private Query(bool wildcard, Type[] wildcardTypes)
             {
-                this.wildcardType = wildcardType;
+                this.wildcardTypes = wildcardTypes;
                 this.wildcard = wildcard;
                 values = null;
             }
@@ -244,7 +244,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Gets a Type that matches the structure of the expected wildcard.
             /// </summary>
-            public Type WildcardType => wildcard ? wildcardType : null;
+            public Type[] WildcardTypes => wildcard ? wildcardTypes : null;
             /// <summary>
             /// True if this Query represents the absence of a Query string.
             /// </summary>
@@ -278,10 +278,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Applies a wildcard structure type to the query string, if it is a wildcard pattern.
             /// </summary>
-            /// <param name="wildcardType">The structural type.</param>
+            /// <param name="wildcardTypes">The structural type.</param>
             /// <returns>A Query with the type applied if it is a wildcard, <i>this</i> otherwise.</returns>
-            public Query WithWildcardType(Type wildcardType)
-                => IsWildcard ? new Query(true, wildcardType) : this;
+            public Query WithWildcardTypes(Type[] wildcardTypes)
+                => IsWildcard ? new Query(true, wildcardTypes) : this;
             /// <summary>
             /// Gets the Values corresponding to some key.
             /// </summary>

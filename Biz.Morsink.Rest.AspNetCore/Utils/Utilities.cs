@@ -87,19 +87,23 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         public static RestCapabilities MakeCapabilities(IRestIdentityProvider idProvider, IRestRepository repo, TypeDescriptorCreator typeDescriptorCreator)
         {
             var res = new RestCapabilities();
-            var wildcardtype = idProvider.GetRestPaths(repo.EntityType)
+            var wildcardtypes = idProvider.GetRestPaths(repo.EntityType)
                 .Where(rp => rp.QueryString.IsWildcard)
-                .Select(rp => rp.QueryString.WildcardType)
+                .Select(rp => rp.QueryString.WildcardTypes)
                 .Where(t => t != null)
                 .FirstOrDefault();
             foreach (var capGroup in repo.GetCapabilities().GroupBy(c => c.Name))
             {
+                var wildcardDescriptor = wildcardtypes == null || wildcardtypes.Length == 0
+                    ? TypeDescriptor.MakeEmpty()
+                    : TypeDescriptor.MakeIntersection("", wildcardtypes.Select(typeDescriptorCreator.GetDescriptor));
+
                 res[capGroup.Key] = capGroup.Select(cap => new RequestDescription(
                      typeDescriptorCreator.GetDescriptor(cap.BodyType),
-                     capGroup.Key == "GET" && wildcardtype != null
+                     capGroup.Key == "GET" && wildcardtypes != null && wildcardtypes.Length > 0
                         ? cap.ParameterType == typeof(Empty)
-                            ? typeDescriptorCreator.GetDescriptor(wildcardtype)
-                            : TypeDescriptor.MakeIntersection("", new[] { typeDescriptorCreator.GetDescriptor(wildcardtype), typeDescriptorCreator.GetDescriptor(cap.ParameterType) })
+                            ? wildcardDescriptor
+                            : TypeDescriptor.MakeIntersection("", new[] { wildcardDescriptor, typeDescriptorCreator.GetDescriptor(cap.ParameterType) })
                         : typeDescriptorCreator.GetDescriptor(cap.ParameterType),
                      typeDescriptorCreator.GetDescriptor(cap.ResultType)
                 )).ToArray();

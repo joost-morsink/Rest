@@ -125,7 +125,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 serviceCollection.AddAttributedRestRepository<PersonRepository>(lifetime)
                     .AddSingleton<IRestResourceCollection<PersonCollection, Person>, PersonSource>()
                     .AddRestPathMapping<Person>("/person/*")
-                    .AddRestPathMapping<PersonCollection>("/person?*", wildcardType: typeof(PersonCollection.Parameters))
+                    .AddRestPathMapping<PersonCollection>("/person?*", null, typeof(SimpleSearchParameters), typeof(CollectionParameters))
                     .AddScoped<IDynamicLinkProvider<PersonCollection>, PersonCollectionLinks>()
                     ;
             }

@@ -17,12 +17,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// <param name="restPath">The Rest path.</param>
         /// <param name="componentTypes">The component types of the identity value.</param>
         /// <param name="wildcardType">An optional wildcard type for the query srtring.</param>
-        public RestPathMapping(Type resourceType, string restPath, Type[] componentTypes = null, Type wildcardType = null)
+        public RestPathMapping(Type resourceType, string restPath, Type[] componentTypes = null, Type[] wildcardTypes = null)
         {
             ResourceType = resourceType;
             RestPath = restPath;
             ComponentTypes = componentTypes ?? new Type[] { resourceType };
-            WildcardType = wildcardType;
+            WildcardTypes = wildcardTypes;
         }
         /// <summary>
         /// Gets the resource type.
@@ -37,8 +37,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// </summary>
         public Type[] ComponentTypes { get; }
         /// <summary>
-        /// Gets an optional WildcardType for the query string.
+        /// Gets a set of optional WildcardTypes for the query string.
         /// </summary>
-        public Type WildcardType { get; }
+        public Type[] WildcardTypes { get; }
     }
 }

@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// Gets the collection path mapping.
             /// </summary>
             public IRestPathMapping CollectionPathMapping =>
-                new RestPathMapping(typeof(C), BasePath + "?*", wildcardType: WildcardType);
+                new RestPathMapping(typeof(C), BasePath + "?*", wildcardTypes: WildcardTypes);
             /// <summary>
             /// Gets the item path mapping.
             /// </summary>
@@ -58,7 +58,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Returns the wildcard type for retrieving collections.
             /// </summary>
-            public abstract Type WildcardType { get; }
+            public abstract Type[] WildcardTypes { get; }
             /// <summary>
             /// Returns the root type for the structure.
             /// The default implementation returns the class the structure is nested in.

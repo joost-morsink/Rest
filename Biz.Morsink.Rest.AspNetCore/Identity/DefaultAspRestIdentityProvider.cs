@@ -20,8 +20,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         {
             foreach (var mapping in pathMappings)
             {
-                if (mapping.WildcardType != null)
-                    BuildEntry(mapping.ComponentTypes).WithPathAndQueryType(mapping.RestPath, mapping.WildcardType).Add();
+                if (mapping.WildcardTypes != null && mapping.WildcardTypes.Length > 0)
+                    BuildEntry(mapping.ComponentTypes).WithPathAndQueryType(mapping.RestPath, mapping.WildcardTypes).Add();
                 else
                     BuildEntry(mapping.ComponentTypes).WithPath(mapping.RestPath).Add();
             }

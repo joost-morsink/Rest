@@ -148,12 +148,12 @@ namespace Biz.Morsink.Rest.AspNetCore
                 var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
                 return WithPath(p, types);
             }
-            public EntryBuilder WithPathAndQueryType(string path, Type queryType)
+            public EntryBuilder WithPathAndQueryType(string path, params Type[] queryTypes)
             {
                 var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
                 if (!p.QueryString.IsWildcard)
                     throw new ArgumentException("Query string must be wildcard.");
-                return WithPath(p.WithQuery(q => q.WithWildcardType(queryType)));
+                return WithPath(p.WithQuery(q => q.WithWildcardTypes(queryTypes)));
             }
             /// <summary>
             /// Adds the entry to the parent PathIdentityProvider this builder was created from.

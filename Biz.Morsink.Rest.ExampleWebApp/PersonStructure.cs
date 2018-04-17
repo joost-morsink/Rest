@@ -106,7 +106,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         public class Structure : AbstractStructure
         {
             public override string BasePath => "/person";
-            public override Type WildcardType => typeof(PersonCollection.Parameters);
+            public override Type[] WildcardTypes => new[] { typeof(SimpleSearchParameters), typeof(CollectionParameters) };
         }
     }
 
