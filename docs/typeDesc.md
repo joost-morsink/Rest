@@ -112,6 +112,78 @@ XML is a very powerful _document_ format, when used for data only a small subset
 There is no best, or canonical, way of determining how a `TypeDescriptor` should be converted to an XSD, or how an object of the type described should be serialized to XML.
 Of course it is possible to define a few ways of doing it.
 
+## Canonical type transformation
+Types are generally transformed to `TypeDescriptor`s by a generic algorithm, called the canonical type transformation. 
+In cases where the canonical type transformation is not adequate, an override mechanism called 'Representations' can be used (see below).
+A `TypeDescriptorCreator` instance can be used to 
+
+### Primitives
+All primitive types have a canonical type descriptors, shown in the table below:
+
+| Primitive type | TypeDescriptor                       |
+| -------------- | -------------------------------------|
+| string         | String                               |
+| sbyte          | Integral                             |
+| byte           | Integral                             |
+| short          | Integral                             |
+| ushort         | Integral                             |
+| int            | Integral                             |
+| uint           | Integral                             |
+| long           | Integral                             |
+| ulong          | Integral                             |
+| decimal        | Float                                |
+| float          | Float                                |
+| double         | Float                                |
+| bool           | Boolean                              |
+| DateTime       | DateTime                             |
+| Object         | Record (with 0 properties)           |
+
+These descriptors are fixed and cannot be changed. 
+Please note that a decimal is also a floating point number that just happens to be exact in a base 10 system.
+The Float `TypeDescriptor` is not supposed to be interpreted as having accuracy or inaccuracy.
+
+### Type forms
+If a registration of a certain type is not yet present, the creator must create a descriptor, and it does so by checking whether types fit a particular form.
+At the moment the following forms are checked:
+
+* Nullability
+* Sequential collections
+* Disjunct union types
+* Records
+* Units
+
+#### Nullability
+The nullability check is a check whether the type is of the form `Nullable<T>` for some type `T`.
+The type constraint on `Nullable<T>`make `T` a struct type.
+The result is a union of the `Null` type and the type descriptor for `T`.
+
+#### Sequential collections
+Sequential collections include types that implement `IEnumerable`, but don't implement `IDictionary<K,V>` for any `K` and `V`.
+Sequential collections are described as the `Array` type.
+The first implementation of `IEnumerable<T>` is used to describe the item type. 
+If such an implementation is not found, `object` and as such a record with no properties is used as the item type.
+
+#### Disjunct union types
+A disjunct union type is an abstract class containing (nested) derived classes. 
+The type descriptor generated for these types is a `Union` over all the derived public classes.
+When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
+
+#### Records
+There are two kinds of record forms supported by the `TypeDescriptorCreator` mechanism.
+
+First of all, regular DTO's are supported.
+These should have a parameterless constructor and properties with getters and setters.
+For each property there will be a property in the `Record`.
+
+Second, immutable DTO's are supported.
+These should have only readonly properties, and a constructor with parameters.
+The parameter names should match the property names (case-insensitive, allowing idiomatic casing) and the parameter types should also match the property types.
+Each property will result in a property in the `Record`, just as with regular DTO's.
+
+#### Unit
+If a type contains a parameterless constructor and does not contain any properties, the type is considered to be isomorphic to the unit type.
+Unit types are described as a `Record` with 0 properties, basically type without constraints.
+
 ## Representations
 Sometimes a type is not the best candidate for a serialization format.
 In that case you can _represent_ the type by another type.

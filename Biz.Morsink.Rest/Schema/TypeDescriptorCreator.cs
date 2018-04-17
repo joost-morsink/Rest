@@ -218,7 +218,7 @@ namespace Biz.Morsink.Rest.Schema
             if (ti.IsAbstract && ti.DeclaredNestedTypes.Any(nt => nt.BaseType == type))
             {
                 var rec = GetRecordDescriptor(type, cutoff, enclosing);
-                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type).Select(ty => GetReferableDescriptor(ty, type, enclosing)));
+                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type && nt.IsPublic).Select(ty => GetReferableDescriptor(ty, type, enclosing)));
 
                 if (rec != null)
                     res = new TypeDescriptor.Intersection(type.ToString(), new[] { rec, res });
