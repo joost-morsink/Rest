@@ -97,3 +97,5 @@ Other methods are available for configuration of the Rest component, such as:
 * `AddPathMapping` to add path mappings for the `DefaultRestIdentityProvider`.
 * `AddAttributedRepository` to add an [attributed Rest repository](attrRepo.md) to the services.
     
+## F#
+> **TODO**: A library allowing for easy configuration in F# should be built.
