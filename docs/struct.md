@@ -39,10 +39,10 @@ The class still needs to configure some aspects:
 
 ```csharp
 string BasePath => "/person";
-Type WildcardType => typeof(PersonCollection.Parameters);
+Type[] WildcardTypes => new [] { typeof(SimpleSearchParameters), typeof(CollectionParameters) };
 ```
 
-Based on the `BasePath` it registers the collection and item repositories to the correct Rest paths and the `WildcardType` is used for determining parameters for searches in the collection repository.
+Based on the `BasePath` it registers the collection and item repositories to the correct Rest paths and the `WildcardTypes` property is used for determining parameters for searches in the collection repository.
 Everything else is handled generically.
 
 Within the `AbstractRestCollectionStructure.AbstractStructure` there is still the possibility to override the `RegisterComponents` method, when necessary.
