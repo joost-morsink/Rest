@@ -20,6 +20,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="id">A dummy identity value for the Home Resource.</param>
         /// <param name="parameters">No parameters.</param>
         /// <returns>An asynchronous Rest response containing the Home Resource.</returns>
+        [RestDocumentation("The Home call should result in an empty resource with links to important repositories.")]
         public ValueTask<RestResponse<Home>> Get(IIdentity<Home> id, Empty parameters, CancellationToken cancellationToken)
         {
             return Rest.ValueBuilder(Home.Instance)

@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.Jobs
     /// <summary>
     /// Repository for finishing jobs.
     /// </summary>
+    [RestDocumentation("Repository for finished messages on Rest Jobs.")]
     public class JobFinishedRepository : RestRepository<RestJobFinished>, IRestPost<RestJobFinished, Empty, RestJobFinished, Empty>
     {
         private IRestJobStore store;
@@ -23,6 +24,7 @@ namespace Biz.Morsink.Rest.Jobs
         {
             this.store = store;
         }
+        [RestDocumentation("Messages posted to this endpoint finish the addressed Rest Job.")]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobFinished> target, Empty parameters, RestJobFinished entity, CancellationToken cancellationToken)
         {
             if (entity.Id != null && !target.Equals(entity.Id))

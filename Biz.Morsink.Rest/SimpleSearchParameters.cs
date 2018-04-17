@@ -20,6 +20,7 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets the string value to search for.
         /// </summary>
+        [RestDocumentation("A simple search string.")]
         public string Q { get; }
     }
 }

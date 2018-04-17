@@ -19,6 +19,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// <param name="ex">A dummy exception identity value.</param>
         /// <returns>Does not return: throws an exception.</returns>
         [RestGet]
+        [RestDocumentation("This method always throws an exception and should result in the HTTP 500 status.")]
         public Task<Exception> Get(IIdentity<Exception> ex)
         {
             throw new Exception("Test-exception");

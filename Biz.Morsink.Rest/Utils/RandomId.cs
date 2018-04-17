@@ -11,7 +11,7 @@ namespace Biz.Morsink.Rest.Utils
     public static class RandomId
     {
         /// <summary>
-        /// Gets a cryptographicaly strong new random identifier.
+        /// Gets a cryptographically strong new random identifier.
         /// The result contains 6 bits of entropy per character.
         /// </summary>
         /// <param name="length">

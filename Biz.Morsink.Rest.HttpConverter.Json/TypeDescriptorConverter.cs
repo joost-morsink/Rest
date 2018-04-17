@@ -16,18 +16,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class TypeDescriptorConverter : JsonConverter, IJsonSchemaTranslator<TypeDescriptor>
     {
-        private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly IJsonSchemaProvider schemaProvider;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="serviceProvider">A service provider to lazily evaluate a collection of IJsonSchemaTranslators.</param>
-        public TypeDescriptorConverter(IServiceProvider serviceProvider)
+        public TypeDescriptorConverter(IJsonSchemaProvider schemaProvider)
         {
-            this.translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() =>
-            (IEnumerable<IJsonSchemaTranslator>)serviceProvider.GetService(typeof(IEnumerable<IJsonSchemaTranslator>)));
-            this.typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
+            this.schemaProvider = schemaProvider;
         }
         /// <summary>
         /// This Converter can convert TypeDescriptors.
@@ -64,15 +61,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var typeDescriptor = (TypeDescriptor)value;
-            var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(typeDescriptor) == true);
-            if (specific == null)
-            {
-                var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
-                var schema = visitor.Transform(typeDescriptor);
-                schema.WriteTo(writer, serializer.Converters.ToArray());
-            }
-            else
-                specific.GetSchema().Schema.WriteTo(writer, serializer.Converters.ToArray());
+            schemaProvider.GetSchema(typeDescriptor).Schema.WriteTo(writer, serializer.Converters.ToArray());
         }
 
         JsonConverter IJsonSchemaTranslator.GetConverter()

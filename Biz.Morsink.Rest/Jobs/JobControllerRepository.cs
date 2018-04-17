@@ -11,6 +11,7 @@ namespace Biz.Morsink.Rest.Jobs
     /// <summary>
     /// Job controller repository -> work in progress
     /// </summary>
+    [RestDocumentation("Repository for Job controllers")]
     public class JobControllerRepository : RestRepository<RestJobController>, IRestGet<RestJobController, Empty>
     {
         private readonly IRestJobStore store;
@@ -20,6 +21,7 @@ namespace Biz.Morsink.Rest.Jobs
             this.store = store;
         }
 
+        [RestDocumentation(@"Gets the controller for a certain Rest Job.")]
         public async ValueTask<RestResponse<RestJobController>> Get(IIdentity<RestJobController> id, Empty parameters, CancellationToken cancellationToken)
         {
             var ctrl = await store.GetController(id);

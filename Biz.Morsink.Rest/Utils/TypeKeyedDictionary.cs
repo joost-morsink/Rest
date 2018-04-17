@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest.Utils
     /// An immutable keyed collection of typed objects.
     /// Every element is 'keyed' by a single type (statically at registration), that the element is assignable to.
     /// </summary>
-    public class TypeKeyedDictionary
+    public class TypeKeyedDictionary 
     {
         /// <summary>
         /// Gets the empty TypeKeyedDictionary.
@@ -57,5 +57,11 @@ namespace Biz.Morsink.Rest.Utils
             if (TryGet(out T t))
                 act(t);
         }
+        /// <summary>
+        /// Gets the collection as an IEnumerable&lt;KeyValuePair&lt;Type, object&gt;&gt;.
+        /// </summary>
+        /// <returns>The collection as an IEnumerable&lt;KeyValuePair&lt;Type, object&gt;&gt;.</returns>
+        public IEnumerable<KeyValuePair<Type, object>> AsEnumerable()
+            => objects;
     }
 }

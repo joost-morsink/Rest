@@ -6,6 +6,7 @@ using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.DataConvert;
 using System.Threading;
+using System.Reflection;
 
 namespace Biz.Morsink.Rest
 {
@@ -39,8 +40,13 @@ namespace Biz.Morsink.Rest
             /// </summary>
             protected virtual void RegisterCapabilities()
             {
-                Register(new Get(this));
-                Register(new Post(this));
+                var get = RestCapabilityDescriptor.Create(typeof(IRestGet<C, Empty>))
+                    .WithMethod(Source.GetType().GetTypeInfo().GetDeclaredMethod(nameof(AbstractRestResourceCollection<C, E>.GetCollection)));
+                var post = RestCapabilityDescriptor.Create(typeof(IRestPost<C, Empty, E, E>))
+                    .WithMethod(Source.GetType().GetTypeInfo().GetDeclaredMethod(nameof(AbstractRestResourceCollection<C, E>.Post)));
+
+                RegisterSingle(new RestCapability<C>(get, new Get(this)));
+                RegisterSingle(new RestCapability<C>(post, new Post(this)));
             }
             /// <summary>
             /// Default 'GET' implementation.
@@ -113,9 +119,16 @@ namespace Biz.Morsink.Rest
             public ItemRepository(AbstractRestResourceCollection<C, E> source)
             {
                 Source = source;
-                Register(new Get(this));
-                Register(new Put(this));
-                Register(new Delete(this));
+                var get = RestCapabilityDescriptor.Create(typeof(IRestGet<E, Empty>))
+                    .WithMethod(source.GetType().GetTypeInfo().GetDeclaredMethod(nameof(AbstractRestResourceCollection<C, E>.Get)));
+                var put = RestCapabilityDescriptor.Create(typeof(IRestPut<E, Empty>))
+                    .WithMethod(source.GetType().GetTypeInfo().GetDeclaredMethod(nameof(AbstractRestResourceCollection<C, E>.Put)));
+                var delete = RestCapabilityDescriptor.Create(typeof(IRestDelete<E, Empty>))
+                    .WithMethod(source.GetType().GetTypeInfo().GetDeclaredMethod(nameof(AbstractRestResourceCollection<C, E>.Delete)));
+
+                RegisterSingle(new RestCapability<E>(get, new Get(this)));
+                RegisterSingle(new RestCapability<E>(put, new Put(this)));
+                RegisterSingle(new RestCapability<E>(delete, new Delete(this)));
             }
             /// <summary>
             /// Default 'GET' implementation.

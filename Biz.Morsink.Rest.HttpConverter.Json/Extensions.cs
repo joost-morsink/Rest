@@ -1,4 +1,6 @@
 ﻿using Biz.Morsink.Rest.AspNetCore;
+using Biz.Morsink.Rest.AspNetCore.OpenApi;
+using Biz.Morsink.Rest.HttpConverter.Json.OpenApi;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -57,8 +59,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public static IServiceCollection AddJsonHttpConverter(this IServiceCollection serviceCollection, Func<IJsonHttpConverterBuilder, IJsonHttpConverterBuilder> builder = null)
         {
             serviceCollection.AddSingleton<IHttpRestConverter, JsonHttpConverter>();
-            serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>(); // Or: serviceCollection.AddJsonSchemaTranslator<IdentityConverter>();
             serviceCollection.AddJsonSchemaTranslator<TypeDescriptorConverter>();
+
+            serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Parameter>>();
+            serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Header>>();
+            serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<AspNetCore.OpenApi.Schema>>();
+
+            serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
+
             builder?.Invoke(new RestJsonHttpConverterBuilder(serviceCollection));
             if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IContractResolver)))
                 serviceCollection.AddSingleton<IContractResolver, RestJsonContractResolver>();

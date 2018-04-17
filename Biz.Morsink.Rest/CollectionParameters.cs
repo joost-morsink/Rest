@@ -23,10 +23,12 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets the maximum number of returned results in a collection instance.
         /// </summary>
+        [RestDocumentation("The maximum number of returned results.")]
         public int? Limit { get; }
         /// <summary>
         /// Gets the amount of objects to skip.
         /// </summary>
+        [RestDocumentation("The number of items to skip.")]
         public int Skip { get; }
     }
  

@@ -57,6 +57,9 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
             serviceCollection.AddScoped(sp => sp.GetRequiredService<IRestIdentityProvider>().Prefixes.Copy());
 
+            serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
+
             var restbuilder = new RestServicesBuilder(serviceCollection);
             builder?.Invoke(restbuilder);
             restbuilder.EndConfiguration();

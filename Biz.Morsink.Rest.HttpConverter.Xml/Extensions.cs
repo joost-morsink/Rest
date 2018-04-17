@@ -39,6 +39,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             serviceCollection.AddSingleton<IHttpRestConverter, XmlHttpConverter>();
             serviceCollection.AddSingleton(sp => new XmlSerializer(sp.GetRequiredService<TypeDescriptorCreator>(), DataConverter.Default, sp.GetServices<IXmlSchemaTranslator>(), sp.GetServices<ITypeRepresentation>()));
             serviceCollection.AddXmlSchemaTranslator<XmlSchemaXmlSchemaTranslator>();
+            serviceCollection.AddXmlSchemaTranslator<OpenApiXmlSchemaTranslator>();
             return serviceCollection;
         }
         /// <summary>

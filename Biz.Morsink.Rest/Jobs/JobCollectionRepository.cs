@@ -12,10 +12,12 @@ namespace Biz.Morsink.Rest.Jobs
     /// Repository for the Job collection. 
     /// Allows for creating new Job controllers.
     /// </summary>
+    [RestDocumentation("Repository for Rest Jobs (collection path).")]
     public class JobCollectionRepository : RestRepository<RestJobCollection>, IRestPost<RestJobCollection, JobCollectionRepository.PostParameters, Empty, Empty>
     {
         public class PostParameters
         {
+            [RestDocumentation("True if the Job should be secure, meaning it is only accessible by the current security principal.")]
             public bool Secure { get; set; }
         }
         private readonly IRestJobStore jobstore;
@@ -32,6 +34,8 @@ namespace Biz.Morsink.Rest.Jobs
             this.user = user;
         }
 
+        [RestDocumentation("Administers a new 'Job' in the Job repository.")]
+        [RestMetaDataOut(typeof(CreatedResource))]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty entity, CancellationToken cancellationToken)
         {
             if (parameters.Secure && user?.Principal == null)

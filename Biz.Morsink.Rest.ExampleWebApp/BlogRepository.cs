@@ -12,6 +12,7 @@ using Biz.Morsink.Rest.Metadata;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
+    [RestDocumentation("Repository for blogs.")]
     public class BlogRepository
     {
         private static int counter = 0;
@@ -25,6 +26,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         }
 
         [RestGet]
+        [RestDocumentation(@"Gets a Blog with a certain id.")]
         public RestResult<Blog> Get(IIdentity<Blog> blogId)
         {
             var id = blogId.Value.ToString();
@@ -34,11 +36,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 return RestResult.NotFound<Blog>();
         }
         [RestGet]
+        [RestDocumentation(@"Searches for blogs.")]
         public RestValue<BlogCollection> Get(IIdentity<BlogCollection> collId)
         {
             return Rest.Value(new BlogCollection(collId, data.Values, data.Count, null, 0));
         }
         [RestPost]
+        [RestDocumentation("Adds a new Blog to the system.")]
         public RestResponse<Blog> Post(IIdentity<BlogCollection> collId, [RestBody] Blog blog)
         {
             var id = next();
@@ -47,6 +51,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             return Rest.Value(blog).ToResponse().WithMetadata(new CreatedResource { Address = blog.Id });
         }
         [RestPut]
+        [RestDocumentation("Upserts a Blog into the system.")]
         public RestResult<Blog> Put(IIdentity<Blog> id, Empty empty, Blog blog)
         {
             if (blog.Id == null)
@@ -56,6 +61,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             return Rest.Value(data.AddOrUpdate(id.ComponentValue.ToString(), blog, (_, __) => blog)).ToResult();
         }
         [RestDelete]
+        [RestDocumentation("Deletes a Blog from the system.")]
         public RestResult<object> Delete(IIdentity<Blog> id)
         {
             if (data.TryRemove(id.ComponentValue.ToString(), out var blog))
