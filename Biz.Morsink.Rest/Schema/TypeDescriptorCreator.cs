@@ -19,6 +19,13 @@ namespace Biz.Morsink.Rest.Schema
     /// </summary>
     public class TypeDescriptorCreator
     {
+        private const string CompilationMappingAttribute = nameof(CompilationMappingAttribute);
+        private const string SourceConstructFlags = nameof(SourceConstructFlags);
+        private const string SumType = nameof(SumType);
+        private const string UnionCase = nameof(UnionCase);
+        private const string Tags = nameof(Tags);
+        private const string SequenceNumber = nameof(SequenceNumber);
+
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
         private IEnumerable<ITypeRepresentation> representations;
@@ -98,6 +105,7 @@ namespace Biz.Morsink.Rest.Schema
                 ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
                 var desc = GetNullableDescriptor(ty, cutoff, enclosing.Push(type)) // Check for nullability
                 ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
+                ?? GetFSharpUnionDescriptor(ty,cutoff, enclosing.Push(type)) // Check for F# union types
                 ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
                 ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
                 ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
@@ -174,7 +182,7 @@ namespace Biz.Morsink.Rest.Schema
                        .GroupBy(x => x.Name)
                        .Select(x => x.First())
                        .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, GetReferableDescriptor(x.PropertyType, null, enclosing), x.GetCustomAttributes<RequiredAttribute>().Any()));
-                       
+
                 return props.Any()
                     ? new TypeDescriptor.Record(type.ToString(), props)
                     : null;
@@ -227,6 +235,39 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
                 return null;
+        }
+        private TypeDescriptor GetFSharpUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            var cma = type.GetCustomAttributes().Where(a => a.GetType().Name == CompilationMappingAttribute).FirstOrDefault();
+            if (cma != null)
+            {
+                var prop = cma.GetType().GetProperty(SourceConstructFlags);
+                if (prop != null)
+                {
+                    if (prop.GetValue(cma, null)?.ToString() == SumType)
+                    {
+                        var constructorMethods = type.GetMethods().Where(mi => mi.GetCustomAttributes().Any(a => a.GetType().Name == CompilationMappingAttribute));
+                        var typeDescs = constructorMethods.Select(cm =>
+                            TypeDescriptor.MakeRecord(cm.Name.Substring(3),
+                                new[] {
+                                    new PropertyDescriptor<TypeDescriptor>("Tag", TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name.Substring(3)), true)
+                                }.Concat(
+                                    cm.GetParameters().Select(pi => new PropertyDescriptor<TypeDescriptor>(adjustName(pi.Name), GetDescriptor(pi.ParameterType), true))
+                                )));
+                        return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
+                    }
+                }
+            }
+            return null;
+
+            string adjustName(string str)
+            {
+                if (str.Length > 0 && str[0] == '_')
+                    str = str.Substring(1);
+                if (str.Length > 0 && !char.IsUpper(str[0]))
+                    str = char.ToUpper(str[0]) + str.Substring(1);
+                return str;
+            }
         }
     }
 }
