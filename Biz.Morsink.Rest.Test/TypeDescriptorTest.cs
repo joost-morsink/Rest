@@ -1,8 +1,10 @@
 ﻿using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Test.Helpers;
+using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.Test
@@ -40,7 +42,7 @@ namespace Biz.Morsink.Rest.Test
         public void TypeDescriptor_FSharpUnion()
         {
             var tdc = new TypeDescriptorCreator();
-            var schema = tdc.GetDescriptor(typeof(Biz.Morsink.Rest.FSharp.Tryout.Test));
+            var schema = tdc.GetDescriptor(typeof(FSharp.Tryout.Union));
             Assert.IsNotNull(schema);
             Assert.IsInstanceOfType(schema, typeof(TypeDescriptor.Union));
             var u = (TypeDescriptor.Union)schema;
@@ -78,6 +80,18 @@ namespace Biz.Morsink.Rest.Test
             });
 
             Assert.IsTrue(expected.Equals(schema));
+        }
+        [TestMethod]
+        public void TypeDescriptor_FSharpOption()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var stringOption = tdc.GetDescriptor(typeof(FSharpOption<string>));
+            var u = stringOption as TypeDescriptor.Union;
+            Assert.IsNotNull(u);
+            Assert.AreEqual(2, u.Options.Count);
+            Assert.IsTrue(u.Options.OfType<TypeDescriptor.Null>().Any());
+            Assert.IsTrue(u.Options.OfType<TypeDescriptor.Primitive.String>().Any());
+
         }
     }
 }

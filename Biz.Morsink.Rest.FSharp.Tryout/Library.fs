@@ -2,12 +2,12 @@ namespace Biz.Morsink.Rest.FSharp.Tryout
 open System.Reflection
 open Microsoft.FSharp.Reflection
 
-type public Test = 
+type public Union = 
     | A of int
     | B of string
     | C of float
 
-type public Record = { a: int; b: string; c: float}
+type public Record = { a: int; b: string; c: float }
 
 module Tests =     
     type Regular() =
@@ -40,13 +40,13 @@ module Tests =
         0
 
     let test1 () =
-        let ty = typeof<Test>;
+        let ty = typeof<Union>;
         printf "%A\n" (FSharpType.IsUnion ty)
         let uci, value= FSharpValue.GetUnionFields(B "Joost", ty)
         printf "%A of %A\n" uci.Name value
         printf "%A\n" (value.GetType())
     let test3 () =
-        let ty = typeof<Test>;
+        let ty = typeof<Union>;
         let cma = ty.GetCustomAttributes() |> Seq.find (fun a -> a.GetType().Name = "CompilationMappingAttribute")
         let sm = cma.GetType().GetProperty("SourceConstructFlags").GetValue(cma,null).ToString()
         printf "%s\n" sm
