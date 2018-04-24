@@ -91,7 +91,15 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual(2, u.Options.Count);
             Assert.IsTrue(u.Options.OfType<TypeDescriptor.Null>().Any());
             Assert.IsTrue(u.Options.OfType<TypeDescriptor.Primitive.String>().Any());
-
+        }
+        [TestMethod]
+        public void TypeDescriptor_FSharpList()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var stringList = tdc.GetDescriptor(typeof(Microsoft.FSharp.Collections.FSharpList<string>));
+            var a = stringList as TypeDescriptor.Array;
+            Assert.IsNotNull(a);
+            Assert.IsInstanceOfType(a.ElementType, typeof(TypeDescriptor.Primitive.String));
         }
     }
 }
