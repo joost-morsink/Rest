@@ -14,21 +14,13 @@ using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    using static FSharp.Names;
+    using static FSharp.Utils;
     /// <summary>
     /// A class that helps construct TypeDescriptor objects for CLR types.
     /// </summary>
     public class TypeDescriptorCreator
     {
-        private const string CompilationMappingAttribute = nameof(CompilationMappingAttribute);
-        private const string SourceConstructFlags = nameof(SourceConstructFlags);
-        private const string SumType = nameof(SumType);
-        private const string UnionCase = nameof(UnionCase);
-        private const string Tags = nameof(Tags);
-        private const string SequenceNumber = nameof(SequenceNumber);
-
-        private static readonly string Microsoft_FSharp_Core = nameof(Microsoft_FSharp_Core).Replace('_', '.');
-        private static readonly string FSharpOption_1 = nameof(FSharpOption_1).Replace('_', '`');
-
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
         private IEnumerable<ITypeRepresentation> representations;
@@ -241,48 +233,39 @@ namespace Biz.Morsink.Rest.Schema
         }
         private TypeDescriptor GetFSharpUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
-            var cma = type.GetCustomAttributes().Where(a => a.GetType().Name == CompilationMappingAttribute).FirstOrDefault();
-            if (cma != null)
+            if (IsFsharpUnionType(type))
             {
-                var prop = cma.GetType().GetProperty(SourceConstructFlags);
-                if (prop != null)
+                if (type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1)
                 {
-                    if (prop.GetValue(cma, null)?.ToString() == SumType)
+                    var opt = GetDescriptor(type.GetGenericArguments()[0]);
+                    return TypeDescriptor.MakeUnion($"Optional<{opt.Name}>", new[]
                     {
-                        if (type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1)
+                        opt,
+                        TypeDescriptor.Null.Instance
+                    });
+                }
+                else
+                {
+                    var tags = GetTags(type);
+                    var constructorMethods = GetConstructorMethods(type)
+                        .Select(m => new
                         {
-                            var opt = GetDescriptor(type.GetGenericArguments()[0]);
-                            return TypeDescriptor.MakeUnion($"Optional<{opt.Name}>", new[]
-                            {
-                                opt,
-                                TypeDescriptor.Null.Instance
-                            });
-                        }
-                        else
-                        {
-                            var tags = type.GetNestedType("Tags")?.GetFields().ToDictionary(f => (int)f.GetValue(null), f => f.Name);
-                            var constructorMethods = type.GetMethods()
-                                .Select(mi => new { Method = mi, Attribute = mi.GetCustomAttributes().FirstOrDefault(a => a.GetType().Name == CompilationMappingAttribute) })
-                                .Where(m => m.Attribute != null)
-                                .Select(m => new
-                                {
-                                    m.Method,
-                                    m.Attribute,
-                                    Name = getOrNull(tags, (int)m.Attribute.GetType().GetProperty(SequenceNumber).GetValue(m.Attribute)) ?? m.Method.Name.Substring(m.Method.Name.StartsWith("New") ? 3 : 0)
-                                });
-                            var typeDescs = constructorMethods.Select(cm =>
-                                TypeDescriptor.MakeRecord(tags[(int)cm.Attribute.GetType().GetProperty(SequenceNumber).GetValue(cm.Attribute)],
-                                    new[] {
-                                        new PropertyDescriptor<TypeDescriptor>("Tag", TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
-                                    }.Concat(
-                                        cm.Method.GetParameters()
-                                        .Select(pi => new PropertyDescriptor<TypeDescriptor>(adjustName(pi.Name), GetDescriptor(pi.ParameterType), true))
-                                    )));
-                            return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
-                        }
-                    }
+                            Method = m.Item1,
+                            Name = tags[m.Item2]
+                        });
+
+                    var typeDescs = constructorMethods.Select(cm =>
+                        TypeDescriptor.MakeRecord(cm.Name,
+                            new[] {
+                                        new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
+                            }.Concat(
+                                cm.Method.GetParameters()
+                                .Select(pi => new PropertyDescriptor<TypeDescriptor>(adjustName(pi.Name), GetDescriptor(pi.ParameterType), true))
+                            )));
+                    return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
                 }
             }
+
             return null;
 
             string adjustName(string str)
@@ -293,8 +276,7 @@ namespace Biz.Morsink.Rest.Schema
                     str = char.ToUpper(str[0]) + str.Substring(1);
                 return str;
             }
-            string getOrNull(Dictionary<int, string> dict, int key)
-                => dict.TryGetValue(key, out var res) ? res : null;
+
         }
     }
 }
