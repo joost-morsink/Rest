@@ -16,14 +16,28 @@ namespace Biz.Morsink.Rest.FSharp
                 .Where(a => a.Flags == SumType)
                 .Any();
         }
+        private static void ThrowOnNonFSharpUnionType(Type type)
+        {
+            if (!IsFsharpUnionType(type))
+                throw new ArgumentException("Type is not an F# union type.");
+        }
         public static Dictionary<int, string> GetTags(Type type)
         {
+            ThrowOnNonFSharpUnionType(type);
             return type.GetNestedType(Tags)
-                ?.GetFields()
+                .GetFields()
                 .ToDictionary(f => (int)f.GetValue(null), f => f.Name);
+        }
+        public static Dictionary<string, int> GetTagsReverse(Type type)
+        {
+            ThrowOnNonFSharpUnionType(type);
+            return type.GetNestedType(Tags)
+                .GetFields()
+                .ToDictionary(f => f.Name, f => (int)f.GetValue(null));
         }
         public static IEnumerable<(MethodInfo, int)> GetConstructorMethods(Type type)
         {
+            ThrowOnNonFSharpUnionType(type);
             var constructorMethods = type.GetMethods()
                 .Select(mi => new { Method = mi, Attribute = mi.GetCustomAttributes().FirstOrDefault(a => a.GetType().Name == CompilationMappingAttribute) })
                 .Where(m => m.Attribute != null)

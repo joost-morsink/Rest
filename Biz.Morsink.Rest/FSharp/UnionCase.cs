@@ -7,10 +7,11 @@ namespace Biz.Morsink.Rest.FSharp
 {
     public class UnionCase
     {
-        internal static UnionCase Create((MethodInfo,int) m)
+        internal static UnionCase Create((MethodInfo, int, string) m)
         {
             return new UnionCase(m.Item2,
-                m.Item1.GetParameters().Select(p => new UnionCaseParameter(p.ParameterType, adjustName(p.Name))));
+                m.Item1.GetParameters().Select(p => new UnionCaseParameter(p.ParameterType, adjustName(p.Name))),
+                m.Item3);
 
             string adjustName(string str)
             {
@@ -21,12 +22,14 @@ namespace Biz.Morsink.Rest.FSharp
                 return str;
             }
         }
-        internal UnionCase(int tag, IEnumerable<UnionCaseParameter> parameters)
+        internal UnionCase(int tag, IEnumerable<UnionCaseParameter> parameters, string name)
         {
             Tag = tag;
             Parameters = parameters.ToArray();
+            Name = name;
         }
         public int Tag { get;  }
         public IReadOnlyList<UnionCaseParameter> Parameters { get; }
+        public string Name { get; }
     }
 }

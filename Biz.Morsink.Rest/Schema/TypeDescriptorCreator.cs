@@ -257,7 +257,7 @@ namespace Biz.Morsink.Rest.Schema
                     var typeDescs = constructorMethods.Select(cm =>
                         TypeDescriptor.MakeRecord(cm.Name,
                             new[] {
-                                        new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
+                                new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
                             }.Concat(
                                 cm.Method.GetParameters()
                                 .Select(pi => new PropertyDescriptor<TypeDescriptor>(adjustName(pi.Name), GetDescriptor(pi.ParameterType), true))
