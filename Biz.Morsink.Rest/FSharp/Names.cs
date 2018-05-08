@@ -13,6 +13,7 @@ namespace Biz.Morsink.Rest.FSharp
         public const string Tags = nameof(Tags);
         public const string Tag = nameof(Tag);
         public const string SequenceNumber = nameof(SequenceNumber);
+        public const string VariantNumber = nameof(VariantNumber);
 
         public static readonly string Microsoft_FSharp_Core = nameof(Microsoft_FSharp_Core).Replace('_', '.');
         public static readonly string FSharpOption_1 = nameof(FSharpOption_1).Replace('_', '`');

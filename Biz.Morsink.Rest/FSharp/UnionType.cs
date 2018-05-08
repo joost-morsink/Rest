@@ -13,8 +13,9 @@ namespace Biz.Morsink.Rest.FSharp
             if (!IsFsharpUnionType(type))
                 throw new ArgumentException("Type is not an F# union type.");
             var tags = GetTags(type);
-            var constructorMethods = GetConstructorMethods(type).Select(cm => (cm.Item1, cm.Item2, tags[cm.Item2]));
-            return new UnionType(type, constructorMethods.Select(UnionCase.Create));
+            var classes = GetCaseClasses(type);
+            var createParameters = GetConstructorMethods(type).Select(cm => new UnionCase.CreateParameters(cm.Item1, cm.Item2, tags[cm.Item2], classes.TryGetValue(cm.Item2, out var caseType) ? caseType : type, type.IsValueType));
+            return new UnionType(type, createParameters.Select(UnionCase.Create));
         }
         internal UnionType(Type type, IEnumerable<UnionCase> cases)
         {

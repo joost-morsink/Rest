@@ -46,23 +46,27 @@ namespace Biz.Morsink.Rest.Test
             Assert.IsNotNull(schema);
             Assert.IsInstanceOfType(schema, typeof(TypeDescriptor.Union));
             var u = (TypeDescriptor.Union)schema;
-            Assert.AreEqual(3, u.Options.Count);
-            var expected = new TypeDescriptor.Union("Biz.Morsink.Rest.FSharp.Tryout.Test", new[]
+            Assert.AreEqual(4, u.Options.Count);
+            var expected = new TypeDescriptor.Union($"{typeof(FSharp.Tryout.Union).Namespace}.{nameof(FSharp.Tryout.Union)}", new[]
             {
                 new TypeDescriptor.Record("A", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "A"), true),
-                    new PropertyDescriptor<TypeDescriptor>("Item",TypeDescriptor.Primitive.Numeric.Integral.Instance, true)
+                    new PropertyDescriptor<TypeDescriptor>("A",TypeDescriptor.Primitive.Numeric.Integral.Instance, true)
                 }),
                 new TypeDescriptor.Record("B", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "B"), true),
-                    new PropertyDescriptor<TypeDescriptor>("Item",TypeDescriptor.Primitive.String.Instance, true)
+                    new PropertyDescriptor<TypeDescriptor>("B",TypeDescriptor.Primitive.String.Instance, true)
                 }),
                 new TypeDescriptor.Record("C", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "C"), true),
-                    new PropertyDescriptor<TypeDescriptor>("Item",TypeDescriptor.Primitive.Numeric.Float.Instance, true)
+                    new PropertyDescriptor<TypeDescriptor>("C",TypeDescriptor.Primitive.Numeric.Float.Instance, true)
+                }),
+                new TypeDescriptor.Record("D", new []
+                {
+                    new PropertyDescriptor<TypeDescriptor>("Tag", TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "D"), true)
                 })
             });
             Assert.IsTrue(expected.Equals(schema));

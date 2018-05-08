@@ -5,22 +5,49 @@ using System.Reflection;
 
 namespace Biz.Morsink.Rest.FSharp
 {
+    using static Biz.Morsink.Rest.FSharp.Names;
     public class UnionCase
     {
-        internal static UnionCase Create((MethodInfo, int, string) m)
+        internal struct CreateParameters
         {
-            return new UnionCase(m.Item2,
-                m.Item1.GetParameters().Select(p => new UnionCaseParameter(p.ParameterType, adjustName(p.Name))),
-                m.Item3);
-
-            string adjustName(string str)
+            public CreateParameters(MethodInfo constructorMethod, int tag, string name, Type caseClass, bool isStruct)
             {
-                if (str.Length > 0 && str[0] == '_')
-                    str = str.Substring(1);
-                if (str.Length > 0 && !char.IsUpper(str[0]))
-                    str = char.ToUpper(str[0]) + str.Substring(1);
-                return str;
+                ConstructorMethod = constructorMethod;
+                Tag = tag;
+                Name = name;
+                CaseClass = caseClass;
+                IsStruct = isStruct;
             }
+            public MethodInfo ConstructorMethod { get; }
+            public int Tag { get; }
+            public string Name { get; }
+            public Type CaseClass { get; }
+            public bool IsStruct { get; }
+        }
+
+        private static IEnumerable<UnionCaseParameter> GetParameters(CreateParameters m, Func<Attribute, bool> propertyFilter)
+        {
+            var q = from par in m.ConstructorMethod.GetParameters().Select((p, i) => (p, i))
+                    join cprop in (from cprop in m.CaseClass.GetProperties()
+                                   let attr = cprop.GetCustomAttributes().FirstOrDefault(a => a.GetType().Name == CompilationMappingAttribute)
+                                   where attr != null && propertyFilter(attr)
+                                   select (cprop, (int)attr.GetType().GetProperty(SequenceNumber).GetValue(attr)))
+                                   on par.i equals cprop.Item2 into cprop
+                    select new UnionCaseParameter(par.p.ParameterType, AdjustName(par.p.Name), cprop.Select(p => p.cprop).FirstOrDefault());
+            return q;
+        }
+        private static string AdjustName(string str)
+        {
+            if (str.Length > 0 && str[0] == '_')
+                str = str.Substring(1);
+            if (str.Length > 0 && !char.IsUpper(str[0]))
+                str = char.ToUpper(str[0]) + str.Substring(1);
+            return str;
+        }
+        internal static UnionCase Create(CreateParameters m)
+        {
+            var q = GetParameters(m, a => !m.IsStruct || (int)a.GetType().GetProperty(VariantNumber).GetValue(a) == m.Tag);
+            return new UnionCase(m.Tag, q, AdjustName(m.Name));
         }
         internal UnionCase(int tag, IEnumerable<UnionCaseParameter> parameters, string name)
         {
@@ -28,7 +55,7 @@ namespace Biz.Morsink.Rest.FSharp
             Parameters = parameters.ToArray();
             Name = name;
         }
-        public int Tag { get;  }
+        public int Tag { get; }
         public IReadOnlyList<UnionCaseParameter> Parameters { get; }
         public string Name { get; }
     }

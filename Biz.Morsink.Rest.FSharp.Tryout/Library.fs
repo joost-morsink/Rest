@@ -3,9 +3,17 @@ open System.Reflection
 open Microsoft.FSharp.Reflection
 
 type public Union = 
-    | A of int
-    | B of string
-    | C of float
+    | A of a:int
+    | B of b:string
+    | C of c:float
+    | D 
+    
+[<Struct>]
+type public UnionStruct =
+    | A of a:int
+    | B of b:string
+    | C of c:float
+    | D 
 
 type public Record = { a: int; b: string; c: float }
 

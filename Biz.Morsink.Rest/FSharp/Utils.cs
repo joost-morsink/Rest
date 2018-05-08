@@ -46,5 +46,18 @@ namespace Biz.Morsink.Rest.FSharp
 
             return constructorMethods;
         }
+        public static Dictionary<int, Type> GetCaseClasses(Type type)
+        {
+            ThrowOnNonFSharpUnionType(type);
+            var cases = from nt in type.GetNestedTypes()
+                        let sequence = (from p in nt.GetProperties()
+                                        from a in p.GetCustomAttributes()
+                                        where a.GetType().Name == CompilationMappingAttribute
+                                        select a.GetType().GetProperty(VariantNumber).GetValue(a)
+                                        ).Distinct().FirstOrDefault()
+                        where sequence != null
+                        select new KeyValuePair<int, Type>((int)sequence, nt);
+            return cases.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
     }
 }
