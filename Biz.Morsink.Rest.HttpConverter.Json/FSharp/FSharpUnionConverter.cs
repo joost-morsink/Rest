@@ -10,6 +10,7 @@ using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 {
     using Biz.Morsink.Rest.Utils;
+    using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
     using static Morsink.Rest.FSharp.Names;
     public class FSharpUnionConverter : JsonConverter
@@ -38,25 +39,24 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var dict = new Dictionary<string, object>();
-            if (reader.TokenType != JsonToken.StartObject)
-                throw new InvalidOperationException("JSON reader should have its cursor on a StartObject token.");
-            reader.Read();
-            while (reader.TokenType != JsonToken.EndObject)
+            var tok = JToken.ReadFrom(reader);
+            if (tok is JObject obj)
             {
-                var name = (string)reader.Value;
-                reader.Read();
-                dict[name.CasedToPascalCase()] = serializer.Deserialize(reader);
-                reader.Read();
+                if (!obj.TryGetValue("Tag", out var tag))
+                    throw new JsonSerializationException("Object does not contain a 'Tag' property.");
+                if (!UnionType.CasesByName.TryGetValue(tag.Value<string>(), out var @case))
+                    throw new JsonSerializationException($"Unknown tag '{tag.Value<string>()}'");
+                var absent = @case.Parameters.Where(p => obj.Property(p.Name) == null);
+                if (absent.Any())
+                    throw new FormatException($"Missing properties: {string.Join(", ", absent)}");
+                return @case.ConstructorMethod.Invoke(null, @case.Parameters.Select(p =>
+                    {
+                        using (var rdr = obj.Property(p.Name).Value.CreateReader())
+                            return serializer.Deserialize(rdr, p.Type);
+                    }).ToArray());
             }
-            reader.Read();
-            if (!dict.TryGetValue("Tag", out var tag))
-                throw new FormatException("Object does not contain a 'Tag' property.");
-            if (!UnionType.CasesByName.TryGetValue(tag.ToString(), out var @case))
-                throw new FormatException($"Unknown tag '{tag}'");
-            var absent = @case.Parameters.Where(p => !dict.ContainsKey(p.Name));
-            if (absent.Any())
-                throw new FormatException($"Missing properties: {string.Join(", ", absent)}");
-            return @case.ConstructorMethod.Invoke(null, @case.Parameters.Select(p => dict[p.Name]).ToArray());
+            else
+                throw new JsonSerializationException("Object expected.");
         }
 
         public override bool CanConvert(Type objectType)
