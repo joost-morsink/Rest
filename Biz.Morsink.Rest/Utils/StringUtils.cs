@@ -6,7 +6,7 @@ namespace Biz.Morsink.Rest.Utils
 {
     public static class StringUtils
     {
-        public static string CasedToCamelCase(this string str)
+        public static string CasedToPascalCase(this string str)
         {
             if (str.Length > 0 && str[0] == '_')
                 str = str.Substring(1);
@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.Utils
                 str = char.ToUpper(str[0]) + str.Substring(1);
             return str;
         }
-        public static string CasedToPascalCase(this string str)
+        public static string CasedToCamelCase(this string str)
         {
             if (str.Length > 0 && str[0] == '_')
                 str = str.Substring(1);
@@ -22,6 +22,6 @@ namespace Biz.Morsink.Rest.Utils
                 str = char.ToLower(str[0]) + str.Substring(1);
             return str;
         }
-    }
 
+    }
 }

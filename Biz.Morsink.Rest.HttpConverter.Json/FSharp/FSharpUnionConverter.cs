@@ -9,6 +9,7 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 {
+    using Biz.Morsink.Rest.Utils;
     using Newtonsoft.Json.Serialization;
     using static Morsink.Rest.FSharp.Names;
     public class FSharpUnionConverter : JsonConverter
@@ -36,7 +37,26 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var dict = new Dictionary<string, object>();
+            if (reader.TokenType != JsonToken.StartObject)
+                throw new InvalidOperationException("JSON reader should have its cursor on a StartObject token.");
+            reader.Read();
+            while (reader.TokenType != JsonToken.EndObject)
+            {
+                var name = (string)reader.Value;
+                reader.Read();
+                dict[name.CasedToPascalCase()] = serializer.Deserialize(reader);
+                reader.Read();
+            }
+            reader.Read();
+            if (!dict.TryGetValue("Tag", out var tag))
+                throw new FormatException("Object does not contain a 'Tag' property.");
+            if (!UnionType.CasesByName.TryGetValue(tag.ToString(), out var @case))
+                throw new FormatException($"Unknown tag '{tag}'");
+            var absent = @case.Parameters.Where(p => !dict.ContainsKey(p.Name));
+            if (absent.Any())
+                throw new FormatException($"Missing properties: {string.Join(", ", absent)}");
+            return @case.ConstructorMethod.Invoke(null, @case.Parameters.Select(p => dict[p.Name]).ToArray());
         }
 
         public override bool CanConvert(Type objectType)

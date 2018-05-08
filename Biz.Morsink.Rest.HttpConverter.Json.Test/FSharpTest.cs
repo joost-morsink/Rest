@@ -11,7 +11,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
     public class FSharpTest
     {
         [TestMethod]
-        public void FSharpJson_Union()
+        public void FSharpJson_UnionSerialize()
         {
             var ser = new JsonSerializer();
             ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(Union)));
@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             Assert.AreEqual(1, o.Properties().Count());
         }
         [TestMethod]
-        public void FSharpJson_UnionStruct()
+        public void FSharpJson_UnionStructSerialize()
         {
             var ser = new JsonSerializer();
             ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(UnionStruct)));
@@ -59,6 +59,23 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             Assert.IsNotNull(o["Tag"]);
             Assert.AreEqual("D", o["Tag"].Value<string>());
             Assert.AreEqual(1, o.Properties().Count());
+        }
+        [TestMethod]
+        public void FSharpJson_UnionDeserialize()
+        {
+            var ser = new JsonSerializer();
+            ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(Union)));
+            var o = new JObject(new JProperty("Tag", "A"), new JProperty("A", 42));
+            using (var rdr = o.CreateReader())
+            {
+                var a = ser.Deserialize<Union>(rdr);
+                Assert.IsNotNull(a);
+                Assert.IsTrue(a.IsA);
+                if (a is Union.A aa)
+                    Assert.AreEqual(42, aa.a);
+                else
+                    Assert.Fail("a is not of type Union.A");
+            }
         }
     }
 }
