@@ -5,6 +5,7 @@ using System.Reflection;
 
 namespace Biz.Morsink.Rest.FSharp
 {
+    using Biz.Morsink.Rest.Utils;
     using static Biz.Morsink.Rest.FSharp.Names;
     public class UnionCase
     {
@@ -36,14 +37,8 @@ namespace Biz.Morsink.Rest.FSharp
                     select new UnionCaseParameter(par.p.ParameterType, AdjustName(par.p.Name), cprop.Select(p => p.cprop).FirstOrDefault());
             return q;
         }
-        private static string AdjustName(string str)
-        {
-            if (str.Length > 0 && str[0] == '_')
-                str = str.Substring(1);
-            if (str.Length > 0 && !char.IsUpper(str[0]))
-                str = char.ToUpper(str[0]) + str.Substring(1);
-            return str;
-        }
+        private static string AdjustName(string str) => str.CasedToPascalCase();
+        
         internal static UnionCase Create(CreateParameters m)
         {
             var q = GetParameters(m, a => !m.IsStruct || (int)a.GetType().GetProperty(VariantNumber).GetValue(a) == m.Tag);

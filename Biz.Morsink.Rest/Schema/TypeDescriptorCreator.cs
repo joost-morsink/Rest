@@ -260,23 +260,12 @@ namespace Biz.Morsink.Rest.Schema
                                 new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
                             }.Concat(
                                 cm.Method.GetParameters()
-                                .Select(pi => new PropertyDescriptor<TypeDescriptor>(adjustName(pi.Name), GetDescriptor(pi.ParameterType), true))
+                                .Select(pi => new PropertyDescriptor<TypeDescriptor>(pi.Name.CasedToPascalCase(), GetDescriptor(pi.ParameterType), true))
                             )));
                     return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
                 }
             }
-
             return null;
-
-            string adjustName(string str)
-            {
-                if (str.Length > 0 && str[0] == '_')
-                    str = str.Substring(1);
-                if (str.Length > 0 && !char.IsUpper(str[0]))
-                    str = char.ToUpper(str[0]) + str.Substring(1);
-                return str;
-            }
-
         }
     }
 }
