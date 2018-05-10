@@ -20,6 +20,15 @@ type public Record = { a: int; b: string; c: float }
 [<Struct>]
 type TaggedString = | TaggedString of string
 
+type AddressData = { Street: string; HouseNumber: int; City:string }
+type Address = MailAddress of address:AddressData | HomeAddress of address:AddressData
+type Person = { FirstName:string; LastName:string; Addresses : Address list }
+    with 
+        static member Create (firstName, lastName, addresses) = { FirstName=firstName; LastName=lastName; Addresses = addresses |> List.ofSeq  }
+type Expression = 
+    | Value of value:int
+    | Mul of left:Expression * right:Expression
+    | Add of left:Expression * right:Expression
 module Tests =     
     type Regular() =
         member val Firstname = ""
