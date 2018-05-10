@@ -65,7 +65,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         {
             var ser = new JsonSerializer();
             ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(Union)));
-            var o = new JObject(new JProperty("Tag", "A"), new JProperty("A", 42));
+            var o = new JObject(new JProperty("A", 42), new JProperty("Tag", "A"));
             using (var rdr = o.CreateReader())
             {
                 var a = ser.Deserialize<Union>(rdr);
@@ -75,6 +75,30 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
                     Assert.AreEqual(42, aa.a);
                 else
                     Assert.Fail("a is not of type Union.A");
+            }
+        }
+        [TestMethod]
+        public void FSharpJson_SingleCaseSerialize()
+        {
+            var ser = new JsonSerializer();
+            ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(TaggedString)));
+            var o = JObject.FromObject(TaggedString.NewTaggedString("abc"), ser);
+            Assert.AreEqual("TaggedString", o["Tag"]?.Value<string>());
+            Assert.AreEqual("abc", o["Item"]?.Value<string>());
+        }
+        [TestMethod]
+        public void FSharpJson_SingleCaseDeserialize()
+        {
+            var ser = new JsonSerializer();
+            ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(TaggedString)));
+            var o = new JObject(
+                new JProperty("Item", "abc"),
+                new JProperty("Tag", "TaggedString"));
+
+            using (var rdr = o.CreateReader())
+            {
+                var actual = ser.Deserialize<TaggedString>(rdr);
+                Assert.AreEqual(TaggedString.NewTaggedString("abc"), actual);
             }
         }
     }

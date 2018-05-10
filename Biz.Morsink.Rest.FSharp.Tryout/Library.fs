@@ -17,6 +17,9 @@ type public UnionStruct =
 
 type public Record = { a: int; b: string; c: float }
 
+[<Struct>]
+type TaggedString = | TaggedString of string
+
 module Tests =     
     type Regular() =
         member val Firstname = ""

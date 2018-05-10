@@ -21,19 +21,25 @@ namespace Biz.Morsink.Rest.FSharp
             if (!IsFsharpUnionType(type))
                 throw new ArgumentException("Type is not an F# union type.");
         }
+        private static IEnumerable<(int, string)> GetTagCollection(Type type)
+        {
+            var tags = type.GetNestedType(Tags);
+            if (tags != null)
+                return tags.GetFields().Select(f => ((int)f.GetValue(null), f.Name));
+            else
+                return GetConstructorMethods(type).Select(cm => (cm.Item2, cm.Item1.Name.Substring(cm.Item1.Name.StartsWith("New") ? 3 : 0)));
+        }
         public static Dictionary<int, string> GetTags(Type type)
         {
             ThrowOnNonFSharpUnionType(type);
-            return type.GetNestedType(Tags)
-                .GetFields()
-                .ToDictionary(f => (int)f.GetValue(null), f => f.Name);
+            return GetTagCollection(type)
+                .ToDictionary(f => f.Item1, f => f.Item2);
         }
         public static Dictionary<string, int> GetTagsReverse(Type type)
         {
             ThrowOnNonFSharpUnionType(type);
-            return type.GetNestedType(Tags)
-                .GetFields()
-                .ToDictionary(f => f.Name, f => (int)f.GetValue(null));
+            return GetTagCollection(type)
+                .ToDictionary(f => f.Item2, f => f.Item1);
         }
         public static IEnumerable<(MethodInfo, int)> GetConstructorMethods(Type type)
         {
@@ -49,15 +55,15 @@ namespace Biz.Morsink.Rest.FSharp
         public static Dictionary<int, Type> GetCaseClasses(Type type)
         {
             ThrowOnNonFSharpUnionType(type);
-            var cases = from nt in type.GetNestedTypes()
-                        let sequence = (from p in nt.GetProperties()
+            var cases = from nestedType in type.GetNestedTypes()
+                        let sequence = (from p in nestedType.GetProperties()
                                         from a in p.GetCustomAttributes()
                                         where a.GetType().Name == CompilationMappingAttribute
                                         select a.GetType().GetProperty(VariantNumber).GetValue(a)
                                         ).Distinct().FirstOrDefault()
                         where sequence != null
-                        select new KeyValuePair<int, Type>((int)sequence, nt);
-            return cases.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                        select (sequence:(int)sequence, nestedType);
+            return cases.ToDictionary(kvp => kvp.sequence, kvp => kvp.nestedType);
         }
     }
 }
