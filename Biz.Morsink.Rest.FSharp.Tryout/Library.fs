@@ -30,7 +30,7 @@ type Expression =
     | Mul of left:Expression * right:Expression
     | Add of left:Expression * right:Expression
 
-type FsPersonRepository =
+type FsPersonRepository() =
     [<RestGet>]
     member this.Get (id:IIdentity<Person>) = {
         FirstName = "Joost";

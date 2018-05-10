@@ -16,6 +16,13 @@ namespace Biz.Morsink.Rest.FSharp
                 .Where(a => a.Flags == SumType)
                 .Any();
         }
+        public static Type GetFsharpUnionType(Type type)
+        {
+            if (IsFsharpUnionType(type.BaseType))
+                return GetFsharpUnionType(type.BaseType);
+            else
+                return type;
+        }
         private static void ThrowOnNonFSharpUnionType(Type type)
         {
             if (!IsFsharpUnionType(type))

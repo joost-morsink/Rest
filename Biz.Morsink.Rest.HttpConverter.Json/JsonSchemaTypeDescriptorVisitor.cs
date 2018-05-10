@@ -140,7 +140,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         protected override JObject VisitValue(TypeDescriptor.Value v, JObject inner)
         {
-            return new JObject(new JProperty("enum", new JArray(v)));
+            return new JObject(new JProperty("enum", new JArray(v.InnerValue)));
         }
     }
 }

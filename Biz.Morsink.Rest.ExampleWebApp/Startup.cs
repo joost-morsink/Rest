@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddJobs()
                 .UseRequestHandler((sp, hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
                 // Configure HttpConverters
-                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy()))
+                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport()))
                 .AddXmlHttpConverter()
                 // Configure Repositories
                 .AddStructure<PersonRepository.Structure>()
@@ -40,7 +40,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddStructure<ExceptionRepository.Structure>()
                 .AddRepository<HomeRepository>()
                 .AddAttributedRepository<FsPersonRepository>()
-                .AddPathMapping<FSharp.Tryout.Person>("/fsperson")
+                .AddPathMapping<FSharp.Tryout.Person>("/fsperson/*")
                 .AddOpenApi()
                 );
             services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });

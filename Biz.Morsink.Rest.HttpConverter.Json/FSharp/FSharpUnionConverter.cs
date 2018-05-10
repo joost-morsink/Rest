@@ -1,22 +1,21 @@
 ﻿using Biz.Morsink.Rest.FSharp;
+using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using Ex = System.Linq.Expressions.Expression;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 {
-    using Biz.Morsink.Rest.Utils;
-    using Newtonsoft.Json.Linq;
-    using Newtonsoft.Json.Serialization;
     using static Morsink.Rest.FSharp.Names;
     public class FSharpUnionConverter : JsonConverter
     {
         public static bool IsFSharpUnionType(Type type)
-            => Biz.Morsink.Rest.FSharp.Utils.IsFsharpUnionType(type);
+            => Biz.Morsink.Rest.FSharp.Utils.IsFsharpUnionType(type) && !typeof(IEnumerable).IsAssignableFrom(type);
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
@@ -64,6 +63,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 
         public FSharpUnionConverter(Type forType)
         {
+            if (!IsFSharpUnionType(forType))
+                throw new ArgumentException("Type is not a proper F# union type.");
             ForType = forType;
             UnionType = UnionType.Create(forType);
             tagFunc = MakeTagFunc();

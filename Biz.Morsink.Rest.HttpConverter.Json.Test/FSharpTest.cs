@@ -202,6 +202,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             JObject mul(JObject left, JObject right) => bin("Mul", left, right);
         }
         [TestMethod]
+        public void FSharpJson_ListIsNotUnion()
+        {
+            Assert.ThrowsException<ArgumentException>(() => new FSharp.FSharpUnionConverter(typeof(FSharpList<int>)));
+        }
+        [TestMethod]
         public void FSharpJson_List()
         {
             var ser = new JsonSerializer();
