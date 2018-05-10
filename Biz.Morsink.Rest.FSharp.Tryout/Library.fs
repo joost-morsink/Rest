@@ -1,6 +1,6 @@
 namespace Biz.Morsink.Rest.FSharp.Tryout
-open System.Reflection
-open Microsoft.FSharp.Reflection
+open Biz.Morsink.Identity
+open Biz.Morsink.Rest
 
 type public Union = 
     | A of a:int
@@ -29,44 +29,56 @@ type Expression =
     | Value of value:int
     | Mul of left:Expression * right:Expression
     | Add of left:Expression * right:Expression
-module Tests =     
-    type Regular() =
-        member val Firstname = ""
-        member val Lastname = "" with get, set
 
-    type Case =
-        | RegularPerson of person:Regular
-        | CheckedPerson of person:Regular * cool:bool
+type FsPersonRepository =
+    [<RestGet>]
+    member this.Get (id:IIdentity<Person>) = {
+        FirstName = "Joost";
+        LastName = "Morsink";
+        Addresses = 
+        [
+            HomeAddress { Street="Mainstreet"; HouseNumber=1; City="Utrecht" };
+            MailAddress { Street="PO box"; HouseNumber=1234; City="Utrecht" }
+        ] }
 
-    [<Struct>]
-    type TaggedString = | TaggedString of string
+//module Tests =     
+//    type Regular() =
+//        member val Firstname = ""
+//        member val Lastname = "" with get, set
 
-    [<Struct>]
-    type Abc = 
-     | A of a:int
-     | B of b:string
-     | C of c:float
+//    type Case =
+//        | RegularPerson of person:Regular
+//        | CheckedPerson of person:Regular * cool:bool
 
-    let checkPerson = function
-        | RegularPerson p when p.Firstname = "Joost" -> CheckedPerson (p,true)
-        | RegularPerson p -> CheckedPerson(p,false)
-        | x -> x
+//    [<Struct>]
+//    type TaggedString = | TaggedString of string
 
-    let test2 =
-        let ty = typeof<Case>
-        let attr = ty.GetCustomAttributesData() |> Seq.find (fun a -> a.AttributeType.Name = "CompilationMappingAttribute") 
-        let desc = attr.ConstructorArguments |> Seq.map (fun p -> sprintf "%A = %A " p.ArgumentType p.Value) |> List.ofSeq
-        printf "%A" desc
-        0
+//    [<Struct>]
+//    type Abc = 
+//     | A of a:int
+//     | B of b:string
+//     | C of c:float
 
-    let test1 () =
-        let ty = typeof<Union>;
-        printf "%A\n" (FSharpType.IsUnion ty)
-        let uci, value= FSharpValue.GetUnionFields(B "Joost", ty)
-        printf "%A of %A\n" uci.Name value
-        printf "%A\n" (value.GetType())
-    let test3 () =
-        let ty = typeof<Union>;
-        let cma = ty.GetCustomAttributes() |> Seq.find (fun a -> a.GetType().Name = "CompilationMappingAttribute")
-        let sm = cma.GetType().GetProperty("SourceConstructFlags").GetValue(cma,null).ToString()
-        printf "%s\n" sm
+//    let checkPerson = function
+//        | RegularPerson p when p.Firstname = "Joost" -> CheckedPerson (p,true)
+//        | RegularPerson p -> CheckedPerson(p,false)
+//        | x -> x
+
+//    let test2 =
+//        let ty = typeof<Case>
+//        let attr = ty.GetCustomAttributesData() |> Seq.find (fun a -> a.AttributeType.Name = "CompilationMappingAttribute") 
+//        let desc = attr.ConstructorArguments |> Seq.map (fun p -> sprintf "%A = %A " p.ArgumentType p.Value) |> List.ofSeq
+//        printf "%A" desc
+//        0
+
+//    let test1 () =
+//        let ty = typeof<Union>;
+//        printf "%A\n" (FSharpType.IsUnion ty)
+//        let uci, value= FSharpValue.GetUnionFields(B "Joost", ty)
+//        printf "%A of %A\n" uci.Name value
+//        printf "%A\n" (value.GetType())
+//    let test3 () =
+//        let ty = typeof<Union>;
+//        let cma = ty.GetCustomAttributes() |> Seq.find (fun a -> a.GetType().Name = "CompilationMappingAttribute")
+//        let sm = cma.GetType().GetProperty("SourceConstructFlags").GetValue(cma,null).ToString()
+//        printf "%s\n" sm

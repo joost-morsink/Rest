@@ -16,7 +16,7 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Biz.Morsink.Rest.AspNetCore.Identity;
 using System.Security.Claims;
-
+using Biz.Morsink.Rest.FSharp.Tryout;
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     public class Startup
@@ -39,6 +39,8 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddStructure<BlogRepository.Structure>()
                 .AddStructure<ExceptionRepository.Structure>()
                 .AddRepository<HomeRepository>()
+                .AddAttributedRepository<FsPersonRepository>()
+                .AddPathMapping<FSharp.Tryout.Person>("/fsperson")
                 .AddOpenApi()
                 );
             services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });

@@ -48,10 +48,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c != null && c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
 
-            if (FSharp.FSharpUnionConverter.IsFSharpUnionType(objectType))
-                contract.Converter = new FSharp.FSharpUnionConverter(objectType);
-            if (FSharp.FSharpOptionConverter.IsFSharpOptionType(objectType))
-                contract.Converter = new FSharp.FSharpOptionConverter(objectType);
+            if (options.Value.FSharpSupport)
+            {
+                if (FSharp.FSharpUnionConverter.IsFSharpUnionType(objectType))
+                    contract.Converter = new FSharp.FSharpUnionConverter(objectType);
+                if (FSharp.FSharpOptionConverter.IsFSharpOptionType(objectType))
+                    contract.Converter = new FSharp.FSharpOptionConverter(objectType);
+            }
             return contract;
         }
     }

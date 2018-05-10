@@ -14,6 +14,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         public JsonSerializerSettings SerializerSettings { get; set; } = new JsonSerializerSettings();
         public NamingStrategy NamingStrategy { get; set; }
+        public bool FSharpSupport { get; set; }
         public JsonHttpConverterOptions ApplyDefaultNamingStrategy()
         {
             NamingStrategy = new DefaultNamingStrategy();
@@ -22,6 +23,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonHttpConverterOptions ApplyCamelCaseNamingStrategy()
         {
             NamingStrategy = new CamelCaseNamingStrategy();
+            return this;
+        }
+        public JsonHttpConverterOptions UseFSharpSupport(bool support = true)
+        {
+            FSharpSupport = support;
             return this;
         }
     }
