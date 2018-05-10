@@ -4,6 +4,8 @@ using Newtonsoft.Json;
 using Biz.Morsink.Rest.FSharp.Tryout;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.Test
 {
@@ -198,6 +200,30 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
                 new JProperty("Right", right));
             JObject add(JObject left, JObject right) => bin("Add", left, right);
             JObject mul(JObject left, JObject right) => bin("Mul", left, right);
+        }
+        [TestMethod]
+        public void FSharpJson_List()
+        {
+            var ser = new JsonSerializer();
+            var lst = FSharpList<int>.Cons(1, FSharpList<int>.Cons(2, FSharpList<int>.Cons(3, FSharpList<int>.Empty)));
+            var json = new JArray(1, 2, 3);
+
+            Assert.IsTrue(JToken.DeepEquals(JToken.FromObject(lst, ser), json));
+            using (var rdr = json.CreateReader())
+                Assert.AreEqual(lst, ser.Deserialize<FSharpList<int>>(rdr));
+        }
+        [TestMethod]
+        public void FSharpJson_Option()
+        {
+            var ser = new JsonSerializer();
+            ser.Converters.Add(new FSharp.FSharpOptionConverter(typeof(FSharpOption<int>)));
+            var opt = FSharpOption<int>.Some(42);
+            var json = new JValue(42);
+
+            Assert.IsTrue(JToken.DeepEquals(JToken.FromObject(opt, ser), json));
+            using (var rdr = json.CreateReader())
+                Assert.AreEqual(opt, ser.Deserialize<FSharpOption<int>>(rdr));
+
         }
     }
 }

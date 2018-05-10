@@ -50,6 +50,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             if (FSharp.FSharpUnionConverter.IsFSharpUnionType(objectType))
                 contract.Converter = new FSharp.FSharpUnionConverter(objectType);
+            if (FSharp.FSharpOptionConverter.IsFSharpOptionType(objectType))
+                contract.Converter = new FSharp.FSharpOptionConverter(objectType);
             return contract;
         }
     }
