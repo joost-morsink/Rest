@@ -12,8 +12,16 @@ using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 {
     using static Morsink.Rest.FSharp.Names;
+    /// <summary>
+    /// A JsonConverter for F# union types.
+    /// </summary>
     public class FSharpUnionConverter : JsonConverter
     {
+        /// <summary>
+        /// Determines whether the provided type is an F# union type.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the type is an F# union type.</returns>
         public static bool IsFSharpUnionType(Type type)
             => Biz.Morsink.Rest.FSharp.Utils.IsFsharpUnionType(type) && !typeof(IEnumerable).IsAssignableFrom(type);
 
@@ -60,7 +68,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 
         public override bool CanConvert(Type objectType)
             => ForType.IsAssignableFrom(objectType);
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="forType">The F# union type.</param>
         public FSharpUnionConverter(Type forType)
         {
             if (!IsFSharpUnionType(forType))
@@ -76,7 +87,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
             var lambda = Ex.Lambda<Func<object, int>>(block, p);
             return lambda.Compile();
         }
+        /// <summary>
+        /// The F# union type this instance can convert.
+        /// </summary>
         public Type ForType { get; }
+        /// <summary>
+        /// A UnionType representation of the F# union type.
+        /// </summary>
         public UnionType UnionType { get; }
         private readonly Func<object, int> tagFunc;
     }

@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.FSharp
 {
-    using Biz.Morsink.Rest.Utils;
     using static Biz.Morsink.Rest.FSharp.Names;
+    /// <summary>
+    /// This class describes a case belonging to an F# union type.
+    /// </summary>
     public class UnionCase
     {
         internal struct CreateParameters
@@ -51,9 +54,21 @@ namespace Biz.Morsink.Rest.FSharp
             Parameters = parameters.ToArray();
             Name = name;
         }
+        /// <summary>
+        /// Contains the MethodInfo that can be used to construct an instance of the case.
+        /// </summary>
         public MethodInfo ConstructorMethod { get; }
+        /// <summary>
+        /// Contains the integer Tag used by F#.
+        /// </summary>
         public int Tag { get; }
+        /// <summary>
+        /// Contains a list of parameters for the construction of the case.
+        /// </summary>
         public IReadOnlyList<UnionCaseParameter> Parameters { get; }
+        /// <summary>
+        /// Contains the case's name.
+        /// </summary>
         public string Name { get; }
     }
 }

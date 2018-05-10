@@ -6,8 +6,17 @@ using System.Text;
 namespace Biz.Morsink.Rest.FSharp
 {
     using static Utils;
+    /// <summary>
+    /// This class describes an F# union type.
+    /// </summary>
     public class UnionType
     {
+        /// <summary>
+        /// Creates a UnionType instance based on some type.
+        /// The type does need to be an F# union type.
+        /// </summary>
+        /// <param name="type">An F# union type.</param>
+        /// <returns>A UnionType instance describing the type.</returns>
         public static UnionType Create(Type type)
         {
             if (!IsFsharpUnionType(type))
@@ -23,9 +32,17 @@ namespace Biz.Morsink.Rest.FSharp
             Cases = cases.ToDictionary(c => c.Tag);
             CasesByName = cases.ToDictionary(c => c.Name);
         }
-
+        /// <summary>
+        /// Contains the type of the F# union type.
+        /// </summary>
         public Type ForType { get; }
+        /// <summary>
+        /// Contains a collection of the cases indexed by the integer tag.
+        /// </summary>
         public IReadOnlyDictionary<int, UnionCase> Cases { get; }
+        /// <summary>
+        /// Contains a collection of the cases indexed by the case name.
+        /// </summary>
         public IReadOnlyDictionary<string, UnionCase> CasesByName { get; }
     }
 }
