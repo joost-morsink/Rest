@@ -12,17 +12,18 @@ namespace Biz.Morsink.Rest.Test
     [TestClass]
     public class TypeDescriptorTest
     {
-        [TestMethod]
-        public void TypeDescriptor_Happy()
-        {
-            var tdc = new TypeDescriptorCreator();
-            var schema = tdc.GetDescriptor(typeof(Person));
-            var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
+        private static readonly TypeDescriptor personDescriptor = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
             {
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), TypeDescriptor.Primitive.Numeric.Integral.Instance),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName),TypeDescriptor.Primitive.String.Instance)
             });
+        [TestMethod]
+        public void TypeDescriptor_Happy()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(Person));
+            var expected = personDescriptor;
             Assert.AreEqual(expected, schema);
         }
         [TestMethod]
@@ -37,6 +38,25 @@ namespace Biz.Morsink.Rest.Test
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName), TypeDescriptor.Primitive.String.Instance, true)
             });
             Assert.IsTrue(expected.Equals(schema));
+        }
+        [TestMethod]
+        public void TypeDescriptor_List()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(List<Person>));
+            var expected = new TypeDescriptor.Array(new TypeDescriptor.Reference($"{typeof(Person).Namespace}.{typeof(Person).Name}"));
+            Assert.AreEqual(expected, schema);
+        }
+        [TestMethod]
+        public void TypeDescriptor_Dictionary()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(Dictionary<string, Person>));
+            var expected = new TypeDescriptor.Dictionary("", personDescriptor);
+            Assert.AreEqual(expected, schema);
+            schema = tdc.GetDescriptor(typeof(Dictionary<string, object>));
+            expected = new TypeDescriptor.Dictionary("", TypeDescriptor.MakeAny());
+            Assert.AreEqual(expected, schema);
         }
         [TestMethod]
         public void TypeDescriptor_FSharpUnion()

@@ -40,6 +40,8 @@ namespace Biz.Morsink.Rest.Schema
                 return PrevisitArray(a);
             if (t is TypeDescriptor.Record r)
                 return PrevisitRecord(r);
+            if (t is TypeDescriptor.Dictionary d)
+                return PrevisitDictionary(d);
             if (t is TypeDescriptor.Reference rf)
                 return VisitReference(rf);
             if (t is TypeDescriptor.Referable ra)
@@ -50,6 +52,8 @@ namespace Biz.Morsink.Rest.Schema
                 return PrevisitValue(v);
             if (t is TypeDescriptor.Union u)
                 return PrevisitUnion(u);
+            if (t is TypeDescriptor.Any any)
+                return VisitAny(any);
             var j = (TypeDescriptor.Intersection)t;
             return PrevisitIntersection(j);
         }
@@ -88,6 +92,17 @@ namespace Biz.Morsink.Rest.Schema
             return VisitRecord(r, props);
         }
         /// <summary>
+        /// Previsit function for Dicrtionary types.
+        /// Override if recursive processing is not needed.
+        /// </summary>
+        /// <param name="d">A Dictionary TypeDescriptor.</param>
+        /// <returns>An object of type R.</returns>
+        protected virtual R PrevisitDictionary(TypeDescriptor.Dictionary d)
+        {
+            var valueType = Visit(d.ValueType);
+            return VisitDictionary(d, valueType);
+        }
+        /// <summary>
         /// Previsit function for Array types. 
         /// Override if recursive processing is not needed.
         /// </summary>
@@ -120,9 +135,15 @@ namespace Biz.Morsink.Rest.Schema
             return VisitReferable(r, inner);
         }
         /// <summary>
+        /// Visits Any TypeDescriptors.
+        /// </summary>
+        /// <param name="a">An Any TypeDescriptor.</param>
+        /// <returns>An object of type R.</returns>
+        protected abstract R VisitAny(TypeDescriptor.Any a);
+        /// <summary>
         /// Visits Null TypeDescriptors.
         /// </summary>
-        /// <param name="n">A Null TypeDescriptor</param>
+        /// <param name="n">A Null TypeDescriptor.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitNull(TypeDescriptor.Null n);
         /// <summary>
@@ -176,6 +197,13 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="props">An array of already visited values for the property descriptors.</param>
         /// <returns>An object of type R.</returns>
         protected abstract R VisitRecord(TypeDescriptor.Record r, PropertyDescriptor<R>[] props);
+        /// <summary>
+        /// Visits Dictionary TypeDescriptors.
+        /// </summary>
+        /// <param name="d">A Dictionary TypeDescriptor.</param>
+        /// <param name="valueType">An already visited value type descriptor.</param>
+        /// <returns></returns>
+        protected abstract R VisitDictionary(TypeDescriptor.Dictionary d, R valueType);
         /// <summary>
         /// Visit Reference TypeDescriptors.
         /// </summary>

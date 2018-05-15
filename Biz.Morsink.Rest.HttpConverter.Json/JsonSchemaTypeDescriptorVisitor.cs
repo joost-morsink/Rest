@@ -75,6 +75,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             result.Add(new JProperty("definitions", defs));
             return result;
         }
+        protected override JObject VisitAny(TypeDescriptor.Any a)
+        {
+            return new JObject();
+        }
         protected override JObject VisitArray(TypeDescriptor.Array a, JObject inner)
         {
             return new JObject(new JProperty("type", "array"), new JProperty("items", inner));
@@ -117,7 +121,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 new JProperty("properties", new JObject(props.Select(x => new JProperty(CamelCase(x.Name), x.Type)))),
                 new JProperty("required", new JArray(props.Where(p => p.Required).Select(p => CamelCase(p.Name)))));
         }
-
+        protected override JObject VisitDictionary(TypeDescriptor.Dictionary d, JObject valueType)
+        {
+            return new JObject(
+                new JProperty("type", "object"),
+                new JProperty("additionalProperties", valueType));
+        }
         protected override JObject VisitReference(TypeDescriptor.Reference r)
         {
             var shortName = GetSchemaAddress(r.RefName);

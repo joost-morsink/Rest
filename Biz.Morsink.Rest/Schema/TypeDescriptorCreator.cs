@@ -55,7 +55,7 @@ namespace Biz.Morsink.Rest.Schema
 
             d[typeof(DateTime)] = TypeDescriptor.Primitive.DateTime.Instance;
 
-            d[typeof(object)] = new TypeDescriptor.Record(typeof(object).ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
+            d[typeof(object)] = TypeDescriptor.Any.Instance;
 
             descriptors = d;
             byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
@@ -99,6 +99,7 @@ namespace Biz.Morsink.Rest.Schema
             {
                 ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
                 var desc = GetNullableDescriptor(ty, cutoff, enclosing.Push(type)) // Check for nullability
+                ?? GetDictionaryDescriptor(ty,cutoff,enclosing.Push(type)) // Check for dictionaries
                 ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
                 ?? GetFSharpUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for F# union types
                 ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
@@ -138,15 +139,24 @@ namespace Biz.Morsink.Rest.Schema
             }
             return null;
         }
+        private TypeDescriptor GetDictionaryDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            var gendict = type.GetTypeInfo().ImplementedInterfaces
+                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
+                   && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                .Select(i => i.GetGenericArguments())
+                .FirstOrDefault();
+            if (gendict != null && gendict[0] == typeof(string))
+                return new TypeDescriptor.Dictionary(type.ToString(), GetDescriptor(gendict[1]));
+            else if (typeof(IDictionary).IsAssignableFrom(type))
+                return new TypeDescriptor.Dictionary(type.ToString(), TypeDescriptor.MakeEmpty());
+            else
+                return null;
+
+        }
         private TypeDescriptor GetArrayDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
-            if (type.GetTypeInfo().ImplementedInterfaces
-                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
-                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
-                    || i == typeof(IDictionary))
-                .Any())
-                return null;
-            else if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
                 var q = from itf in type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
                         let iti = itf.GetTypeInfo()
@@ -162,13 +172,8 @@ namespace Biz.Morsink.Rest.Schema
         private TypeDescriptor GetRecordDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
         {
             var ti = type.GetTypeInfo();
-            if (ti.ImplementedInterfaces
-                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
-                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
-                    || i == typeof(IDictionary))
-                .Any())
-                return new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
-            else if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
+   
+            if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
             {
                 var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
                        .TakeWhile(x => x != null)

@@ -19,6 +19,7 @@ namespace Biz.Morsink.Rest.Schema
         public static TypeDescriptor MakeNull() => Null.Instance;
         public static TypeDescriptor MakeArray(TypeDescriptor elementType) => new Array(elementType);
         public static TypeDescriptor MakeRecord(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties) => new Record(name, properties);
+        public static TypeDescriptor MakeDictionary(string name, TypeDescriptor valueType) => new Dictionary(name, valueType);
         public static TypeDescriptor MakeValue(TypeDescriptor baseType, object innerValue) => new Value(baseType, innerValue);
         public static TypeDescriptor MakeEmpty() => MakeRecord("", Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
         public static TypeDescriptor MakeUnion(string name, IEnumerable<TypeDescriptor> options)
@@ -33,6 +34,7 @@ namespace Biz.Morsink.Rest.Schema
                     ? new Intersection(name, parts)
                     : parts.First()
                 : MakeEmpty();
+        public static TypeDescriptor MakeAny() => Any.Instance;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -45,6 +47,20 @@ namespace Biz.Morsink.Rest.Schema
         /// Gets the name of the TypeDescriptor.
         /// </summary>
         public string Name { get; }
+        /// <summary>
+        /// This class represents any value.
+        /// </summary>
+        public class Any : TypeDescriptor
+        {
+            private static readonly int hashcode = typeof(Any).GetHashCode();
+            private Any() : base("Any") { }
+            public static Any Instance { get; } = new Any();
+            public override bool Equals(TypeDescriptor other)
+                => other is Any;
+            public override int GetHashCode()
+                => hashcode;
+
+        }
         /// <summary>
         /// This abstract class represents primitive types.
         /// A primitive type is not parameterized in a recursive way and often has a specific syntax.
@@ -207,6 +223,35 @@ namespace Biz.Morsink.Rest.Schema
             }
         }
         /// <summary>
+        /// This class represents a dictionary type with free keys.
+        /// The valuetype can be restricted by a TypeDescriptor.
+        /// </summary>
+        public class Dictionary : TypeDescriptor
+        {
+            private readonly static int hashcode = typeof(Dictionary).GetHashCode();
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="name">he name for the type descriptor.T</param>
+            /// <param name="valueType">A type descriptor for the values in the dictionary.</param>
+            public Dictionary(string name, TypeDescriptor valueType) : base(name)
+            {
+                ValueType = valueType;
+            }
+            /// <summary>
+            /// A type descriptor for the dictionary's values.
+            /// </summary>
+            public TypeDescriptor ValueType { get; }
+
+            public override bool Equals(TypeDescriptor other)
+                => Equals(other as Dictionary);
+            public bool Equals(Dictionary other)
+                => other != null
+                && ValueType.Equals(other.ValueType);
+            public override int GetHashCode()
+                => hashcode ^ ValueType.GetHashCode();
+        }
+        /// <summary>
         /// This class represents the null type, having only the value null as its member.
         /// </summary>
         public class Null : TypeDescriptor
@@ -339,8 +384,10 @@ namespace Biz.Morsink.Rest.Schema
 
             public bool Equals(Reference other)
                 => other != null && RefName == other.RefName;
+            public bool Equals(Referable other)
+                => other != null && RefName == other.RefName;
             public override bool Equals(TypeDescriptor other)
-                => Equals(other as Reference);
+                => Equals(other as Reference) || Equals(other as Referable);
             public override int GetHashCode()
                 => hashcode ^ RefName.GetHashCode();
         }
@@ -355,7 +402,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             /// <param name="refname">The name of the reference.</param>
             /// <param name="expandedDescriptor">The expanded type descriptor for the reference.</param>
-            public Referable(string refname, Lazy<TypeDescriptor> expandedDescriptor) : base("&+"+ refname)
+            public Referable(string refname, Lazy<TypeDescriptor> expandedDescriptor) : base("&+" + refname)
             {
                 RefName = refname;
                 this.expandedDescriptor = expandedDescriptor;
@@ -368,7 +415,7 @@ namespace Biz.Morsink.Rest.Schema
             /// <returns>A new referable TypeDescriptor.</returns>
             public static Referable Create(string refname, TypeDescriptor expandedDescriptor)
                 => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor));
-            
+
             private readonly Lazy<TypeDescriptor> expandedDescriptor;
             /// <summary>
             /// Gets the name of the TypeDescriptor referenced by this TypeDescriptor.
@@ -379,10 +426,12 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public TypeDescriptor ExpandedDescriptor => expandedDescriptor.Value;
 
+            public bool Equals(Reference other)
+                => other != null && RefName == other.RefName;
             public bool Equals(Referable other)
                 => other != null && RefName == other.RefName;
             public override bool Equals(TypeDescriptor other)
-                => Equals(other as Referable);
+                => Equals(other as Referable) || Equals(other as Reference);
             public override int GetHashCode()
                 => hashcode ^ RefName.GetHashCode();
         }

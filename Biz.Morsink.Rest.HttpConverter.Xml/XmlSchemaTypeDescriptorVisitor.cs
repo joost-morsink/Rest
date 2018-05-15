@@ -57,7 +57,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 new XAttribute(type, GetName(t.Name))),
                 types.Values);
         }
-
+        protected override XElement VisitAny(TypeDescriptor.Any a)
+        {
+            if(!types.ContainsKey(a.Name))
+            {
+                var schema = new XElement(XSD + complexType,
+                     new XAttribute(name, GetName(a.Name)),
+                     new XElement(XSD + sequence,
+                         new XElement(XSD + any,
+                             new XAttribute(minOccurs, 0),
+                             new XAttribute(maxOccurs, unbounded))));
+                types[a.Name] = schema;
+            }
+            return new XElement("_", new XAttribute(type, GetName(a.Name)));
+        }
         protected override XElement VisitArray(TypeDescriptor.Array a, XElement inner)
         {
             if (!types.ContainsKey(a.Name))
@@ -115,6 +128,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 types[r.Name] = schema;
             }
             return new XElement("_", new XAttribute(type, GetName(r.Name)));
+        }
+        protected override XElement VisitDictionary(TypeDescriptor.Dictionary d, XElement valueType)
+        {
+            if(!types.ContainsKey(d.Name))
+            {
+                var schema = new XElement(XSD + complexType,
+                    new XAttribute(name, GetName(d.Name)),
+                    new XElement(XSD + sequence,
+                        new XElement(XSD + any,
+                            new XAttribute(minOccurs, 0),
+                            new XAttribute(maxOccurs, unbounded))));
+                types[d.Name] = schema;
+            }
+            return new XElement("_", new XAttribute(type, GetName(d.Name)));
         }
 
         protected override XElement VisitReferable(TypeDescriptor.Referable r, XElement expandedDescriptor)

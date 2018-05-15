@@ -34,6 +34,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public const string @base = nameof(@base);
         public const string minOccurs = nameof(minOccurs);
         public const string maxOccurs = nameof(maxOccurs);
+        public const string unbounded = nameof(unbounded);
         public const string nil = nameof(nil);
         public const string nillable = nameof(nillable);
         public const string value = nameof(value);
