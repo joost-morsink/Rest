@@ -14,6 +14,8 @@ using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    using static FSharp.Names;
+    using static FSharp.Utils;
     /// <summary>
     /// A class that helps construct TypeDescriptor objects for CLR types.
     /// </summary>
@@ -98,6 +100,7 @@ namespace Biz.Morsink.Rest.Schema
                 ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
                 var desc = GetNullableDescriptor(ty, cutoff, enclosing.Push(type)) // Check for nullability
                 ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
+                ?? GetFSharpUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for F# union types
                 ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
                 ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
                 ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
@@ -174,7 +177,7 @@ namespace Biz.Morsink.Rest.Schema
                        .GroupBy(x => x.Name)
                        .Select(x => x.First())
                        .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, GetReferableDescriptor(x.PropertyType, null, enclosing), x.GetCustomAttributes<RequiredAttribute>().Any()));
-                       
+
                 return props.Any()
                     ? new TypeDescriptor.Record(type.ToString(), props)
                     : null;
@@ -227,6 +230,42 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
                 return null;
+        }
+        private TypeDescriptor GetFSharpUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        {
+            if (IsFsharpUnionType(type))
+            {
+                if (type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1)
+                {
+                    var opt = GetDescriptor(type.GetGenericArguments()[0]);
+                    return TypeDescriptor.MakeUnion($"Optional<{opt.Name}>", new[]
+                    {
+                        opt,
+                        TypeDescriptor.Null.Instance
+                    });
+                }
+                else
+                {
+                    var tags = GetTags(type);
+                    var constructorMethods = GetConstructorMethods(type)
+                        .Select(m => new
+                        {
+                            Method = m.Item1,
+                            Name = tags[m.Item2]
+                        });
+
+                    var typeDescs = constructorMethods.Select(cm =>
+                        TypeDescriptor.MakeRecord(cm.Name,
+                            new[] {
+                                new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
+                            }.Concat(
+                                cm.Method.GetParameters()
+                                .Select(pi => new PropertyDescriptor<TypeDescriptor>(pi.Name.CasedToPascalCase(), GetDescriptor(pi.ParameterType), true))
+                            )));
+                    return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
+                }
+            }
+            return null;
         }
     }
 }

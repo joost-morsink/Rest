@@ -168,6 +168,19 @@ A disjunct union type is an abstract class containing (nested) derived classes.
 The type descriptor generated for these types is a `Union` over all the derived public classes.
 When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
 
+F# union types with more than one case should almost be covered by this form. 
+Although it must be noted that these types contain no public constructors, only static construction methods. 
+There is also the issue of the `Tag` property on the base class, which does not contain properly formatted data.
+
+F# union types with a single case are just some decoration over an existing type.
+They are isomorphic to the inner type of the case of the union and, ideally, they should be treated as such.
+
+F# union types are annotated with a `CompilationMapping(SourceConstructFlags.SumType)`.
+Based on this criterion a specialized form should be created.
+
+> **TODO**: A specialized F# union type form should be designed to handle these types.
+> HttpConverters should implement proper serializers and deserializers to adhere to the generated descriptors.
+
 #### Records
 There are two kinds of record forms supported by the `TypeDescriptorCreator` mechanism.
 

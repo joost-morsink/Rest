@@ -11,6 +11,7 @@ using System.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
+    using static Biz.Morsink.Rest.FSharp.Utils;
     /// <summary>
     /// A Json Contract Resolver for Rest. 
     /// It knows how to serialize some Rest specific types like IIdentity values.
@@ -47,6 +48,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c != null && c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
+
+            if (options.Value.FSharpSupport)
+            {
+
+                if (FSharp.FSharpUnionConverter.IsFSharpUnionType(objectType))
+                    contract.Converter = new FSharp.FSharpUnionConverter(GetFsharpUnionType(objectType));
+                if (FSharp.FSharpOptionConverter.IsFSharpOptionType(objectType))
+                    contract.Converter = new FSharp.FSharpOptionConverter(objectType);
+            }
             return contract;
         }
     }
