@@ -49,8 +49,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Determines if the converter applies to the given HttpContext.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
-        /// <returns>True if this converter is applicable to the context.</returns>
-        public abstract bool Applies(HttpContext context);
+        /// <returns>A score ranging from 0 to 1.</returns>
+        public abstract decimal AppliesScore(HttpContext context);
         /// <summary>
         /// A converter is able to manipulate the RestRequest using this method.
         /// </summary>
@@ -145,8 +145,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         }
         protected void ParseCurieHeaders(HttpRequest request, RestPrefixContainer prefixes)
         {
-            if(request.Headers.TryGetValue(Curie , out var curies)){
-                foreach(var curie in curies)
+            if (request.Headers.TryGetValue(Curie, out var curies))
+            {
+                foreach (var curie in curies)
                 {
                     var parts = curie.Split(EQUALS, 2);
                     if (parts.Length == 2)
@@ -172,6 +173,19 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>True if the Accept header is found with the specified value.</returns>
         protected bool HasAcceptHeader(HttpRequest request, string acceptValue)
             => HasHeader(request, "Accept", acceptValue);
+        /// <summary>
+        /// Scores the Accept header based on some mimetype.
+        /// </summary>
+        /// <param name="request">The HttpRequest</param>
+        /// <param name="mimeType">A single mimetype the Rest converter accepts.</param>
+        /// <returns>A score ranging from 0 to 1.</returns>
+        protected decimal ScoreAcceptHeader(HttpRequest request, string mimeType)
+        {
+            if (request.HttpContext.TryGetContextItem<AcceptStructure>(out var acceptStructure))
+                return acceptStructure.Score(mimeType);
+            else
+                return HasAcceptHeader(request, mimeType) ? 1m : 0m;
+        }
         /// <summary>
         /// Override to apply general HTTP headers (like Content-Type).
         /// </summary>

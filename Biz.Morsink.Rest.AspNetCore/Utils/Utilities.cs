@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.Schema;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -114,6 +115,31 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         {
             for (int i = 0; i < rp.Count; i++)
                 yield return rp[i];
+        }
+        /// <summary>
+        /// Tries to retrieve a stored object from an HttpContext's Items collection by using the type as key.
+        /// </summary>
+        /// <typeparam name="T">The type the stored object is supposed to have.</typeparam>
+        /// <param name="httpContext">The HttpContext.</param>
+        /// <param name="item">When found, this parameter will contain the found object.</param>
+        /// <returns>True if the object was found, false otherwise.</returns>
+        public static bool TryGetContextItem<T>(this HttpContext httpContext, out T item)
+            where T : class
+        {
+            var res = httpContext.Items.TryGetValue(typeof(T), out var val);
+            item = val as T;
+            return res;
+        }
+        /// <summary>
+        /// Stores an object in an HttpContext's Items collection by using the type as key.
+        /// The object can only be found using the exact type used here.
+        /// </summary>
+        /// <typeparam name="T">The type of the object, and key to use.</typeparam>
+        /// <param name="httpContext">The HttpContext.</param>
+        /// <param name="item">The item to store.</param>
+        public static void SetContextItem<T>(this HttpContext httpContext, T item)
+        {
+            httpContext.Items[typeof(T)] = item;
         }
     }
 }

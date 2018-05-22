@@ -35,9 +35,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// Determines if the converter applies to the given HttpContext.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
-        /// <returns>True if this converter is applicable to the context.</returns>
-        public override bool Applies(HttpContext context)
-            => HasAcceptHeader(context.Request, "application/json");
+        /// <returns>A score ranging from 0 to 1.</returns>
+        public override decimal AppliesScore(HttpContext context)
+            => ScoreAcceptHeader(context.Request, "application/json");
         /// <summary>
         /// Json parser.
         /// </summary>

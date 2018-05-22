@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Biz.Morsink.Rest.AspNetCore.Utils;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,7 +66,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             try
             {
                 var (req, conv) = ReadRequest(context);
-                context.Items[nameof(IHttpRestConverter)] = conv;
+                context.SetContextItem(conv); 
 
                 if (req == null)
                 {
@@ -101,15 +102,30 @@ namespace Biz.Morsink.Rest.AspNetCore
             var request = context.Request;
             var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString),
                 request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v))));
+            if (context.Request.Headers.TryGetValue("Accept", out var acceptHeaders))
+            {
+                var accStruct = new AcceptStructure(acceptHeaders.SelectMany(h => h.Split(',')).ToList());
+                context.SetContextItem(accStruct);
+            }
+            else
+                return (null, null);
+
+            IHttpRestConverter best = null;
+            decimal bestQ = 0m;
             for (int i = 0; i < converters.Length; i++)
-                if (converters[i].Applies(context))
-                    return (converters[i].ManipulateRequest(req, context), converters[i]);
-            return (null, null);
+            {
+                var q = converters[i].AppliesScore(context);
+                if (q > bestQ)
+                {
+                    bestQ = q;
+                    best = converters[i];
+                }
+            }
+            return (best?.ManipulateRequest(req, context), best);
         }
         private Task WriteResponse(IHttpRestConverter converter, HttpContext context, RestResponse response)
         {
             return converter.SerializeResponse(response, context);
         }
     }
-  
 }

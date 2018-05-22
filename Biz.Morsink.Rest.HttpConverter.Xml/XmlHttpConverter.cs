@@ -36,9 +36,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// This converter applies when the Accept header specifies application/xml.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
-        /// <returns>True if this converter is applicable to the context.</returns>
-        public override bool Applies(HttpContext context)
-            => HasAcceptHeader(context.Request, "application/xml");
+        /// <returns>A score ranging from 0 to 1.</returns>
+        public override decimal AppliesScore(HttpContext context)
+            => ScoreAcceptHeader(context.Request, "application/xml");
         /// <summary>
         /// Parses XML bodies if the type is known.
         /// </summary>

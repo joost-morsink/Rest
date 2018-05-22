@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Biz.Morsink.Rest.AspNetCore.Utils;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Gets the actual currently used IHttpRestConverter instance.
         /// </summary>
-        public IHttpRestConverter CurrentHttpRestConverter => contextAccessor.HttpContext.Items[nameof(IHttpRestConverter)] as IHttpRestConverter;
+        public IHttpRestConverter CurrentHttpRestConverter 
+            => contextAccessor.HttpContext.TryGetContextItem<IHttpRestConverter>(out var res) ? res : null;
     }
 }
