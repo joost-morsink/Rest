@@ -44,5 +44,9 @@ namespace Biz.Morsink.Rest.FSharp
         /// Contains a collection of the cases indexed by the case name.
         /// </summary>
         public IReadOnlyDictionary<string, UnionCase> CasesByName { get; }
+        /// <summary>
+        /// Tests if the union case is a trivial single case with a single value.
+        /// </summary>
+        public bool IsSingleValue => Cases.Count == 1 && Cases.Values.First().Parameters.Count == 1;
     }
 }

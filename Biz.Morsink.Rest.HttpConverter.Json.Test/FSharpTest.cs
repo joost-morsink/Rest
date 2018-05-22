@@ -84,18 +84,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         {
             var ser = new JsonSerializer();
             ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(TaggedString)));
-            var o = JObject.FromObject(TaggedString.NewTaggedString("abc"), ser);
-            Assert.AreEqual("TaggedString", o["Tag"]?.Value<string>());
-            Assert.AreEqual("abc", o["Item"]?.Value<string>());
+            var o = JToken.FromObject(TaggedString.NewTaggedString("abc"), ser);
+            if (o is JValue v)
+                Assert.AreEqual("abc", v.Value<string>());
+            else
+                Assert.Fail("Serialized object is not a JValue.");
         }
         [TestMethod]
         public void FSharpJson_SingleCaseDeserialize()
         {
             var ser = new JsonSerializer();
             ser.Converters.Add(new FSharp.FSharpUnionConverter(typeof(TaggedString)));
-            var o = new JObject(
-                new JProperty("Item", "abc"),
-                new JProperty("Tag", "TaggedString"));
+
+            var o = new JValue("abc");
 
             using (var rdr = o.CreateReader())
             {

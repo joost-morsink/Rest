@@ -92,6 +92,14 @@ namespace Biz.Morsink.Rest.Test
             Assert.IsTrue(expected.Equals(schema));
         }
         [TestMethod]
+        public void TypeDescriptor_FSharpSingleCaseUnion()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var schema = tdc.GetDescriptor(typeof(FSharp.Tryout.TaggedString));
+            Assert.IsNotNull(schema);
+            Assert.IsInstanceOfType(schema, typeof(TypeDescriptor.Primitive.String));
+        }
+        [TestMethod]
         public void TypeDescriptor_FSharpRecord()
         {
             var tdc = new TypeDescriptorCreator();

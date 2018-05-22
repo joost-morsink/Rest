@@ -251,23 +251,20 @@ namespace Biz.Morsink.Rest.Schema
                 }
                 else
                 {
-                    var tags = GetTags(type);
-                    var constructorMethods = GetConstructorMethods(type)
-                        .Select(m => new
-                        {
-                            Method = m.Item1,
-                            Name = tags[m.Item2]
-                        });
-
-                    var typeDescs = constructorMethods.Select(cm =>
-                        TypeDescriptor.MakeRecord(cm.Name,
+                    var utype = FSharp.UnionType.Create(type);
+                    if (utype.IsSingleValue)
+                        return GetDescriptor(utype.Cases.First().Value.Parameters[0].Type);
+                    else
+                    {
+                        var typeDescs = utype.Cases.Values.Select(c =>
+                        TypeDescriptor.MakeRecord(c.Name,
                             new[] {
-                                new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, cm.Name), true)
+                                new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, c.Name),true)
                             }.Concat(
-                                cm.Method.GetParameters()
-                                .Select(pi => new PropertyDescriptor<TypeDescriptor>(pi.Name.CasedToPascalCase(), GetDescriptor(pi.ParameterType), true))
-                            )));
-                    return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
+                                c.Parameters.Select(p => new PropertyDescriptor<TypeDescriptor>(p.Name.CasedToPascalCase(), GetDescriptor(p.Type), true))
+                                )));
+                        return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
+                    }
                 }
             }
             return null;

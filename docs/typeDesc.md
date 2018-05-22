@@ -146,11 +146,12 @@ All primitive types have a canonical type descriptors, shown in the table below:
 | double         | Float                                |
 | bool           | Boolean                              |
 | DateTime       | DateTime                             |
-| Object         | Record (with 0 properties)           |
+| Object         | Any                                  |
 
 These descriptors are fixed and cannot be changed. 
-Please note that a decimal is also a floating point number that just happens to be exact in a base 10 system.
+Please note that a decimal is also a floating point number that just happens to be precise in a base 10 system, just like float and double being precise in a base 2 system.
 The Float `TypeDescriptor` is not supposed to be interpreted as having accuracy or inaccuracy.
+Precision constraints might be added in a future version.
 
 ### Type forms
 If a registration of a certain type is not yet present, the creator must create a descriptor, and it does so by checking whether types fit a particular form.
@@ -159,7 +160,7 @@ At the moment the following forms are checked:
 * Nullability
 * Dictionaries
 * Sequential collections
-* Disjunct union types
+* Disjoint union types
 * Records
 * Units
 
@@ -180,23 +181,22 @@ Sequential collections are described as the `Array` type.
 The first implementation of `IEnumerable<T>` is used to describe the item type. 
 If such an implementation is not found, `object` and as such an any type descriptor is used as the item type.
 
-#### Disjunct union types
-A disjunct union type is an abstract class containing (nested) derived classes. 
+#### Disjoint union types
+A disjoint union type is an abstract class containing (nested) derived classes. 
 The type descriptor generated for these types is a `Union` over all the derived public classes.
 When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
 
-F# union types with more than one case should almost be covered by this form. 
-Although it must be noted that these types contain no public constructors, only static construction methods. 
-There is also the issue of the `Tag` property on the base class, which does not contain properly formatted data.
+A special case of disjoint union types is F# union types.
+These types are '_tagged_' union types, meaning each case of the union has an identifying tag.
+The integer `Tag` property generated on these types represents this and is translated to a string representation.
 
-F# union types with a single case are just some decoration over an existing type.
-They are isomorphic to the inner type of the case of the union and, ideally, they should be treated as such.
+F# union types with a single case and single value are just some decoration over an existing type.
+They are isomorphic to the inner type of the case of the union and should be treated as such.
 
 F# union types are annotated with a `CompilationMapping(SourceConstructFlags.SumType)`.
-Based on this criterion a specialized form should be created.
+Based on this criterion a specialized subform exists.
 
-> **TODO**: A specialized F# union type form should be designed to handle these types.
-> HttpConverters should implement proper serializers and deserializers to adhere to the generated descriptors.
+At the time of writing only the JSON HttpConverter supports F# union types.
 
 #### Records
 There are two kinds of record forms supported by the `TypeDescriptorCreator` mechanism.
@@ -212,7 +212,8 @@ Each property will result in a property in the `Record`, just as with regular DT
 
 #### Unit
 If a type contains a parameterless constructor and does not contain any properties, the type is considered to be isomorphic to the unit type.
-Unit types are described as a `Record` with 0 properties, basically type without constraints.
+Unit types are described as a `Record` with 0 properties, basically a non-primitive type without constraints.
+
 
 ## Representations
 Sometimes a type is not the best candidate for a serialization format.

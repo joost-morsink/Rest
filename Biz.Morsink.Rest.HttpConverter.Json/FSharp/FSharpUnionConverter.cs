@@ -27,43 +27,60 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.FSharp
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var @case = UnionType.Cases[tagFunc(value)];
-            var namingStrategy = (serializer.ContractResolver as DefaultContractResolver)?.NamingStrategy;
-            var namerFunc = namingStrategy != null
-                ? new Func<string, string>(x => namingStrategy.GetPropertyName(x, false))
-                : x => x;
-            writer.WriteStartObject();
-            writer.WritePropertyName(namerFunc("Tag"));
-            writer.WriteValue(@case.Name);
-            foreach (var param in @case.Parameters)
+            if (UnionType.IsSingleValue)
             {
-                writer.WritePropertyName(namerFunc(param.Name));
-                serializer.Serialize(writer, param.Property.GetValue(value));
+                var val = UnionType.Cases.Values.First().Parameters[0].Property.GetValue(value);
+                serializer.Serialize(writer, val);
             }
-            writer.WriteEndObject();
+            else
+            {
+                var @case = UnionType.Cases[tagFunc(value)];
+                var namingStrategy = (serializer.ContractResolver as DefaultContractResolver)?.NamingStrategy;
+                var namerFunc = namingStrategy != null
+                    ? new Func<string, string>(x => namingStrategy.GetPropertyName(x, false))
+                    : x => x;
+                writer.WriteStartObject();
+                writer.WritePropertyName(namerFunc("Tag"));
+                writer.WriteValue(@case.Name);
+                foreach (var param in @case.Parameters)
+                {
+                    writer.WritePropertyName(namerFunc(param.Name));
+                    serializer.Serialize(writer, param.Property.GetValue(value));
+                }
+                writer.WriteEndObject();
+            }
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var dict = new Dictionary<string, object>();
-            var tok = JToken.ReadFrom(reader);
-            if (tok is JObject obj)
+            if (UnionType.IsSingleValue)
             {
-                if (!obj.TryGetValue("Tag", out var tag))
-                    throw new JsonSerializationException("Object does not contain a 'Tag' property.");
-                if (!UnionType.CasesByName.TryGetValue(tag.Value<string>(), out var @case))
-                    throw new JsonSerializationException($"Unknown tag '{tag.Value<string>()}'");
-                var absent = @case.Parameters.Where(p => obj.Property(p.Name) == null);
-                if (absent.Any())
-                    throw new FormatException($"Missing properties: {string.Join(", ", absent)}");
-                return @case.ConstructorMethod.Invoke(null, @case.Parameters.Select(p =>
-                    {
-                        using (var rdr = obj.Property(p.Name).Value.CreateReader())
-                            return serializer.Deserialize(rdr, p.Type);
-                    }).ToArray());
+                var type = UnionType.Cases.Values.First().Parameters[0].Type;
+                var val = serializer.Deserialize(reader, type);
+                return UnionType.Cases.Values.First().ConstructorMethod.Invoke(null, new[] { val });
             }
             else
-                throw new JsonSerializationException("Object expected.");
+            {
+                var dict = new Dictionary<string, object>();
+                var tok = JToken.ReadFrom(reader);
+                if (tok is JObject obj)
+                {
+                    if (!obj.TryGetValue("Tag", out var tag))
+                        throw new JsonSerializationException("Object does not contain a 'Tag' property.");
+                    if (!UnionType.CasesByName.TryGetValue(tag.Value<string>(), out var @case))
+                        throw new JsonSerializationException($"Unknown tag '{tag.Value<string>()}'");
+                    var absent = @case.Parameters.Where(p => obj.Property(p.Name) == null);
+                    if (absent.Any())
+                        throw new FormatException($"Missing properties: {string.Join(", ", absent)}");
+                    return @case.ConstructorMethod.Invoke(null, @case.Parameters.Select(p =>
+                        {
+                            using (var rdr = obj.Property(p.Name).Value.CreateReader())
+                                return serializer.Deserialize(rdr, p.Type);
+                        }).ToArray());
+                }
+                else
+                    throw new JsonSerializationException("Object expected.");
+            }
         }
 
         public override bool CanConvert(Type objectType)
