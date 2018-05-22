@@ -12,6 +12,7 @@ This way we can be certain that the set of known subtypes is a complete set.
 
 The subtype hierarchy is as follows:
 * TypeDescriptor
+  * Any
   * Primitive
     * Number
       * Float
@@ -21,6 +22,7 @@ The subtype hierarchy is as follows:
     * DateTime
   * Array
   * Record
+  * Dictionary
   * Null
   * Value
   * Union
@@ -31,6 +33,10 @@ The subtype hierarchy is as follows:
 TypeDescriptors constrain other types in some way, ultimately constraining a 'Anything' type containing all possible values. 
 The absence of a descriptor means any value (Anything) and the presence of multiple descriptors should be interpreted as an intersection of those types.
 At the other end of the type spectrum there is 'Nothing', a type that is not inhabited by any value.
+
+### Any
+An any could be anything. 
+It is a type descriptor that represents the absence of any constraints.
 
 ### Primitives
 A primitive value is just that: a primitive value.
@@ -49,6 +55,10 @@ Each property has the following 'properties':
 * Required (A boolean indicating whether the _presence_ of the property is required)
 
 Note that the presence of properties is not the same as nullability of their values.
+
+### Dictionary
+A dictionary is a collection of key-value mappings. 
+The key type should always be a string type, but the value type is a parameter to the dictionary type.
 
 ### Null
 This type only contains the null value, and other types explicitly do not allow null values.
@@ -147,6 +157,7 @@ If a registration of a certain type is not yet present, the creator must create 
 At the moment the following forms are checked:
 
 * Nullability
+* Dictionaries
 * Sequential collections
 * Disjunct union types
 * Records
@@ -157,11 +168,17 @@ The nullability check is a check whether the type is of the form `Nullable<T>` f
 The type constraint on `Nullable<T>`make `T` a struct type.
 The result is a union of the `Null` type and the type descriptor for `T`.
 
+#### Dictionaries
+Dictionaries are key-value mapping collections.
+They implement `IDictionary<string,V>` for some value type `V`. 
+The first implementation of `IDictionary<string, V>` is used to describe the item type.
+Instances of the non-generic `IDictionary` can also be used and is treated as an `IDictionary<string,object>`.
+
 #### Sequential collections
 Sequential collections include types that implement `IEnumerable`, but don't implement `IDictionary<K,V>` for any `K` and `V`.
 Sequential collections are described as the `Array` type.
 The first implementation of `IEnumerable<T>` is used to describe the item type. 
-If such an implementation is not found, `object` and as such a record with no properties is used as the item type.
+If such an implementation is not found, `object` and as such an any type descriptor is used as the item type.
 
 #### Disjunct union types
 A disjunct union type is an abstract class containing (nested) derived classes. 
