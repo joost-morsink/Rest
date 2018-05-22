@@ -1,29 +1,69 @@
-﻿using Biz.Morsink.Identity;
-using Biz.Morsink.Identity.PathProvider;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using Biz.Morsink.Rest.Utils;
+using Biz.Morsink.Rest.FSharp;
 
 namespace Biz.Morsink.Rest.Schema
 {
-    using static FSharp.Names;
-    using static FSharp.Utils;
     /// <summary>
     /// A class that helps construct TypeDescriptor objects for CLR types.
     /// </summary>
     public class TypeDescriptorCreator
     {
+        private class MultipleKinds : IKindPipeline
+        {
+            private IKind[] kinds;
+
+            public MultipleKinds(IEnumerable<IKind> kinds)
+            {
+                this.kinds = kinds.ToArray();
+            }
+
+            public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context)
+            {
+                TypeDescriptor result = null;
+                for (int i = 0; i < kinds.Length && result == null; i++)
+                    result = kinds[i].GetDescriptor(creator, context);
+                return result;
+            }
+        }
+        public interface IKind
+        {
+            TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context);
+        }
+        public interface IKindPipeline : IKind { }
+        public static IKindPipeline CreateKindPipeline(IEnumerable<IKind> kinds)
+            => new MultipleKinds(kinds);
+        public class Context
+        {
+            public Context(Type type, Type cutoff=null, ImmutableStack<Type> enclosing =null)
+            {
+                Type = type;
+                Cutoff = cutoff;
+                Enclosing = enclosing ?? ImmutableStack<Type>.Empty;
+            }
+            public Type Type { get; }
+            public Type Cutoff { get; }
+            public ImmutableStack<Type> Enclosing { get; }
+
+            public Context WithType(Type type)
+                => new Context(type, Cutoff, Enclosing);
+            public Context WithCutoff(Type cutoff)
+                => new Context(Type, cutoff, Enclosing);
+            public Context WithEnclosing(ImmutableStack<Type> enclosing)
+                => new Context(Type, Cutoff, enclosing);
+            public Context PushEnclosing(Type type)
+                => new Context(Type, Cutoff, Enclosing.Push(type));
+            public Context PopEnclosing()
+                => new Context(Type, Cutoff, Enclosing.Pop());
+        }
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
-        private IEnumerable<ITypeRepresentation> representations;
+        private readonly IKindPipeline kindPipeline;
+        private readonly IEnumerable<ITypeRepresentation> representations;
         /// <summary>
         /// Gets a collection of all the registered types.
         /// </summary>
@@ -32,7 +72,19 @@ namespace Biz.Morsink.Rest.Schema
         /// Constructor.
         /// </summary>
         /// <param name="representations">A collection of type representations.</param>
-        public TypeDescriptorCreator(IEnumerable<ITypeRepresentation> representations = null)
+        /// <param name="kindPipeline">
+        /// A pipeline of different creator kinds. The default pipeline is:
+        /// <list type="number">
+        /// <item>NullableDescriptorKind</item>
+        /// <item>DictionaryDescriptorKind</item>
+        /// <item>ArrayDescriptorKind</item>
+        /// <item>FSharpUnionDescriptorKind</item>
+        /// <item>UnionDescriptorKind</item>
+        /// <item>RecordDescriptorKind</item>
+        /// <item>UnitDescriptorKind</item>
+        /// </list>
+        /// </param>
+        public TypeDescriptorCreator(IEnumerable<ITypeRepresentation> representations = null, IKindPipeline kindPipeline = null)
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
             var d = new ConcurrentDictionary<Type, TypeDescriptor>();
@@ -59,6 +111,16 @@ namespace Biz.Morsink.Rest.Schema
 
             descriptors = d;
             byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
+
+            this.kindPipeline = kindPipeline ?? CreateKindPipeline(new IKind[] {
+                NullableDescriptorKind.Instance,
+                DictionaryDescriptorKind.Instance,
+                ArrayDescriptorKind.Instance,
+                FSharpUnionDescriptorKind.Instance,
+                UnionDescriptorKind.Instance,
+                RecordDescriptorKind.Instance,
+                UnitDescriptorKind.Instance,
+            });
         }
 
         /// <summary>
@@ -67,7 +129,7 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="type">The type to get a TypeDescriptor for.</param>
         /// <returns>A TypeDescriptor for the type.</returns>
         public TypeDescriptor GetDescriptor(Type type)
-            => type == null ? null : GetDescriptor(type, null, null);
+            => type == null ? null : GetDescriptor(new Context(type));
         private static bool IsPrimitiveTypeDescriptor(TypeDescriptor desc)
         {
             if (desc is TypeDescriptor.Primitive || desc is TypeDescriptor.Null || desc is TypeDescriptor.Referable
@@ -82,30 +144,24 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return false;
         }
-        private TypeDescriptor GetReferableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
+        public TypeDescriptor GetReferableDescriptor(Context context)
         {
-            var desc = GetDescriptor(type, cutoff, enclosing);
+            var desc = GetDescriptor(context);
             if (IsPrimitiveTypeDescriptor(desc))
                 return desc;
             else
-                return TypeDescriptor.Referable.Create(GetTypeName(type), desc);
+                return TypeDescriptor.Referable.Create(GetTypeName(context.Type), desc);
         }
-        private TypeDescriptor GetDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            enclosing = enclosing ?? ImmutableStack<Type>.Empty;
-            if (enclosing.Contains(type))
-                return new TypeDescriptor.Reference(GetTypeName(type));
-            return descriptors.GetOrAdd(type, ty =>
+        public TypeDescriptor GetDescriptor(Context context)
+        { 
+            if (context.Enclosing.Contains(context.Type))
+                return new TypeDescriptor.Reference(GetTypeName(context.Type));
+            return descriptors.GetOrAdd(context.Type, ty =>
             {
                 ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
-                var desc = GetNullableDescriptor(ty, cutoff, enclosing.Push(type)) // Check for nullability
-                ?? GetDictionaryDescriptor(ty,cutoff,enclosing.Push(type)) // Check for dictionaries
-                ?? GetArrayDescriptor(ty, cutoff, enclosing.Push(type)) // Check for collections
-                ?? GetFSharpUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for F# union types
-                ?? GetUnionDescriptor(ty, cutoff, enclosing.Push(type)) // Check for disjunct union types
-                ?? GetRecordDescriptor(ty, cutoff, enclosing.Push(type)) // Check for records (regular objects)
-                ?? GetUnitDescriptor(ty, cutoff, enclosing.Push(type)); // Check form empty types
-                byString.AddOrUpdate(GetTypeName(type), desc, (_, __) => desc);
+                var ctx = context.WithType(ty).PushEnclosing(context.Type);
+                var desc = kindPipeline.GetDescriptor(this, ctx);
+                byString.AddOrUpdate(GetTypeName(context.Type), desc, (_, __) => desc);
                 return desc;
             });
         }
@@ -125,149 +181,5 @@ namespace Biz.Morsink.Rest.Schema
         public string GetTypeName(Type type)
             => type.ToString().Replace('+', '.');
 
-        private TypeDescriptor GetNullableDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            var ti = type.GetTypeInfo();
-            var ga = ti.GetGenericArguments();
-            if (ga.Length == 1)
-            {
-                if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    var t = GetReferableDescriptor(ga[0], cutoff, enclosing);
-                    return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
-                }
-            }
-            return null;
-        }
-        private TypeDescriptor GetDictionaryDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            var gendict = type.GetTypeInfo().ImplementedInterfaces
-                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
-                   && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
-                .Select(i => i.GetGenericArguments())
-                .FirstOrDefault();
-            if (gendict != null && gendict[0] == typeof(string))
-                return new TypeDescriptor.Dictionary(type.ToString(), GetDescriptor(gendict[1]));
-            else if (typeof(IDictionary).IsAssignableFrom(type))
-                return new TypeDescriptor.Dictionary(type.ToString(), TypeDescriptor.MakeEmpty());
-            else
-                return null;
-
-        }
-        private TypeDescriptor GetArrayDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
-            {
-                var q = from itf in type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
-                        let iti = itf.GetTypeInfo()
-                        let ga = iti.GetGenericArguments()
-                        where ga.Length == 1 && iti.GetGenericTypeDefinition() == typeof(IEnumerable<>)
-                        select ga[0];
-                var inner = GetReferableDescriptor((q.FirstOrDefault() ?? typeof(object)), null, enclosing);
-                return new TypeDescriptor.Array(inner);
-            }
-            else
-                return null;
-        }
-        private TypeDescriptor GetRecordDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            var ti = type.GetTypeInfo();
-   
-            if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
-            {
-                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
-                       .TakeWhile(x => x != null)
-                       .SelectMany(x => x.DeclaredProperties)
-                       .Where(p => p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
-                       .GroupBy(x => x.Name)
-                       .Select(x => x.First())
-                       .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, GetReferableDescriptor(x.PropertyType, null, enclosing), x.GetCustomAttributes<RequiredAttribute>().Any()));
-
-                return props.Any()
-                    ? new TypeDescriptor.Record(type.ToString(), props)
-                    : null;
-            }
-            else
-            {
-                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
-                    .TakeWhile(x => x != cutoff && x != null)
-                    .SelectMany(x => x.DeclaredProperties)
-                    .Where(p => p.CanRead && p.GetMethod.IsPublic)
-                    .GroupBy(x => x.Name)
-                    .Select(x => x.First())
-                    .ToArray();
-                if (!props.All(pi => pi.CanRead && !pi.CanWrite))
-                    return null;
-                var properties = from ci in ti.DeclaredConstructors
-                                 let ps = ci.GetParameters()
-                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
-                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
-                                 from p in ps.Join(props, p => p.Name, p => p.Name,
-                                     (par, prop) => new PropertyDescriptor<TypeDescriptor>(prop.Name, GetReferableDescriptor(prop.PropertyType, null, enclosing), !par.GetCustomAttributes<OptionalAttribute>().Any()),
-                                     CaseInsensitiveEqualityComparer.Instance)
-                                 select p;
-
-                return properties.Any() ? new TypeDescriptor.Record(type.ToString(), properties) : null;
-            }
-
-        }
-        private TypeDescriptor GetUnitDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            var ti = type.GetTypeInfo();
-            var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);
-            return parameterlessConstructors.Any()
-                && !ti.Iterate(x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != cutoff && x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
-                ? new TypeDescriptor.Record(type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
-                : null;
-        }
-        private TypeDescriptor GetUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            var ti = type.GetTypeInfo();
-            if (ti.IsAbstract && ti.DeclaredNestedTypes.Any(nt => nt.BaseType == type))
-            {
-                var rec = GetRecordDescriptor(type, cutoff, enclosing);
-                TypeDescriptor res = new TypeDescriptor.Union(rec == null ? type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == type && nt.IsPublic).Select(ty => GetReferableDescriptor(ty, type, enclosing)));
-
-                if (rec != null)
-                    res = new TypeDescriptor.Intersection(type.ToString(), new[] { rec, res });
-
-                return res;
-            }
-            else
-                return null;
-        }
-        private TypeDescriptor GetFSharpUnionDescriptor(Type type, Type cutoff, ImmutableStack<Type> enclosing)
-        {
-            if (IsFsharpUnionType(type))
-            {
-                if (type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1)
-                {
-                    var opt = GetDescriptor(type.GetGenericArguments()[0]);
-                    return TypeDescriptor.MakeUnion($"Optional<{opt.Name}>", new[]
-                    {
-                        opt,
-                        TypeDescriptor.Null.Instance
-                    });
-                }
-                else
-                {
-                    var utype = FSharp.UnionType.Create(type);
-                    if (utype.IsSingleValue)
-                        return GetDescriptor(utype.Cases.First().Value.Parameters[0].Type);
-                    else
-                    {
-                        var typeDescs = utype.Cases.Values.Select(c =>
-                        TypeDescriptor.MakeRecord(c.Name,
-                            new[] {
-                                new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, c.Name),true)
-                            }.Concat(
-                                c.Parameters.Select(p => new PropertyDescriptor<TypeDescriptor>(p.Name.CasedToPascalCase(), GetDescriptor(p.Type), true))
-                                )));
-                        return TypeDescriptor.MakeUnion(type.ToString(), typeDescs);
-                    }
-                }
-            }
-            return null;
-        }
     }
 }
