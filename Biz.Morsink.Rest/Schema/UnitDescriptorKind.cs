@@ -7,10 +7,22 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// This class represents a type descriptor creator kind for unit types.
+    /// A unit type has a parameterless constructor and no instance properties.
+    /// </summary>
     public class UnitDescriptorKind : TypeDescriptorCreator.IKind
     {
+        /// <summary>
+        /// Singleton property.
+        /// </summary>
         public static UnitDescriptorKind Instance { get; } = new UnitDescriptorKind();
         private UnitDescriptorKind() { }
+        /// <summary>
+        /// Gets a type descriptor for a unit type.
+        /// A unit type has a parameterless constructor and no instance properties.
+        /// This method returns null if the context does not represent a unit tyoe.
+        /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var ti = context.Type.GetTypeInfo();

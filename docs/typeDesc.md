@@ -125,7 +125,7 @@ Of course it is possible to define a few ways of doing it.
 ## Canonical type transformation
 Types are generally transformed to `TypeDescriptor`s by a generic algorithm, called the canonical type transformation. 
 In cases where the canonical type transformation is not adequate, an override mechanism called 'Representations' can be used (see below).
-A `TypeDescriptorCreator` instance can be used to 
+A `TypeDescriptorCreator` instance can be used to construct `TypeDescriptor`s for .Net types.
 
 ### Primitives
 All primitive types have a canonical type descriptors, shown in the table below:
@@ -153,14 +153,21 @@ Please note that a decimal is also a floating point number that just happens to 
 The Float `TypeDescriptor` is not supposed to be interpreted as having accuracy or inaccuracy.
 Precision constraints might be added in a future version.
 
-### Type forms
+### Type kinds
 If a registration of a certain type is not yet present, the creator must create a descriptor, and it does so by checking whether types fit a particular form.
-At the moment the following forms are checked:
+These forms are called kinds, which are organized in a kind pipeline.
+This pipeline tries the registered kinds in sequence, until it can find a kind that is able to create a type descriptor for the type.
+
+A kind implements the `TypeDescriptorCreator.IKind` interface, and the pipeline the `TypeDescriptorCreator.IKindPipeline` interface.
+Both interfaces have essentially the same signature.
+
+At the moment the following kinds are configured in the default pipeline:
 
 * Nullability
 * Dictionaries
 * Sequential collections
-* Disjoint union types
+* F# union types
+* Disjoint union types 
 * Records
 * Units
 
@@ -186,6 +193,7 @@ A disjoint union type is an abstract class containing (nested) derived classes.
 The type descriptor generated for these types is a `Union` over all the derived public classes.
 When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
 
+#### F# union types
 A special case of disjoint union types is F# union types.
 These types are '_tagged_' union types, meaning each case of the union has an identifying tag.
 The integer `Tag` property generated on these types represents this and is translated to a string representation.

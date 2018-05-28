@@ -6,10 +6,22 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// This class represents a type descriptor creator kind for unions.
+    /// A union type is an abstract class containing nested 'case' classes that derive from the abstract class.
+    /// </summary>
     public class UnionDescriptorKind : TypeDescriptorCreator.IKind
     {
+        /// <summary>
+        /// Singleton property.
+        /// </summary>
         public static UnionDescriptorKind Instance { get; } = new UnionDescriptorKind();
         private UnionDescriptorKind() { }
+        /// <summary>
+        /// Gets a type descriptor for a union type.
+        /// A union type is an abstract class containing nested 'case' classes that derive from the abstract class.
+        /// This method returns null if the context does not represent a union tyoe.
+        /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var ti = context.Type.GetTypeInfo();

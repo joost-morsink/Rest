@@ -7,10 +7,22 @@ namespace Biz.Morsink.Rest.FSharp
 
     using static FSharp.Names;
     using static FSharp.Utils;
+    /// <summary>
+    /// This class represents a type descriptor creator kind for F# union types.
+    /// An F# union type is a well defined concept within the F# programming language.
+    /// </summary>
     public class FSharpUnionDescriptorKind : TypeDescriptorCreator.IKind
     {
+        /// <summary>
+        /// Singleton property.
+        /// </summary>
         public static FSharpUnionDescriptorKind Instance { get; } = new FSharpUnionDescriptorKind();
         private FSharpUnionDescriptorKind() { }
+        /// <summary>
+        /// Gets a type descriptor for an F# union type.
+        /// An F# union type is a well defined concept within the F# programming language.
+        /// This method returns null if the context does not represent an F# union tyoe.
+        /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             if (IsFsharpUnionType(context.Type))

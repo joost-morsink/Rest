@@ -30,33 +30,100 @@ namespace Biz.Morsink.Rest.Schema
                 return result;
             }
         }
+        /// <summary>
+        /// This interface specifies the contract for a single kind of TypeDescriptor creator.
+        /// The kinds are processed in an IKindPipeline in order, which can be injected.
+        /// </summary>
         public interface IKind
         {
+            /// <summary>
+            /// Gets a TypeDescriptor for some type in some context.
+            /// </summary>
+            /// <param name="creator">The TypeDescriptorCreator instance that is processing the request.</param>
+            /// <param name="context">The type context for generating a descriptor.</param>
+            /// <returns>
+            /// If the context matches this kind it should return a TypeDescriptor for the context. 
+            /// If the context does not match, this method should return null.
+            /// </returns>
             TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context);
         }
+        /// <summary>
+        /// The interface for a kind pipeline.
+        /// </summary>
         public interface IKindPipeline : IKind { }
+        /// <summary>
+        /// Creates a kind pipeline, based on an oredered sequence of kinds.
+        /// The resulting pipeline will try each kind in order.
+        /// </summary>
+        /// <param name="kinds">The kinds to try.</param>
+        /// <returns>A kind pipeline.</returns>
         public static IKindPipeline CreateKindPipeline(IEnumerable<IKind> kinds)
             => new MultipleKinds(kinds);
+        /// <summary>
+        /// This class represents the context for the request of a TypeDescriptor.
+        /// This class is immutable.
+        /// </summary>
         public class Context
         {
-            public Context(Type type, Type cutoff=null, ImmutableStack<Type> enclosing =null)
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="type">The type a descriptor is being requested for.</param>
+            /// <param name="cutoff">The type to function as a cutoff for reflection.</param>
+            /// <param name="enclosing">A collection of enclosing type descriptor definitions.</param>
+            public Context(Type type, Type cutoff = null, ImmutableStack<Type> enclosing = null)
             {
                 Type = type;
                 Cutoff = cutoff;
                 Enclosing = enclosing ?? ImmutableStack<Type>.Empty;
             }
+            /// <summary>
+            /// Contains the type a descriptor is neing requested for.
+            /// </summary>
             public Type Type { get; }
+            /// <summary>
+            /// Contains the (base) type to funcvtion as a cutoff for reflection.
+            /// This allows descriptors to be constructed per inheritance step.
+            /// </summary>
             public Type Cutoff { get; }
+            /// <summary>
+            /// Contains a collection of enclosing type descriptor definitions.
+            /// This prevents recursive definitions to result in infinite type descriptors or stack overflows.
+            /// </summary>
             public ImmutableStack<Type> Enclosing { get; }
 
+            /// <summary>
+            /// Creates a new Context with a different Type.
+            /// </summary>
+            /// <param name="type">The new Type.</param>
+            /// <returns>A new context.</returns>
             public Context WithType(Type type)
                 => new Context(type, Cutoff, Enclosing);
+            /// <summary>
+            /// Creates a new Context with a different Cutoff type.
+            /// </summary>
+            /// <param name="cutoff">The new cutoff type.</param>
+            /// <returns>A new context.</returns>
             public Context WithCutoff(Type cutoff)
                 => new Context(Type, cutoff, Enclosing);
+            /// <summary>
+            /// Creates a new Context with a different Enclosing types stack.
+            /// </summary>
+            /// <param name="enclosing">A new enclosing types stack.</param>
+            /// <returns>A new collection.</returns>
             public Context WithEnclosing(ImmutableStack<Type> enclosing)
                 => new Context(Type, Cutoff, enclosing);
+            /// <summary>
+            /// Creates a new Context by pushing a new type on the Enclosing stack.
+            /// </summary>
+            /// <param name="type">The type to push on the stack.</param>
+            /// <returns>A new context.</returns>
             public Context PushEnclosing(Type type)
                 => new Context(Type, Cutoff, Enclosing.Push(type));
+            /// <summary>
+            /// Creates a new Context by popping a type off the Enclosing stack.
+            /// </summary>
+            /// <returns>A new context.</returns>
             public Context PopEnclosing()
                 => new Context(Type, Cutoff, Enclosing.Pop());
         }
@@ -144,6 +211,11 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return false;
         }
+        /// <summary>
+        /// Creates a TypeDescriptor and makes it 'Referable' if it is not a primitive descriptor.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public TypeDescriptor GetReferableDescriptor(Context context)
         {
             var desc = GetDescriptor(context);
@@ -152,8 +224,13 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return TypeDescriptor.Referable.Create(GetTypeName(context.Type), desc);
         }
+        /// <summary>
+        /// Get a TypeDescriptor for a given context.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>A TypeDescriptor.</returns>
         public TypeDescriptor GetDescriptor(Context context)
-        { 
+        {
             if (context.Enclosing.Contains(context.Type))
                 return new TypeDescriptor.Reference(GetTypeName(context.Type));
             return descriptors.GetOrAdd(context.Type, ty =>
