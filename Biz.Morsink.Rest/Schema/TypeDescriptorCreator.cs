@@ -29,6 +29,8 @@ namespace Biz.Morsink.Rest.Schema
                     result = kinds[i].GetDescriptor(creator, context);
                 return result;
             }
+            public bool IsOfKind(Type type)
+                => kinds.Any(k => k.IsOfKind(type));
         }
         /// <summary>
         /// This interface specifies the contract for a single kind of TypeDescriptor creator.
@@ -46,6 +48,12 @@ namespace Biz.Morsink.Rest.Schema
             /// If the context does not match, this method should return null.
             /// </returns>
             TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context);
+            /// <summary>
+            /// Checks if some type is of this kind.
+            /// </summary>
+            /// <param name="type">The type to check.</param>
+            /// <returns>True if the specified type is of this kind.</returns>
+            bool IsOfKind(Type type);
         }
         /// <summary>
         /// The interface for a kind pipeline.
@@ -183,6 +191,7 @@ namespace Biz.Morsink.Rest.Schema
                 NullableDescriptorKind.Instance,
                 DictionaryDescriptorKind.Instance,
                 ArrayDescriptorKind.Instance,
+                SemanticStructKind.Instance,
                 FSharpUnionDescriptorKind.Instance,
                 UnionDescriptorKind.Instance,
                 RecordDescriptorKind.Instance,

@@ -25,17 +25,31 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
-            var gendict = context.Type.GetTypeInfo().ImplementedInterfaces
+            var valueType = GetValueType(context.Type);
+            if (valueType == null)
+                return null;
+            else
+                return TypeDescriptor.MakeDictionary(context.Type.ToString(), creator.GetDescriptor(context.WithType(valueType).WithCutoff(null)));
+        }
+        private static Type GetValueType(Type type)
+        {
+            var gendict = type.GetTypeInfo().ImplementedInterfaces
                 .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
                 .Select(i => i.GetGenericArguments())
                 .FirstOrDefault();
             if (gendict != null && gendict[0] == typeof(string))
-                return new TypeDescriptor.Dictionary(context.Type.ToString(), creator.GetDescriptor(context.WithType(gendict[1]).WithCutoff(null)));
-            else if (typeof(IDictionary).IsAssignableFrom(context.Type))
-                return new TypeDescriptor.Dictionary(context.Type.ToString(), TypeDescriptor.MakeAny());
+                return gendict[1];
+            else if (typeof(IDictionary).IsAssignableFrom(type))
+                return typeof(object);
             else
                 return null;
         }
+
+        /// <summary>
+        /// A dictionary type implements IDictionary&lt;string, T&gt; from some T.
+        /// </summary>
+        public bool IsOfKind(Type type)
+            => GetValueType(type) != null;
     }
 }

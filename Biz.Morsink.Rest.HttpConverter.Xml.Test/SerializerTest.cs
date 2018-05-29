@@ -153,5 +153,27 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
             else
                 Assert.Fail();
         }
+        public class Container
+        {
+            public EmailAddress Email { get; set; }
+        }
+        public struct EmailAddress
+        {
+            public EmailAddress(string address)
+            {
+                Address = address;
+            }
+
+            public string Address { get; }
+        }
+        [TestMethod]
+        public void XmlSerializer_SemStr()
+        {
+            var x = new Container { Email = new EmailAddress("info@test.nl") };
+            var xml = serializer.Serialize(x);
+            Assert.AreEqual(1, xml.Elements().Count());
+            Assert.AreEqual(nameof(Container.Email), xml.Elements().First().Name.LocalName);
+            Assert.AreEqual("info@test.nl", xml.Elements().First().Value);
+        }
     }
 }

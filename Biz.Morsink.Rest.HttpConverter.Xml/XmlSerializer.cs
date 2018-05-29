@@ -158,6 +158,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
             else if (t.GetGeneric(typeof(Nullable<>)) != null)
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
+            else if (SemanticStructKind.Instance.IsOfKind(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
             else
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
         }

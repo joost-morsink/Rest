@@ -25,18 +25,33 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
-            if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(context.Type.GetTypeInfo()))
+            var elementType = GetElementType(context.Type);
+            if (elementType == null)
+                return null;
+            else
             {
-                var q = from itf in context.Type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { context.Type })
+                var inner = creator.GetReferableDescriptor(context.WithType(elementType).WithCutoff(null));
+                return TypeDescriptor.MakeArray(inner);
+            }
+        }
+        private static Type GetElementType(Type type)
+        {
+            if (typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            {
+                var q = from itf in type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
                         let iti = itf.GetTypeInfo()
                         let ga = iti.GetGenericArguments()
                         where ga.Length == 1 && iti.GetGenericTypeDefinition() == typeof(IEnumerable<>)
                         select ga[0];
-                var inner = creator.GetReferableDescriptor(context.WithType(q.FirstOrDefault() ?? typeof(object)).WithCutoff(null));
-                return new TypeDescriptor.Array(inner);
+                return q.FirstOrDefault() ?? typeof(object);
             }
             else
                 return null;
         }
+        /// <summary>
+        /// A collection type implements IEnumerable, and ideally IEnumerable&lt;T&gt; for some T.
+        /// </summary>
+        public bool IsOfKind(Type type)
+            => GetElementType(type) != null;
     }
 }

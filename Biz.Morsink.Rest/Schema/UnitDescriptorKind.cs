@@ -32,5 +32,16 @@ namespace Biz.Morsink.Rest.Schema
                 ? new TypeDescriptor.Record(context.Type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
                 : null;
         }
+
+        public bool IsOfKind(Type type)
+        {
+            var ti = type.GetTypeInfo();
+            var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);
+            return parameterlessConstructors.Any()
+                && !ti.Iterate(x => x.BaseType?.GetTypeInfo())
+                    .TakeWhile(x => x != null)
+                    .SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic))
+                    .Any();
+             }
     }
 }

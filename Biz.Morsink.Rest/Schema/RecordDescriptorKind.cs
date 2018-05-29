@@ -39,7 +39,7 @@ namespace Biz.Morsink.Rest.Schema
                        .Where(p => p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
                        .GroupBy(x => x.Name)
                        .Select(x => x.First())
-                       .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, creator.GetReferableDescriptor(context.WithType(x.PropertyType).WithCutoff( null)), x.GetCustomAttributes<RequiredAttribute>().Any()));
+                       .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, creator.GetReferableDescriptor(context.WithType(x.PropertyType).WithCutoff(null)), x.GetCustomAttributes<RequiredAttribute>().Any()));
 
                 return props.Any()
                     ? new TypeDescriptor.Record(context.Type.ToString(), props)
@@ -67,7 +67,42 @@ namespace Biz.Morsink.Rest.Schema
 
                 return properties.Any() ? new TypeDescriptor.Record(context.Type.ToString(), properties) : null;
             }
+        }
+        /// <summary>
+        /// A record type is a type with either a parameterless constructor and a bunch of properties with getters and setters, or a type with a single constructor and for each constructor parameter a readonly property.
+        /// </summary>
+        public bool IsOfKind(Type type)
+        {
+            var ti = type.GetTypeInfo();
 
+            if (ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any())
+            {
+                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
+                       .TakeWhile(x => x != null)
+                       .SelectMany(x => x.DeclaredProperties)
+                       .Where(p => p.CanRead && p.GetMethod != null && p.GetMethod.IsPublic && !p.GetMethod.IsStatic);
+
+                return props.Any();
+            }
+            else
+            {
+                var props = ti.Iterate(x => x.BaseType?.GetTypeInfo())
+                    .TakeWhile(x => x != null)
+                    .SelectMany(x => x.DeclaredProperties)
+                    .Where(p => p.CanRead && p.GetMethod != null && p.GetMethod.IsPublic)
+                    .GroupBy(x => x.Name)
+                    .Select(x => x.First())
+                    .ToArray();
+                if (!props.All(pi => pi.CanRead && !pi.CanWrite))
+                    return false;
+                var ctors = from ci in ti.DeclaredConstructors
+                                 let ps = ci.GetParameters()
+                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
+                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
+                                 select ci;
+
+                return ctors.Any();
+            }
         }
     }
 }

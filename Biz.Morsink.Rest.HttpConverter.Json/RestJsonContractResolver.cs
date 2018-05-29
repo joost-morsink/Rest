@@ -49,6 +49,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             foreach (var converter in translators.Select(t => t.GetConverter()).Where(c => c != null && c.CanConvert(objectType)).Take(1))
                 contract.Converter = converter;
 
+            if (SemanticStructKind.Instance.IsOfKind(objectType))
+                contract.Converter = SemanticStructConverter.Create(objectType);
+
             if (options.Value.FSharpSupport)
             {
 

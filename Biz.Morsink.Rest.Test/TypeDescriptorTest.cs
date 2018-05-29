@@ -133,5 +133,21 @@ namespace Biz.Morsink.Rest.Test
             Assert.IsNotNull(a);
             Assert.IsInstanceOfType(a.ElementType, typeof(TypeDescriptor.Primitive.String));
         }
+        [TestMethod]
+        public void TypeDescriptor_SemanticStruct()
+        {
+            var tdc = new TypeDescriptorCreator();
+            var email = tdc.GetDescriptor(typeof(EmailAddress));
+            Assert.IsNotNull(email);
+            Assert.IsInstanceOfType(email, typeof(TypeDescriptor.Primitive.String));
+        }
+        public struct EmailAddress
+        {
+            public EmailAddress(string address)
+            {
+                Address = address;
+            }
+            public string Address { get; }
+        }
     }
 }

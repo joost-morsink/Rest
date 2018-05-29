@@ -21,17 +21,32 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
-            var ti = context.Type.GetTypeInfo();
+            var inner = GetInner(context.Type);
+            if (inner == null)
+                return null;
+            else
+            {
+                var t = creator.GetReferableDescriptor(context.WithType(inner));
+                return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
+            }
+        }
+        private static Type GetInner(Type type)
+        {
+            var ti = type.GetTypeInfo();
             var ga = ti.GetGenericArguments();
             if (ga.Length == 1)
             {
                 if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    var t = creator.GetReferableDescriptor(context.WithType(ga[0]));
-                    return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
+                    return ga[0];
                 }
             }
             return null;
         }
+        /// <summary>
+        /// A nullable type is Nullable&lt;T&gt; for some T.
+        /// </summary>
+        public bool IsOfKind(Type type)
+            => GetInner(type) != null;
     }
 }
