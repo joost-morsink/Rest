@@ -86,29 +86,30 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A Task describing the asynchronous progress of the serialization.</returns>
         public virtual async Task SerializeResponse(RestResponse response, HttpContext context)
         {
-            ApplyGeneralHeaders(context.Response, response);
-            if (!response.IsSuccess)
-                ManipulateHttpContext(response, context);
+            ManipulateHttpContext(response, context);
 
-            if (response.IsSuccess && response.Metadata.TryGet<CreatedResource>(out var loc))
-                context.Response.StatusCode = 201;
+            await WriteResponse(response, context);
+        }
 
-            if (response.UntypedResult.IsPending)
-            {
-                context.Response.StatusCode = 202;
-                context.Response.Headers[Location] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
-            }
-
+        protected virtual async Task WriteResponse(RestResponse response, HttpContext context)
+        {
             var rv = (response.UntypedResult as IHasRestValue)?.RestValue;
+
             if (rv != null)
             {
                 ApplyHeaders(context.Response, response, rv,
                     SupportsCuries && options.Value.UseCuries
                     ? context.RequestServices.GetRequiredService<RestPrefixContainer>()
                     : null);
-                await WriteValue(context.Response.Body, rv);
+            
+                await WriteValue(context.Response.Body, response, response.UntypedResult, rv);
+            } else
+            {
+                await WriteResult(context.Response.Body, response, response.UntypedResult);
             }
         }
+
+
         /// <summary>
         /// Adds a 'Schema-Location' Http header with a link to the schema.
         /// </summary>
@@ -204,12 +205,25 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Override to write the body value to a Stream asynchronously.
         /// </summary>
         /// <param name="bodyStream">The Stream.</param>
+        /// <param name="response">The response containing the value.</param>
+        /// <param name="result">The result containing the value.</param>
         /// <param name="value">The Rest value.</param>
         /// <returns>A Task.</returns>
-        protected abstract Task WriteValue(Stream bodyStream, IRestValue value);
+        protected abstract Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value);
+        /// <summary>
+        /// Override to write the body, when there is no value, to a Stream asynchronously.
+        /// </summary>
+        /// <param name="bodyStream">The Stream.</param>
+        /// <param name="response">The response containing the value.</param>
+        /// <param name="result">The result containing the value.</param>
+        /// <returns>A Task.</returns>
+        protected virtual Task WriteResult(Stream bodyStream, RestResponse response, IRestResult result) 
+            => Task.CompletedTask; 
 
-        private void ManipulateHttpContext(RestResponse response, HttpContext context)
+        protected virtual void ManipulateHttpContext(RestResponse response, HttpContext context)
         {
+            ApplyGeneralHeaders(context.Response, response);
+
             if (response.UntypedResult is IRestFailure failure)
                 switch (failure.Reason)
                 {
@@ -241,6 +255,15 @@ namespace Biz.Morsink.Rest.AspNetCore
                         context.Response.StatusCode = 307;
                         break;
                 }
+
+            if (response.IsSuccess && response.Metadata.TryGet<CreatedResource>(out var loc))
+                context.Response.StatusCode = 201;
+
+            if (response.UntypedResult.IsPending)
+            {
+                context.Response.StatusCode = 202;
+                context.Response.Headers[Location] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
+            }
         }
 
     }

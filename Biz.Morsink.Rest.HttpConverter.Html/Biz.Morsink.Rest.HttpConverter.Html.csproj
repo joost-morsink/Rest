@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Configurations>Debug;Release;Prerelease</Configurations>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Biz.Morsink.Rest.AspNetCore\Biz.Morsink.Rest.AspNetCore.csproj" />
+  </ItemGroup>
+
+</Project>

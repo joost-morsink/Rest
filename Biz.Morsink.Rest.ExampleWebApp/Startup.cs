@@ -17,12 +17,15 @@ using Microsoft.Extensions.Options;
 using Biz.Morsink.Rest.AspNetCore.Identity;
 using System.Security.Claims;
 using Biz.Morsink.Rest.FSharp.Tryout;
+using Biz.Morsink.Rest.HttpConverter.Html;
+
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     public class Startup
     {
         public void ConfigureServices(IServiceCollection services)
         {
+            //var t = typeof(HtmlHttpConverter);
             services.AddRest(bld => bld
                 // Configure the basics
                 .AddDefaultServices()
@@ -33,6 +36,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure HttpConverters
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport()))
                 .AddXmlHttpConverter()
+                .AddHtmlHttpConverter()
                 // Configure Repositories
                 .AddStructure<PersonRepository.Structure>()
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
