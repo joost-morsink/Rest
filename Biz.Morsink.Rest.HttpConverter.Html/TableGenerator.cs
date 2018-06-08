@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,38 +11,88 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
 {
     public class TableGenerator<T> : AbstractSpecificHtmlGenerator<T>
     {
-        public TableGenerator()
+        static TableGenerator()
         {
+            makeSingleMethod = typeof(TableGenerator<T>).GetMethod(nameof(MakeSingle), BindingFlags.NonPublic | BindingFlags.Static);
+            makeMultiMethod = typeof(TableGenerator<T>).GetMethod(nameof(MakeMulti), BindingFlags.NonPublic | BindingFlags.Static);
         }
+        private static MethodInfo makeSingleMethod;
+        private static MethodInfo makeMultiMethod;
 
 
         public override string GenerateHtml(RestValue<T> value)
         {
-            return Generate(value.Value).ToString();
+
+            return string.Format( 
+                @"<html><head>
+<style>
+table {{
+    border-collapse: collapse; 
+}}
+td, th {{
+    border: solid 1px black;
+    margin: 0px;
+    padding: 5px;
+}}
+</style>
+<body>
+{0}
+</body>
+</html", Generate(value.Value).ToString());
         }
 
         public XElement Generate(T value)
         {
-            var properties = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            return new XElement("table",
-                properties.Select(p =>
-                    new XElement("tr",
-                        new XElement("th", p.Name),
-                        Value(p.GetValue(value)))));
+            return MakeSingle(value).Element("table");
         }
-        public XElement Value(object value)
+
+        private static XElement MakeSingle<U>(U value)
+        {
+            var properties = typeof(U).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            return new XElement("td",
+                new XElement("table",
+                    properties.Select(p =>
+                        new XElement("tr",
+                            new XElement("th",
+                                p.Name),
+                            Value(p.GetValue(value))))));
+        }
+        private static XElement MakeMulti<U>(IEnumerable<U> values)
+        {
+            var properties = typeof(U).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            return new XElement("td",
+                new XElement("table",
+                    new XElement("tr",
+                        properties.Select(p => new XElement("th",
+                            p.Name))),
+                    values.Select(value =>
+                        new XElement("tr",
+                            properties.Select(p => Value(p.GetValue(value)))))));
+        }
+        public static XElement Value(object value)
         {
             if (value == null)
                 return new XElement("td");
             var type = value.GetType();
             if (type.IsPrimitive || type == typeof(string))
-                return new XElement("td", value);
+                return new XElement("td",
+                    value);
+
+            var coll = GetElementType(type);
+            if (coll != null)
+                return (XElement)makeMultiMethod.MakeGenericMethod(coll).Invoke(null, new[] { value });
 
             if (typeof(IIdentity).IsAssignableFrom(type))
-                return new XElement("td", ((IIdentity)value).Value);
+                return new XElement("td",
+                    ((IIdentity)value).Value);
 
-            dynamic gen = Activator.CreateInstance(typeof(TableGenerator<>).MakeGenericType(type));
-            return gen.Generate(value);
+            return (XElement)makeSingleMethod.MakeGenericMethod(type).Invoke(null, new[] { value });
         }
+        private static Type GetElementType(Type type)
+            => type.GetTypeInfo().ImplementedInterfaces
+                .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                .Select(i => i.GetGenericArguments()[0])
+                .FirstOrDefault();
+
     }
 }
