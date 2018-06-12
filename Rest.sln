@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConver
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Biz.Morsink.Rest.FSharp.Tryout", "Biz.Morsink.Rest.FSharp.Tryout\Biz.Morsink.Rest.FSharp.Tryout.fsproj", "{AE13FDA4-EF89-4C16-ACFC-19F4D761DA9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.Json.Test", "Biz.Morsink.Rest.HttpConverter.Json.Test\Biz.Morsink.Rest.HttpConverter.Json.Test.csproj", "{00A25F2C-BFD2-4035-8A94-3DEA753122FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.Json.Test", "Biz.Morsink.Rest.HttpConverter.Json.Test\Biz.Morsink.Rest.HttpConverter.Json.Test.csproj", "{00A25F2C-BFD2-4035-8A94-3DEA753122FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.Html", "Biz.Morsink.Rest.HttpConverter.Html\Biz.Morsink.Rest.HttpConverter.Html.csproj", "{96A2A7F2-089D-42EA-8D82-C54103700FBC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,6 +92,12 @@ Global
 		{00A25F2C-BFD2-4035-8A94-3DEA753122FC}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
 		{00A25F2C-BFD2-4035-8A94-3DEA753122FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00A25F2C-BFD2-4035-8A94-3DEA753122FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

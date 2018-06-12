@@ -72,7 +72,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             UseLinkHeaders(httpResponse, value);
             UseCurieHeaders(httpResponse, prefixes);
         }
-        protected override async Task WriteValue(Stream bodyStream, IRestValue value)
+        protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
             var ser = JsonSerializer.Create(options.Value.SerializerSettings);
 
@@ -86,6 +86,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
         }
+
         public override bool SupportsCuries => true;
     }
 }

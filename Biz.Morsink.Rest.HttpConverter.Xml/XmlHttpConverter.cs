@@ -83,7 +83,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="bodyStream">The stream to write the value to.</param>
         /// <param name="value">The value to be written</param>
         /// <returns>An asynchronous result. (Task)</returns>
-        protected override async Task WriteValue(Stream bodyStream, IRestValue value)
+        protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
             using (var ms = new MemoryStream())
             using (var wri = XmlWriter.Create(ms))

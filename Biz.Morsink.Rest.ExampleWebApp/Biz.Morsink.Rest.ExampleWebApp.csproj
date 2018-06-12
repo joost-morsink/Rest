@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Biz.Morsink.Rest.AspNetCore\Biz.Morsink.Rest.AspNetCore.csproj" />
     <ProjectReference Include="..\Biz.Morsink.Rest.FSharp.Tryout\Biz.Morsink.Rest.FSharp.Tryout.fsproj" />
+    <ProjectReference Include="..\Biz.Morsink.Rest.HttpConverter.Html\Biz.Morsink.Rest.HttpConverter.Html.csproj" />
     <ProjectReference Include="..\Biz.Morsink.Rest.HttpConverter.Json\Biz.Morsink.Rest.HttpConverter.Json.csproj" />
     <ProjectReference Include="..\Biz.Morsink.Rest.HttpConverter.Xml\Biz.Morsink.Rest.HttpConverter.Xml.csproj" />
     <ProjectReference Include="..\Biz.Morsink.Rest\Biz.Morsink.Rest.csproj" />
