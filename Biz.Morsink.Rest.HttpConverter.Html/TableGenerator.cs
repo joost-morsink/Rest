@@ -9,6 +9,12 @@ using System.Xml.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Html
 {
+    /// <summary>
+    /// This class generates a table for successful Rest values of a certain type.
+    /// It is used by the DefaultHtmlGenerator and is not meant to be used for production scenarios.
+    /// It uses reflection and might be slow.
+    /// </summary>
+    /// <typeparam name="T">The value type of the Rest value.</typeparam>
     public class TableGenerator<T> : AbstractSpecificHtmlGenerator<T>
     {
         static TableGenerator()

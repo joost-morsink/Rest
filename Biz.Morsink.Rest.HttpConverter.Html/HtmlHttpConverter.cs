@@ -9,10 +9,16 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.HttpConverter.Html
 {
+    /// <summary>
+    /// An Html Http converter
+    /// </summary>
     public class HtmlHttpConverter : AbstractHttpRestConverter
     {
         private readonly IGeneralHtmlGenerator generator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         public HtmlHttpConverter(IGeneralHtmlGenerator generator, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
         {
             this.generator = generator;
@@ -37,15 +43,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
 
         protected async Task WriteHtml(Stream bodyStream, string html)
         {
-            var bytes = Encoding.UTF8.GetBytes(html);
-            await bodyStream.WriteAsync(bytes, 0, bytes.Length);
+            var bytes = Encoding.UTF8.GetBytes(html ?? "");
+            if (bytes.Length > 0)
+                await bodyStream.WriteAsync(bytes, 0, bytes.Length);
         }
 
         protected override Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
             => WriteHtml(bodyStream, generator.GenerateHtml(result));
-        
+
         protected override Task WriteResult(Stream bodyStream, RestResponse response, IRestResult result)
             => WriteHtml(bodyStream, generator.GenerateHtml(result));
-        
+
     }
 }
