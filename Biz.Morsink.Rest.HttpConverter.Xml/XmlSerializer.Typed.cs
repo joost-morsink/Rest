@@ -8,6 +8,8 @@ using System.Text;
 using System.Xml.Linq;
 using Ex = System.Linq.Expressions.Expression;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
+using Biz.Morsink.Rest.Utils;
+
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public partial class XmlSerializer
