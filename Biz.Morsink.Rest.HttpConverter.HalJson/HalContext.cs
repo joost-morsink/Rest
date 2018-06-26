@@ -2,5 +2,7 @@
 {
     public class HalContext
     {
+        public static HalContext Create() => new HalContext();
+        private HalContext() { }
     }
 }

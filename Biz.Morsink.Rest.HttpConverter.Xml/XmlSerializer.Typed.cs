@@ -512,7 +512,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 {
                     var ctor = typeof(T).GetConstructor(new[] { typeof(P) });
                     var e = Ex.Parameter(typeof(XElement), "e");
-                    var block = Ex.New(ctor, Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), new[] { typeof(P) },e));
+                    var block = Ex.New(ctor, Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), new[] { typeof(P) }, e));
                     var lambda = Ex.Lambda<Func<XElement, T>>(block, e);
                     return lambda.Compile();
                 }
@@ -532,6 +532,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     => serializer(item);
             }
         }
-         
+
     }
 }

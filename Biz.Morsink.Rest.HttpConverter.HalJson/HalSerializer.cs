@@ -1,7 +1,9 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,7 +49,13 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         {
             serializers[typeof(T)] = new Typed<T>.Simple(this, converter);
         }
-
+        public JToken Serialize(HalContext context, object item)
+        {
+            if (item == null)
+                return null;
+            var serializer = GetSerializerForType(item.GetType());
+            return serializer.Serialize(context, item);
+        }
         public JToken Serialize(Type type, HalContext context, object item)
         {
             if (item == null)
@@ -78,7 +86,18 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             => (Typed<T>)GetSerializerForType(typeof(T));
         private IForType Get(Type t)
         {
-            return null;
+            var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
+            if (repr != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
+            else if (typeof(IRestValue).IsAssignableFrom(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.RestValue).MakeGenericType(t), this);
+            else if (typeof(IEnumerable).IsAssignableFrom(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
+            else if (t.GetGeneric(typeof(Nullable<>)) != null)
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
+            else
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
+
         }
         public interface IForType
         {

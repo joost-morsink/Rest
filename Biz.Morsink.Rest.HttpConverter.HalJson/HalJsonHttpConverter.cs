@@ -14,10 +14,14 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
     public class HalJsonHttpConverter : AbstractHttpRestConverter
     {
         public const string MEDIA_TYPE = "application/hal+json";
+
+        private readonly HalSerializer serializer;
         private readonly IOptions<HalJsonConverterOptions> options;
-        public HalJsonHttpConverter(IOptions<HalJsonConverterOptions> options, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions)
+
+        public HalJsonHttpConverter(IOptions<HalJsonConverterOptions> options, IRestIdentityProvider provider, HalSerializer serializer, IOptions<RestAspNetCoreOptions> restOptions)
             : base(provider, restOptions)
         {
+            this.serializer = serializer;
             this.options = options;
         }
         public override decimal AppliesScore(HttpContext context)
@@ -49,17 +53,11 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
-            var ser = JsonSerializer.Create(options.Value.SerializerSettings);
+            var json = serializer.Serialize(value.GetType(), HalContext.Create(), value);
 
-            using (var ms = new MemoryStream())
-            {
-                using (var swri = new StreamWriter(ms))
-                using (var wri = new JsonTextWriter(swri))
-                    ser.Serialize(wri, value.Value);
-
-                var body = ms.ToArray();
-                await bodyStream.WriteAsync(body, 0, body.Length);
-            }
+            using (var swri = new StreamWriter(bodyStream))
+            using (var wri = new JsonTextWriter(swri))
+                await json.WriteToAsync(wri);
         }
         public override bool SupportsCuries => false;
     }
