@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Biz.Morsink.DataConvert;
@@ -47,12 +48,13 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 }
 
                 public override T Deserialize(HalContext context, JToken token)
-                    => token.Value<T>();
+                    => Parent.converter.Convert((token as JValue)?.Value).To<T>();
+                    //=> token.Value<T>();
 
                 public override JToken Serialize(HalContext context, T item)
-                    => new JValue(item);
+                    => Parent.converter.Convert(item).To<string>();
+                    //=> new JValue(item);
             }
-
             public class Nullable : Typed<T>
             {
                 private readonly Type valueType;
@@ -251,7 +253,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 {
                     var input = Ex.Parameter(typeof(JToken), "input");
                     var ctx = Ex.Parameter(typeof(HalContext), "ctx");
-                    var children = Ex.Parameter(typeof(JProperty[]), "children");
+                    var children = Ex.Parameter(typeof(JToken[]), "children");
                     var idx = Ex.Parameter(typeof(int), "idx");
                     var start = Ex.Label("start");
                     var end = Ex.Label("end");
@@ -260,10 +262,10 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         var result = Ex.Parameter(baseType.MakeArrayType(), "result");
                         var block = Ex.Block(new[] { children, idx, result },
                             Ex.Assign(children,
-                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(JProperty)),
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(JToken)),
                                     Ex.Convert(
-                                        Ex.Call(input, nameof(JToken.Children), new Type[] { typeof(JProperty) }),
-                                        typeof(IEnumerable<JProperty>)))),
+                                        Ex.Call(input, nameof(JToken.Children), Type.EmptyTypes),
+                                        typeof(IEnumerable<JToken>)))),
                             Ex.Assign(result, Ex.NewArrayBounds(baseType, Ex.Property(children, nameof(Array.Length)))),
                             Ex.Assign(idx, Ex.Constant(0)),
                             Ex.Label(start),
@@ -285,10 +287,10 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         var result = Ex.Parameter(typeof(T), "result");
                         var block = Ex.Block(new[] { children, idx, result },
                             Ex.Assign(children,
-                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(JProperty)),
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(JToken)),
                                     Ex.Convert(
-                                        Ex.Call(input, nameof(JToken.Children), new Type[] { typeof(JProperty) }),
-                                        typeof(IEnumerable<JProperty>)))),
+                                        Ex.Call(input, nameof(JToken.Children), Type.EmptyTypes),
+                                        typeof(IEnumerable<JToken>)))),
                             Ex.Assign(result, Ex.New(typeof(T).GetConstructor(Type.EmptyTypes))),
                             Ex.Assign(idx, Ex.Constant(0)),
                             Ex.Label(start),
@@ -390,14 +392,15 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                                     Ex.Property(prop, nameof(JProperty.Name)),
                                     Ex.Condition(Ex.TypeIs(Ex.Property(prop, nameof(JProperty.Value)), typeof(JObject)),
                                         Ex.Convert(Ex.Call(Ex.Constant(this), nameof(Deserialize), Type.EmptyTypes,
-                                            ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object)),
+                                            ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object)),
                                         Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), Type.EmptyTypes,
-                                            ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object))))),
+                                            Ex.Constant(typeof(string)), ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object))))),
                             result);
 
                         var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
                         return lambda.Compile();
-                    }else
+                    }
+                    else
                     {
                         var block = Ex.Block(new[] { result, props },
                             Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
@@ -406,7 +409,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                                 Ex.Call(Ex.Convert(result, typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(prop, nameof(JProperty.Name)),
                                     Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { valueType },
-                                        ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object)))),
+                                        Ex.Constant(typeof(string)), ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object)))),
                             result);
 
                         var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
@@ -450,7 +453,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             {
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
-                public SemanticStruct(HalSerializer parent): base(parent)
+                public SemanticStruct(HalSerializer parent) : base(parent)
                 {
                     serializer = MakeSerializer();
                     deserializer = MakeDeserializer();
@@ -480,6 +483,22 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);
                     return lambda.Compile();
                 }
+            }
+        }
+
+        public class DateTime : Typed<System.DateTime>
+        {
+
+            public DateTime(HalSerializer parent) : base(parent)
+            {
+            }
+            public override JToken Serialize(HalContext context, System.DateTime item)
+            {
+                return new JValue(Parent.converter.Convert(item).To<string>());
+            }
+            public override System.DateTime Deserialize(HalContext context, JToken token)
+            {
+                return Parent.converter.Convert((token as JValue)?.Value).To<System.DateTime>();
             }
         }
     }

@@ -99,6 +99,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
             else if (SemanticStructKind.Instance.IsOfKind(t))
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
+            else if (t == typeof(System.DateTime))
+                return new DateTime(this);
             else
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
 
