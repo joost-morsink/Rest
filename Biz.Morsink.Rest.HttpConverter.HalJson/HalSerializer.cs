@@ -91,10 +91,14 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
             else if (typeof(IRestValue).IsAssignableFrom(t))
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.RestValue).MakeGenericType(t), this);
+            else if (t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
             else if (typeof(IEnumerable).IsAssignableFrom(t))
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
             else if (t.GetGeneric(typeof(Nullable<>)) != null)
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
+            else if (SemanticStructKind.Instance.IsOfKind(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
             else
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
 

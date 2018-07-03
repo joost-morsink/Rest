@@ -354,6 +354,133 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     throw new NotSupportedException();
                 }
             }
+            public class Dictionary : Typed<T>
+            {
+                private readonly Type valueType;
+                private readonly Func<HalContext, T, JToken> serializer;
+                private readonly Func<HalContext, JToken, T> deserializer;
+                public Dictionary(HalSerializer parent) : base(parent)
+                {
+
+                    var (keyType, valueType) = typeof(T).GetGenerics2(typeof(IDictionary<,>));
+                    if (keyType == null || keyType != typeof(string) || valueType == null)
+                        throw new ArgumentException("Generic type is not a proper dictionary");
+                    this.valueType = valueType;
+                    serializer = MakeSerializer();
+                    deserializer = MakeDeserializer();
+                }
+                public override JToken Serialize(HalContext context, T item)
+                    => serializer(context, item);
+                public override T Deserialize(HalContext context, JToken token)
+                    => deserializer(context, token);
+
+                private Func<HalContext, JToken, T> MakeDeserializer()
+                {
+                    var ctx = Ex.Parameter(typeof(HalContext), "ctx");
+                    var input = Ex.Parameter(typeof(JToken), "input");
+                    var result = Ex.Parameter(typeof(T), "result");
+                    var props = Ex.Parameter(typeof(IEnumerable<JProperty>), "props");
+                    if (valueType == typeof(object))
+                    {
+                        var block = Ex.Block(new[] { result, props },
+                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(props, Ex.Convert(Ex.Call(input, nameof(JToken.Children), new[] { typeof(JProperty) }), typeof(IEnumerable<JProperty>))),
+                            props.Foreach(prop =>
+                                Ex.Call(Ex.Convert(result, typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                    Ex.Property(prop, nameof(JProperty.Name)),
+                                    Ex.Condition(Ex.TypeIs(Ex.Property(prop, nameof(JProperty.Value)), typeof(JObject)),
+                                        Ex.Convert(Ex.Call(Ex.Constant(this), nameof(Deserialize), Type.EmptyTypes,
+                                            ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object)),
+                                        Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), Type.EmptyTypes,
+                                            ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object))))),
+                            result);
+
+                        var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
+                        return lambda.Compile();
+                    }else
+                    {
+                        var block = Ex.Block(new[] { result, props },
+                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(props, Ex.Convert(Ex.Call(input, nameof(JToken.Children), new[] { typeof(JProperty) }), typeof(IEnumerable<JProperty>))),
+                            props.Foreach(prop =>
+                                Ex.Call(Ex.Convert(result, typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                    Ex.Property(prop, nameof(JProperty.Name)),
+                                    Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { valueType },
+                                        ctx, Ex.Property(prop, nameof(JProperty.Value))), typeof(object)))),
+                            result);
+
+                        var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
+                        return lambda.Compile();
+                    }
+                }
+
+                private Func<HalContext, T, JToken> MakeSerializer()
+                {
+                    var ctx = Ex.Parameter(typeof(HalContext), "ctx");
+                    var input = Ex.Parameter(typeof(T), "input");
+                    var kvp = Ex.Parameter(typeof(KeyValuePair<,>).MakeGenericType(typeof(string), valueType), "kvp");
+                    var select = typeof(Enumerable).GetMethods()
+                        .Where(m => m.Name == nameof(Enumerable.Select)
+                            && m.GetGenericArguments().Length == 2
+                            && m.GetParameters().Length == 2
+                            && m.GetParameters()[1].ParameterType == typeof(Func<,>).MakeGenericType(m.GetGenericArguments()[0], m.GetGenericArguments()[1]))
+                        .First().MakeGenericMethod(kvp.Type, typeof(JProperty));
+                    var ctor = typeof(JObject).GetConstructor(new[] { typeof(object) });
+                    var pctor = typeof(JProperty).GetConstructor(new[] { typeof(string), typeof(object) });
+                    var innerlambda = Ex.Lambda(
+                        Ex.New(pctor,
+                            Ex.Property(kvp, nameof(KeyValuePair<string, object>.Key)),
+                            Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), Type.EmptyTypes,
+                                ctx,
+                                Ex.Convert(Ex.Property(kvp, nameof(KeyValuePair<string, object>.Value)), typeof(object)))),
+                        kvp);
+
+                    var block = Ex.Convert(Ex.New(ctor,
+                        Ex.Convert(
+                            Ex.Call(select,
+                                Ex.Convert(input, typeof(IEnumerable<>).MakeGenericType(kvp.Type)),
+                                innerlambda), typeof(object))), typeof(JToken));
+
+                    var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);
+
+                    return lambda.Compile();
+                }
+            }
+            public class SemanticStruct<P> : Typed<T>
+            {
+                private readonly Func<HalContext, T, JToken> serializer;
+                private readonly Func<HalContext, JToken, T> deserializer;
+                public SemanticStruct(HalSerializer parent): base(parent)
+                {
+                    serializer = MakeSerializer();
+                    deserializer = MakeDeserializer();
+                }
+
+                public override JToken Serialize(HalContext context, T item)
+                    => serializer(context, item);
+                public override T Deserialize(HalContext context, JToken token)
+                    => deserializer(context, token);
+                private Func<HalContext, JToken, T> MakeDeserializer()
+                {
+                    var ctor = typeof(T).GetConstructor(new[] { typeof(P) });
+                    var ctx = Ex.Parameter(typeof(HalContext), "ctx");
+                    var token = Ex.Parameter(typeof(JToken), "token");
+                    var block = Ex.New(ctor, Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { typeof(P) },
+                        ctx, token));
+                    var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, token);
+                    return lambda.Compile();
+                }
+
+                private Func<HalContext, T, JToken> MakeSerializer()
+                {
+                    var prop = typeof(T).GetProperties().Where(p => p.PropertyType == typeof(P)).First();
+                    var ctx = Ex.Parameter(typeof(HalContext), "ctx");
+                    var input = Ex.Parameter(typeof(T), "input");
+                    var block = Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), new[] { typeof(P) }, Ex.Property(input, prop));
+                    var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);
+                    return lambda.Compile();
+                }
+            }
         }
     }
 }
