@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Biz.Morsink.DataConvert;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json.Linq;
@@ -38,42 +39,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
             protected HalSerializer Parent { get; }
 
-            public class HasIdentity : Typed<T>
-            {
-                private readonly Typed<T> fallback;
-
-                public HasIdentity(HalSerializer parent, Typed<T> fallback)
-                    : base(parent)
-                {
-                    if (!typeof(IHasIdentity).IsAssignableFrom(typeof(T)))
-                        throw new ArgumentException("Type does not implement IHasIdentity.");
-                    this.fallback = fallback;
-                }
-
-                public override T Deserialize(HalContext context, JToken token)
-                {
-                    if (token is JObject obj)
-                    {
-                        if (obj["id"] != null)
-                        {
-                            var id = Parent.Deserialize<IIdentity>(context, obj["id"]);
-                            if (id != null && context.TryGetEmbedding(id, out var res) && res is T t)
-                                return t;
-                        }
-                    }
-
-                    return fallback.Deserialize(context, token);
-                }
-
-                public override JToken Serialize(HalContext context, T item)
-                {
-                    var id = ((IHasIdentity)item).Id;
-                    if (context.TryGetEmbedding(id, out _))
-                        return new JObject(new JProperty("id", Parent.Serialize(context, id)));
-                    else
-                        return fallback.Serialize(context, item);
-                }
-            }
             public class Simple : Typed<T>
             {
                 private readonly IDataConverter converter;
@@ -390,6 +355,45 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 public override T Deserialize(HalContext context, JToken token)
                 {
                     throw new NotSupportedException();
+                    // TODO: Missing deserialization type
+                    //if (token is JObject o)
+                    //{
+                    //    var res = new EmptyRestValue();
+                    //    var embedded = o["_embedded"];
+                    //    if(embedded!=null && embedded is JArray es)
+                    //    {
+
+                    //        res.WithEmbeddings(es.Select(e => Parent.Deserialize()
+                    //    }
+                    //}
+                    //else
+                    //    throw new ArgumentException("Token should be object.");
+                }
+                private class EmptyRestValue : IRestValue
+                {
+                    public EmptyRestValue()
+                        : this(Enumerable.Empty<Link>(), Enumerable.Empty<object>())
+                    { }
+                    public EmptyRestValue(IEnumerable<Link> links, IEnumerable<object> embeddings)
+                    {
+                        Links = links.ToArray();
+                        Embeddings = embeddings.ToArray();
+                    }
+                    public object Value => null;
+
+                    public Type ValueType => typeof(object);
+
+                    public IReadOnlyList<Link> Links { get; }
+
+                    public IReadOnlyList<object> Embeddings { get; }
+
+                    public EmptyRestValue Manipulate(Func<IRestValue, IEnumerable<Link>> links = null, Func<IRestValue, IEnumerable<object>> embeddings = null)
+                        => new EmptyRestValue(links(this), embeddings(this));
+                    IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<object>> embeddings)
+                        => Manipulate(links, embeddings);
+
+                    public IRestValue AssignValue(Type valueType, object value)
+                        => (IRestValue)Activator.CreateInstance(typeof(RestValue<>).MakeGenericType(valueType), value, Links, Embeddings);
                 }
             }
             public class Dictionary : Typed<T>
@@ -520,6 +524,42 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         Ex.Property(input, prop));
                     var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);
                     return lambda.Compile();
+                }
+            }
+            public class HasIdentity : Typed<T>
+            {
+                private readonly Typed<T> fallback;
+
+                public HasIdentity(HalSerializer parent, Typed<T> fallback)
+                    : base(parent)
+                {
+                    if (!typeof(IHasIdentity).IsAssignableFrom(typeof(T)))
+                        throw new ArgumentException("Type does not implement IHasIdentity.");
+                    this.fallback = fallback;
+                }
+
+                public override T Deserialize(HalContext context, JToken token)
+                {
+                    if (token is JObject obj)
+                    {
+                        if (obj["id"] != null)
+                        {
+                            var id = Parent.Deserialize<IIdentity>(context, obj["id"]);
+                            if (id != null && context.TryGetEmbedding(id, out var res) && res is T t)
+                                return t;
+                        }
+                    }
+
+                    return fallback.Deserialize(context, token);
+                }
+
+                public override JToken Serialize(HalContext context, T item)
+                {
+                    var id = ((IHasIdentity)item).Id;
+                    if (context.TryGetEmbedding(id, out _))
+                        return new JObject(new JProperty("id", Parent.Serialize(context, id)));
+                    else
+                        return fallback.Serialize(context, item);
                 }
             }
         }
