@@ -49,11 +49,9 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
                 public override T Deserialize(HalContext context, JToken token)
                     => Parent.converter.Convert((token as JValue)?.Value).To<T>();
-                    //=> token.Value<T>();
 
                 public override JToken Serialize(HalContext context, T item)
                     => Parent.converter.Convert(item).To<string>();
-                    //=> new JValue(item);
             }
             public class Nullable : Typed<T>
             {
@@ -479,7 +477,9 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     var prop = typeof(T).GetProperties().Where(p => p.PropertyType == typeof(P)).First();
                     var ctx = Ex.Parameter(typeof(HalContext), "ctx");
                     var input = Ex.Parameter(typeof(T), "input");
-                    var block = Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), new[] { typeof(P) }, Ex.Property(input, prop));
+                    var block = Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), new[] { typeof(P) }, 
+                        ctx,
+                        Ex.Property(input, prop));
                     var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);
                     return lambda.Compile();
                 }
@@ -488,7 +488,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
         public class DateTime : Typed<System.DateTime>
         {
-
             public DateTime(HalSerializer parent) : base(parent)
             {
             }

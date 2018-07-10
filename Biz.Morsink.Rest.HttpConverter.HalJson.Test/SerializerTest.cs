@@ -37,6 +37,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             public List<HelperB> Bs { get; set; }
             public IReadOnlyCollection<HelperA> MoreAs { get; set; }
         }
+        public class Container
+        {
+            public EmailAddress Email { get; set; }
+        }
+        public struct EmailAddress
+        {
+            public EmailAddress(string address)
+            {
+                Address = address;
+            }
+
+            public string Address { get; }
+        }
 
         private HalSerializer serializer;
         private Func<HalContext> context;
@@ -138,12 +151,23 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
                 ["B"] = "abc",
                 ["C"] = DateTime.UtcNow
             };
-            var json = serializer.Serialize(context(),x) as JObject;
+            var json = serializer.Serialize(context(), x) as JObject;
             Assert.IsNotNull(json);
             Assert.AreEqual(3, json.Properties().Count());
             Assert.IsNotNull(json["A"]);
             Assert.IsNotNull(json["B"]);
             Assert.IsNotNull(json["C"]);
+        }
+        [TestMethod]
+        public void HalSerializer_SemStr()
+        {
+            var x = new Container { Email = new EmailAddress("info@test.nl") };
+            var json = serializer.Serialize(context(), x) as JObject;
+            Assert.IsNotNull(json);
+            Assert.AreEqual(1, json.Properties().Count());
+            Assert.AreEqual(nameof(Container.Email), json.Properties().First().Name, true);
+            Assert.AreEqual("info@test.nl", json.Properties().First().Value);
+
         }
     }
 }
