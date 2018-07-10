@@ -1,4 +1,6 @@
 ﻿using Biz.Morsink.DataConvert;
+using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json.Linq;
@@ -16,12 +18,13 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         private readonly ConcurrentDictionary<Type, IForType> serializers;
         private readonly IDataConverter converter;
         private readonly ITypeRepresentation[] representations;
-
-        public HalSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<ITypeRepresentation> typeRepresentations)
+        private readonly IRestIdentityProvider identityProvider;
+        public HalSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IRestIdentityProvider identityProvider, IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             this.converter = converter;
             representations = typeRepresentations.ToArray();
+            this.identityProvider = identityProvider;
             InitializeDefaultSerializers();
         }
 
@@ -86,24 +89,31 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             => (Typed<T>)GetSerializerForType(typeof(T));
         private IForType Get(Type t)
         {
-            var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
-            if (repr != null)
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
-            else if (typeof(IRestValue).IsAssignableFrom(t))
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.RestValue).MakeGenericType(t), this);
-            else if (t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string))
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
-            else if (typeof(IEnumerable).IsAssignableFrom(t))
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
-            else if (t.GetGeneric(typeof(Nullable<>)) != null)
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
-            else if (SemanticStructKind.Instance.IsOfKind(t))
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
-            else if (t == typeof(System.DateTime))
-                return new DateTime(this);
+            if (typeof(IHasIdentity).IsAssignableFrom(t))
+                return (IForType)Activator.CreateInstance(typeof(Typed<>.HasIdentity).MakeGenericType(t), this, inner());
             else
-                return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
+                return inner();
 
+            IForType inner()
+            {
+                var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
+                if (repr != null)
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);
+                else if (typeof(IRestValue).IsAssignableFrom(t))
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.RestValue).MakeGenericType(t), this);
+                else if (t.GetGenerics2(typeof(IDictionary<,>)).Item1 == typeof(string))
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.Dictionary).MakeGenericType(t), this);
+                else if (typeof(IEnumerable).IsAssignableFrom(t))
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.Collection).MakeGenericType(t), this);
+                else if (t.GetGeneric(typeof(Nullable<>)) != null)
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.Nullable).MakeGenericType(t), this);
+                else if (SemanticStructKind.Instance.IsOfKind(t))
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
+                else if (t == typeof(System.DateTime))
+                    return new DateTime(this);
+                else
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
+            }
         }
         public interface IForType
         {

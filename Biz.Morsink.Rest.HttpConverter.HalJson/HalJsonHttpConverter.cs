@@ -53,7 +53,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
-            var json = serializer.Serialize(value.GetType(), HalContext.Create(), value);
+            var json = serializer.Serialize(value.GetType(), HalContext.Create(IdentityProvider), value);
 
             using (var swri = new StreamWriter(bodyStream))
             using (var wri = new JsonTextWriter(swri))

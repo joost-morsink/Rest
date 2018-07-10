@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Biz.Morsink.DataConvert;
+using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json.Linq;
@@ -37,6 +38,42 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
             protected HalSerializer Parent { get; }
 
+            public class HasIdentity : Typed<T>
+            {
+                private readonly Typed<T> fallback;
+
+                public HasIdentity(HalSerializer parent, Typed<T> fallback)
+                    : base(parent)
+                {
+                    if (!typeof(IHasIdentity).IsAssignableFrom(typeof(T)))
+                        throw new ArgumentException("Type does not implement IHasIdentity.");
+                    this.fallback = fallback;
+                }
+
+                public override T Deserialize(HalContext context, JToken token)
+                {
+                    if (token is JObject obj)
+                    {
+                        if (obj["id"] != null)
+                        {
+                            var id = Parent.Deserialize<IIdentity>(context, obj["id"]);
+                            if (id != null && context.TryGetEmbedding(id, out var res) && res is T t)
+                                return t;
+                        }
+                    }
+
+                    return fallback.Deserialize(context, token);
+                }
+
+                public override JToken Serialize(HalContext context, T item)
+                {
+                    var id = ((IHasIdentity)item).Id;
+                    if (context.TryGetEmbedding(id, out _))
+                        return new JObject(new JProperty("id", Parent.Serialize(context, id)));
+                    else
+                        return fallback.Serialize(context, item);
+                }
+            }
             public class Simple : Typed<T>
             {
                 private readonly IDataConverter converter;
@@ -339,6 +376,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 public override JToken Serialize(HalContext context, T item)
                 {
                     var rv = (IRestValue)item;
+                    context = context.With(rv);
                     var obj = Parent.Serialize(context, rv.Value);
                     var links = new JObject(from lnk in rv.Links
                                             group lnk by lnk.RelType into g
@@ -346,7 +384,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                                                 ? new JArray(g.Select(x => Parent.Serialize(context, x.Target)))
                                                 : Parent.Serialize(context, g.First().Target)));
                     obj["_links"] = links;
-                    obj["_embedded"] = new JArray(rv.Embeddings);
+                    obj["_embedded"] = new JArray(rv.Embeddings.Select(o => Parent.Serialize(context, o)));
                     return obj;
                 }
                 public override T Deserialize(HalContext context, JToken token)
@@ -477,7 +515,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     var prop = typeof(T).GetProperties().Where(p => p.PropertyType == typeof(P)).First();
                     var ctx = Ex.Parameter(typeof(HalContext), "ctx");
                     var input = Ex.Parameter(typeof(T), "input");
-                    var block = Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), new[] { typeof(P) }, 
+                    var block = Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Serialize), new[] { typeof(P) },
                         ctx,
                         Ex.Property(input, prop));
                     var lambda = Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input);

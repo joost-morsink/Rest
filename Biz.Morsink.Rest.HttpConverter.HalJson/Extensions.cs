@@ -35,18 +35,11 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             serviceCollection.AddSingleton(sp => new HalSerializer(
                 sp.GetRequiredService<TypeDescriptorCreator>(),
                 DataConverter.Default,
+                sp.GetRequiredService<IRestIdentityProvider>(),
                 sp.GetServices<ITypeRepresentation>()));
-            //serviceCollection.AddJsonSchemaTranslator<TypeDescriptorConverter>();
-
-            //serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Parameter>>();
-            //serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Header>>();
-            //serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<AspNetCore.OpenApi.Schema>>();
-
-            //serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
 
             builder?.Invoke(new RestHalJsonHttpConverterBuilder(serviceCollection));
-            //if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IContractResolver)))
-            //    serviceCollection.AddSingleton<IContractResolver, RestJsonContractResolver>();
+
             return serviceCollection;
         }
         private class RestHalJsonHttpConverterBuilder : IHalJsonHttpConverterBuilder
