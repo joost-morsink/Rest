@@ -39,7 +39,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// <returns>The serialization of the object as an XElement.</returns>
             public abstract XElement Serialize(T item);
             /// <summary>
-            /// Should implement deserialization to object of type T.
+            /// Should implement deserialization to objects of type T.
             /// </summary>
             /// <param name="e">The XElement to deserialize.</param>
             /// <returns>A deserialized object of type T.</returns>
@@ -493,7 +493,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// <summary>
             /// Typed XmlSerializer for semantic structs.
             /// </summary>
-            /// <typeparam name="P"></typeparam>
+            /// <typeparam name="P">The type of the underlying value.</typeparam>
             public class SemanticStruct<P> : Typed<T>
             {
                 private readonly Func<T, XElement> serializer;

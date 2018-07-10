@@ -166,6 +166,7 @@ At the moment the following kinds are configured in the default pipeline:
 * Nullability
 * Dictionaries
 * Sequential collections
+* Semantic structs
 * F# union types
 * Disjoint union types 
 * Records
@@ -187,6 +188,13 @@ Sequential collections include types that implement `IEnumerable`, but don't imp
 Sequential collections are described as the `Array` type.
 The first implementation of `IEnumerable<T>` is used to describe the item type. 
 If such an implementation is not found, `object` and as such an any type descriptor is used as the item type.
+
+#### Semantic structs
+Semantic structs are value types that contain a single value.
+The only thing the structs adds is typing information (of the struct itself) and operations on the value (methods).
+The underlying value is said to be enriched with semantic information. 
+For representation/serialization purposes this semantic information is not necessary as it should be contained in the static models of data transfer.
+For this reason a semantic struct is treated as the underlying type.
 
 #### Disjoint union types
 A disjoint union type is an abstract class containing (nested) derived classes. 

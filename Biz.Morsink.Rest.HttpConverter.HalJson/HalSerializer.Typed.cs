@@ -23,26 +23,56 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 return name;
         }
 
+        /// <summary>
+        /// Abstract base class for serializers that handle a specific single type.
+        /// </summary>
+        /// <typeparam name="T">The type the serializer handles.</typeparam>
         public abstract class Typed<T> : IForType
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="parent">A reference to the parent HalSerializer instance.</param>
             protected Typed(HalSerializer parent)
             {
                 Parent = parent;
             }
-
+            /// <summary>
+            /// Should implement serialization for objects of type T.
+            /// </summary>
+            /// <param name="context">The applicable HalContext.</param>
+            /// <param name="item">The object to serialize.</param>
+            /// <returns>The serialization of the object as a JToken.</returns>
             public abstract JToken Serialize(HalContext context, T item);
+            /// <summary>
+            /// Should implement deserialization to objects of type T.
+            /// </summary>
+            /// <param name="context">The applicable HalContext.</param>
+            /// <param name="token">The JToken to deserialize.</param>
+            /// <returns>A deserialized object of type T.</returns>
             public abstract T Deserialize(HalContext context, JToken token);
 
             Type IForType.Type => typeof(T);
             JToken IForType.Serialize(HalContext context, object item) => Serialize(context, (T)item);
             object IForType.Deserialize(HalContext context, JToken token) => Deserialize(context, token);
 
+            /// <summary>
+            /// Contains a reference to the parent HalSerializer instance.
+            /// </summary>
             protected HalSerializer Parent { get; }
 
+            /// <summary>
+            /// Typed HalSerializer for simple (primitive) types.
+            /// </summary>
             public class Simple : Typed<T>
             {
                 private readonly IDataConverter converter;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
+                /// <param name="converter">A DataConverter for simple conversions.</param>
                 public Simple(HalSerializer parent, IDataConverter converter)
                     : base(parent)
                 {
@@ -55,12 +85,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 public override JToken Serialize(HalContext context, T item)
                     => Parent.converter.Convert(item).To<string>();
             }
+            /// <summary>
+            /// Typed HalSerializer for Nullable&lt;T&gt; types.
+            /// </summary>
             public class Nullable : Typed<T>
             {
                 private readonly Type valueType;
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
-
+                
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
                 public Nullable(HalSerializer parent)
                     : base(parent)
                 {
@@ -100,11 +137,20 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return Ex.Lambda<Func<HalContext, T, JToken>>(block, ctx, input).Compile();
                 }
             }
+            /// <summary>
+            /// Default implementation for typed HalSerializers.
+            /// Assumes a record like structure.
+            /// Supports both mutable and immutable classes.
+            /// </summary>
             public class Default : Typed<T>
             {
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
                 public Default(HalSerializer parent)
                     : base(parent)
                 {
@@ -208,11 +254,20 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 }
 
             }
+            /// <summary>
+            /// Typed HalSerializer for types that are represented through an ITypeRepresentation instance.
+            /// </summary>
             public class Represented : Typed<T>
             {
                 private readonly ITypeRepresentation representation;
                 private readonly Type originalType;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
+                /// <param name="originalType">The original type that is passed for serialization.</param>
+                /// <param name="representation">The type representation instance to use for serialization.</param>
                 public Represented(HalSerializer parent, Type originalType, ITypeRepresentation representation) : base(parent)
                 {
                     this.representation = representation;
@@ -230,11 +285,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return (T)representation.GetRepresentable(repr);
                 }
             }
+            /// <summary>
+            /// Typed HalSerializer for collection types.
+            /// </summary>
             public class Collection : Typed<T>
             {
                 private readonly Type baseType;
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
+
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
                 public Collection(HalSerializer parent) : base(parent)
                 {
                     baseType = typeof(T).GetGeneric(typeof(IEnumerable<>));
@@ -329,9 +392,17 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return lambda.Compile();
                 }
             }
+            /// <summary>
+            /// Typed HalSerializer for Rest Values.
+            /// </summary>
             public class RestValue : Typed<T>
             {
                 private readonly Type valueType;
+
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
                 public RestValue(HalSerializer parent) : base(parent)
                 {
                     if (!typeof(IRestValue).IsAssignableFrom(typeof(T)))
@@ -396,6 +467,9 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         => (IRestValue)Activator.CreateInstance(typeof(RestValue<>).MakeGenericType(valueType), value, Links, Embeddings);
                 }
             }
+            /// <summary>
+            /// Typed HalSerializer for Dictionary-like types.
+            /// </summary>
             public class Dictionary : Typed<T>
             {
                 private readonly Type valueType;
@@ -489,10 +563,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return lambda.Compile();
                 }
             }
+            /// <summary>
+            /// Typed HalSerializer for semantic structs.
+            /// </summary>
+            /// <typeparam name="P">The type of the underlying value.</typeparam>
             public class SemanticStruct<P> : Typed<T>
             {
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
+
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
                 public SemanticStruct(HalSerializer parent) : base(parent)
                 {
                     serializer = MakeSerializer();
@@ -526,10 +609,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return lambda.Compile();
                 }
             }
+
+            /// <summary>
+            /// Typed HalSerializer for types that implement IHasIdentity.
+            /// </summary>
             public class HasIdentity : Typed<T>
             {
                 private readonly Typed<T> fallback;
 
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">A reference to the parent HalSerializer instance.</param>
+                /// <param name="fallback">A fallback serializer, to serialize the type as if it didn't implement IHasIdentity.</param>
                 public HasIdentity(HalSerializer parent, Typed<T> fallback)
                     : base(parent)
                 {
@@ -563,9 +655,15 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 }
             }
         }
-
+        /// <summary>
+        /// Typed HalSerializer for DateTime.
+        /// </summary>
         public class DateTime : Typed<System.DateTime>
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="parent">A reference to the parent HalSerializer instance.</param>
             public DateTime(HalSerializer parent) : base(parent)
             {
             }

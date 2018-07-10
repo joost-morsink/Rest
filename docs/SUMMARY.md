@@ -5,6 +5,8 @@
   * [Rest](arch.md#Rest)
   * [Asp.Net Core](arch.md#ASP)
 * [HTTP Converters](httpConv.md)
+  * [Xml](xml.md)
+  * [Hal](hal.md)
 * [Capabilities](capabilities.md)
 * [Values](values.md)
 * [Collections](coll.md)

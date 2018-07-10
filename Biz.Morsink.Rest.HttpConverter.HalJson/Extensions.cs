@@ -10,6 +10,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.HalJson
 {
+    /// <summary>
+    /// Class for extension methods related to the Hal Json Http converter.
+    /// </summary>
     public static class Extensions
     {
         /// <summary>

@@ -8,9 +8,17 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.HalJson
 {
+    /// <summary>
+    /// Options provider pattern implementation for the Hal Json Http converter component.
+    /// </summary>
     public class HalJsonConverterOptionsProvider : IOptions<HalJsonConverterOptions>
     {
         private readonly Lazy<HalJsonConverterOptions> options;
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="serviceProvider">A service provider.</param>
+        /// <param name="configure">An optional configuration function.</param>
         public HalJsonConverterOptionsProvider(IServiceProvider serviceProvider, Func<HalJsonConverterOptions, HalJsonConverterOptions> configure)
         {
             options = new Lazy<HalJsonConverterOptions>(() =>
@@ -21,7 +29,13 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 return configure == null ? opts : configure(opts);
             });
         }
+        /// <summary>
+        /// Contains the options value.
+        /// </summary>
         public HalJsonConverterOptions Value => options.Value;
+        /// <summary>
+        /// Returns 'this'. 
+        /// </summary>
         public IOptions<HalJsonConverterOptions> GetOptions() => this;
     }
 }
