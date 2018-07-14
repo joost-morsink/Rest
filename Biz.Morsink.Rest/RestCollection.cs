@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest
@@ -13,7 +14,7 @@ namespace Biz.Morsink.Rest
     /// </summary>
     /// <typeparam name="T">The entity type contained in the collection.</typeparam>
     /// <typeparam name="I">The type whose instances contain descriptive information about instances of the entity type.</typeparam>
-    public class RestCollection<T, I>
+    public class RestCollection<T, I> : IRestCollection
         where I : IHasIdentity<T>
     {
         /// <summary>
@@ -40,6 +41,7 @@ namespace Biz.Morsink.Rest
         /// Gets the items in the current slice.
         /// </summary>
         public IEnumerable<I> Items { get; }
+        IEnumerable<object> IRestCollection.Items => Items.Cast<object>();
         /// <summary>
         /// Gets the total number of items in the collection (slice).
         /// </summary>
@@ -49,7 +51,7 @@ namespace Biz.Morsink.Rest
         /// </summary>
         public int? Limit { get; }
         /// <summary>
-        /// Gets the number of entities to skip before containing entities in the slice
+        /// Gets the number of entities that precede the entries in the slice.
         /// </summary>
         public int Skip { get; }
     }

@@ -93,7 +93,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 private readonly Type valueType;
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
-                
+
                 /// <summary>
                 /// Constructor.
                 /// </summary>
@@ -420,7 +420,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                                                 ? new JArray(g.Select(x => Parent.Serialize(context, x.Target)))
                                                 : Parent.Serialize(context, g.First().Target)));
                     obj["_links"] = links;
-                    obj["_embedded"] = new JArray(rv.Embeddings.Select(o => Parent.Serialize(context, o)));
+                    obj["_embedded"] = new JArray(rv.Embeddings.Select(o => Parent.Serialize(o is IHasIdentity hid ? context.Without(hid.Id) : context, o)));
                     return obj;
                 }
                 public override T Deserialize(HalContext context, JToken token)

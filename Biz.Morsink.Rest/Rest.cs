@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace Biz.Morsink.Rest
 {
     /// <summary>
@@ -17,6 +14,16 @@ namespace Biz.Morsink.Rest
         /// <returns>A RestValue containing the provided underlying value.</returns>
         public static RestValue<T> Value<T>(T item)
             => new RestValue<T>(item);
+        /// <summary>
+        /// Constructs a RestValue&lt;T7gt; from a collection value of type T.
+        /// All the contained items will be inserted into the embeddings collection.
+        /// </summary>
+        /// <typeparam name="T">The collection type.</typeparam>
+        /// <param name="item">The Rest value's underlying collection.</param>
+        /// <returns>A RestValue containing the provided underlying collection.</returns>
+        public static RestValue<T> Collection<T>(T item)
+            where T : IRestCollection
+            => ValueBuilder(item).WithEmbeddings(item.Items).Build();
         /// <summary>
         /// Constructs a RestValue&lt;T&gt;.Builder from a value of type T.
         /// Using this builder, the other properties can be set before actual creation of the RestValue instance.
