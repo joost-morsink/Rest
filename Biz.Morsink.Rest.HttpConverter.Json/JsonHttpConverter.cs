@@ -21,6 +21,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverter : AbstractHttpRestConverter
     {
+        public const string MEDIA_TYPE = "application/json";
         private readonly IOptions<JsonHttpConverterOptions> options;
         /// <summary>
         /// Constructor.
@@ -37,7 +38,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
         public override decimal AppliesScore(HttpContext context)
-            => ScoreAcceptHeader(context.Request, "application/json");
+            => ScoreAcceptHeader(context.Request, MEDIA_TYPE);
         /// <summary>
         /// Json parser.
         /// </summary>
@@ -64,7 +65,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         protected override void ApplyGeneralHeaders(HttpResponse httpResponse, RestResponse response)
         {
-            httpResponse.ContentType = "application/json";
+            httpResponse.ContentType = MEDIA_TYPE;
         }
         protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes)
         {

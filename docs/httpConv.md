@@ -64,3 +64,12 @@ Plain XML is just as RESTful as plain JSON, so the `XmlHttpConverter` also satis
 
 More information about this converter can be found in the [chapter about XML](xml.md).
 
+## HalJsonHttpConverter
+A separate project in the solution from the regular JSON implementation is the HAL implementation for JSON. 
+It does not carry any type or schema information and is only supposed to be used for read-only scenarios.
+The Accept header should be `application/hal+json` for responses to be formatted using HAL.
+
+Strictly speaking this component implements HATEOAS in the serialization format, although it does not specify how to deal with dynamic navigation options in a hyperlinked fashion.
+This eliminates the possibility for search forms using the HAL approach.
+
+More information about the HAL converter can be found in the [chapter about HAL](hal.md).

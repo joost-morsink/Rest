@@ -23,7 +23,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Biz.Morsink.Rest.FSharp.Try
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.Json.Test", "Biz.Morsink.Rest.HttpConverter.Json.Test\Biz.Morsink.Rest.HttpConverter.Json.Test.csproj", "{00A25F2C-BFD2-4035-8A94-3DEA753122FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.Html", "Biz.Morsink.Rest.HttpConverter.Html\Biz.Morsink.Rest.HttpConverter.Html.csproj", "{96A2A7F2-089D-42EA-8D82-C54103700FBC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.Html", "Biz.Morsink.Rest.HttpConverter.Html\Biz.Morsink.Rest.HttpConverter.Html.csproj", "{96A2A7F2-089D-42EA-8D82-C54103700FBC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.HalJson", "Biz.Morsink.Rest.HttpConverter.HalJson\Biz.Morsink.Rest.HttpConverter.HalJson.csproj", "{234E9152-1A7E-4D2F-8F01-D2EB514962E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.HalJson.Test", "Biz.Morsink.Rest.HttpConverter.HalJson.Test\Biz.Morsink.Rest.HttpConverter.HalJson.Test.csproj", "{F63E852C-1CDA-485E-8E5F-81BE735B3B23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +102,18 @@ Global
 		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
 		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96A2A7F2-089D-42EA-8D82-C54103700FBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{234E9152-1A7E-4D2F-8F01-D2EB514962E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Prerelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Prerelease|Any CPU.Build.0 = Debug|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F63E852C-1CDA-485E-8E5F-81BE735B3B23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

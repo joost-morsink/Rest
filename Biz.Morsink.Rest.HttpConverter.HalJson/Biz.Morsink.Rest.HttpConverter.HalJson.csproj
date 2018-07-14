@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>HAL+json implementation for Rest service</Title>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Joost W. Morsink</Authors>
+    <Company>Morsink Software</Company>
+    <PackageId>Biz.Morsink.Rest.HttpConverter.HalJson</PackageId>
+    <Description>Implementation of the HAL+json format for REST level 3 services.</Description>
+    <PackageProjectUrl>https://github.com/joost-morsink/Rest</PackageProjectUrl>
+    <RootNamespace>Biz.Morsink.Rest.HttpConverter.HalJson</RootNamespace>
+    <Copyright>(C) 2018 Joost W. Morsink</Copyright>
+    <PackageTags>Rest Hal Json</PackageTags>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
+    <Configurations>Debug;Release;Prerelease</Configurations>
+    <LangVersion>latest</LangVersion>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Biz.Morsink.Rest.AspNetCore\Biz.Morsink.Rest.AspNetCore.csproj" />
+  </ItemGroup>
+
+</Project>

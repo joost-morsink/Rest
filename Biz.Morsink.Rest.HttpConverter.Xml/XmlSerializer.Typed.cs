@@ -8,6 +8,8 @@ using System.Text;
 using System.Xml.Linq;
 using Ex = System.Linq.Expressions.Expression;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
+using Biz.Morsink.Rest.Utils;
+
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     public partial class XmlSerializer
@@ -37,7 +39,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// <returns>The serialization of the object as an XElement.</returns>
             public abstract XElement Serialize(T item);
             /// <summary>
-            /// Should implement deserialization to object of type T.
+            /// Should implement deserialization to objects of type T.
             /// </summary>
             /// <param name="e">The XElement to deserialize.</param>
             /// <returns>A deserialized object of type T.</returns>
@@ -491,7 +493,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// <summary>
             /// Typed XmlSerializer for semantic structs.
             /// </summary>
-            /// <typeparam name="P"></typeparam>
+            /// <typeparam name="P">The type of the underlying value.</typeparam>
             public class SemanticStruct<P> : Typed<T>
             {
                 private readonly Func<T, XElement> serializer;
@@ -510,7 +512,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 {
                     var ctor = typeof(T).GetConstructor(new[] { typeof(P) });
                     var e = Ex.Parameter(typeof(XElement), "e");
-                    var block = Ex.New(ctor, Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), new[] { typeof(P) },e));
+                    var block = Ex.New(ctor, Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), new[] { typeof(P) }, e));
                     var lambda = Ex.Lambda<Func<XElement, T>>(block, e);
                     return lambda.Compile();
                 }
@@ -530,6 +532,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     => serializer(item);
             }
         }
-         
+
     }
 }

@@ -18,6 +18,7 @@ using Biz.Morsink.Rest.AspNetCore.Identity;
 using System.Security.Claims;
 using Biz.Morsink.Rest.FSharp.Tryout;
 using Biz.Morsink.Rest.HttpConverter.Html;
+using Biz.Morsink.Rest.HttpConverter.HalJson;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
@@ -37,6 +38,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport()))
                 .AddXmlHttpConverter()
                 .AddHtmlHttpConverter()
+                .AddHalJsonHttpConverter()
                 // Configure Repositories
                 .AddStructure<PersonRepository.Structure>()
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)

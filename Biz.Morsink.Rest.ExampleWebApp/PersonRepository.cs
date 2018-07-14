@@ -98,7 +98,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             var collectionParameters = id.Provider.GetConverter(typeof(PersonCollection), false).Convert(id.Value).To<CollectionParameters>();
             if (collectionParameters != null && (collectionParameters.Limit <= 0 || collectionParameters.Skip < 0))
                 return RestResult.BadRequest<PersonCollection>(new object()).ToResponse();
-            return Rest.Value(await resources.GetCollection(id)).ToResponse();
+            return Rest.Collection(await resources.GetCollection(id)).ToResponse();
         }
         /// <summary>
         /// Post implementation of a Person to a PersonCollection.
