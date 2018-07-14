@@ -32,23 +32,25 @@ namespace Biz.Morsink.Rest
         public RestValue(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
         {
             Value = value;
-            Links = links is IReadOnlyList<Link> rolLink ? rolLink : (links ?? Enumerable.Empty<Link>()).ToArray();
-            Embeddings = embeddings is IReadOnlyList<object> rolEmbedding ? rolEmbedding : (embeddings ?? Enumerable.Empty<object>()).ToArray();
+            this.links = links is IReadOnlyList<Link> rolLink ? ReadOnlyList<Link>.Create(rolLink) : ReadOnlyList<Link>.Create((links ?? Enumerable.Empty<Link>()).ToArray());
+            this.embeddings = embeddings is IReadOnlyList<object> rolEmbedding ? ReadOnlyList<object>.Create(rolEmbedding) : ReadOnlyList<object>.Create((embeddings ?? Enumerable.Empty<object>()).ToArray());
         }
+        private readonly ReadOnlyList<Link> links;
+        private readonly ReadOnlyList<object> embeddings;
         /// <summary>
         /// Gets the underlying (main) value.
         /// </summary>
         public T Value { get; }
+        object IRestValue.Value => Value;
         Type IRestValue.ValueType => typeof(T);
         /// <summary>
         /// Gets a list of links for the value.
         /// </summary>
-        public IReadOnlyList<Link> Links { get; }
+        public IReadOnlyList<Link> Links => links;
         /// <summary>
         /// Gets a list of embeddings for the value.
         /// </summary>
-        public IReadOnlyList<object> Embeddings { get; }
-        object IRestValue.Value => Value;
+        public IReadOnlyList<object> Embeddings => embeddings;
         /// <summary>
         /// Implementation of Linq Select method.
         /// </summary>
@@ -97,7 +99,7 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <returns></returns>
         public static Builder Build()
-            => new Builder(default(T), ImmutableList<Link>.Empty, ImmutableList<object>.Empty);
+            => new Builder(default, ImmutableList<Link>.Empty, ImmutableList<object>.Empty);
         /// <summary>
         /// Builder struct for RestValue&lt;T&gt;
         /// </summary>

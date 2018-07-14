@@ -71,5 +71,32 @@ namespace Biz.Morsink.Rest.Utils
                 result[i] = projection(list[i]);
             return result;
         }
+        /// <summary>
+        /// Concatenates two readonly lists.
+        /// </summary>
+        /// <typeparam name="T">The element type of the lists.</typeparam>
+        /// <param name="src">The original list.</param>
+        /// <param name="other">The list to concatenate.</param>
+        /// <returns>A concatenated list.</returns>
+        public static IReadOnlyList<T> Concat<T>(this IReadOnlyList<T> src, IReadOnlyList<T> other)
+            => ReadOnlyList<T>.Create(src, other);
+        /// <summary>
+        /// Constructs a new readonly list, based on a readonly list and a single element.
+        /// </summary>
+        /// <typeparam name="T">The element type of the lists.</typeparam>
+        /// <param name="src">The original list.</param>
+        /// <param name="item">The item to append.</param>
+        /// <returns>A new list.</returns>
+        public static IReadOnlyList<T> Append<T>(this IReadOnlyList<T> src, T item)
+            => ReadOnlyList<T>.Create(src).Append(item);
+        /// <summary>
+        /// Constructs a new readonly list, based on a readonly list and a single element.
+        /// </summary>
+        /// <typeparam name="T">The element type of the lists.</typeparam>
+        /// <param name="src">The original list.</param>
+        /// <param name="item">The item to prepend.</param>
+        /// <returns>A new list.</returns>
+        public static IReadOnlyList<T> Prepend<T>(this IReadOnlyList<T> src, T item)
+            => ReadOnlyList<T>.Create(src).Append(item);
     }
 }
