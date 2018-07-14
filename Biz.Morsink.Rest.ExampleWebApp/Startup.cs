@@ -33,9 +33,12 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddDefaultIdentityProvider("http://localhost:5000", new RestPrefix("http://localhost:5000", "api"))
                 .AddCache<RestMemoryCache>()
                 .AddJobs()
-                .UseRequestHandler((sp, hbld) => hbld.Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0)))
+                .UseRequestHandler((sp, hbld) => hbld
+                    .Use<SelfRequestHandler>(sp)
+                    .Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0))
+                    )
                 // Configure HttpConverters
-                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport()))
+                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport()/*.UseLinkLocation("_links")*/))
                 .AddXmlHttpConverter()
                 .AddHtmlHttpConverter()
                 .AddHalJsonHttpConverter()

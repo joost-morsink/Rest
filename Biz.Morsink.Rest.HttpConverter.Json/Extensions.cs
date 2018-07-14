@@ -35,8 +35,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             var gen = typeof(T).GetGeneric(typeof(IJsonSchemaTranslator<>));
             serviceCollection.Add(new ServiceDescriptor(typeof(IJsonSchemaTranslator), typeof(T), ServiceLifetime.Singleton));
             serviceCollection.Add(new ServiceDescriptor(typeof(ISchemaTranslator<JsonSchema>), typeof(T), ServiceLifetime.Singleton));
-            serviceCollection.Add(new ServiceDescriptor(typeof(IJsonSchemaTranslator<>).MakeGenericType(gen), typeof(T), ServiceLifetime.Singleton));
-            serviceCollection.Add(new ServiceDescriptor(typeof(ISchemaTranslator<,>).MakeGenericType(gen, typeof(JsonSchema)), typeof(T), ServiceLifetime.Singleton));
+            if (gen != null)
+            {
+                serviceCollection.Add(new ServiceDescriptor(typeof(IJsonSchemaTranslator<>).MakeGenericType(gen), typeof(T), ServiceLifetime.Singleton));
+                serviceCollection.Add(new ServiceDescriptor(typeof(ISchemaTranslator<,>).MakeGenericType(gen, typeof(JsonSchema)), typeof(T), ServiceLifetime.Singleton));
+            }
             return serviceCollection;
         }
         /// <summary>
@@ -64,6 +67,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Parameter>>();
             serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Header>>();
             serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<AspNetCore.OpenApi.Schema>>();
+            serviceCollection.AddJsonSchemaTranslator<RestValueConverter>();
 
             serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
 

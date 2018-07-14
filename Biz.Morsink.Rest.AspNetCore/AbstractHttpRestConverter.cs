@@ -124,12 +124,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="response">The HTTP response.</param>
         /// <param name="rv">The Rest value.</param>
-        /// <param name="includeSchema">Should be true if the schema location is to be added as a 'Link' with Reltype 'describedby'.</param>
-        protected void UseLinkHeaders(HttpResponse response, IRestValue rv, bool includeSchema = true)
+        protected void UseLinkHeaders(HttpResponse response, IRestValue rv)
         {
             var links = rv.Links.Select(l => $"<{IdentityProvider.ToPath(l.Target)}>;rel={l.RelType}").ToList();
-            if (includeSchema)
-                links.Add($"<{IdentityProvider.ToPath(FreeIdentity<TypeDescriptor>.Create(rv.ValueType))}>;rel=describedby");
             response.Headers[Link] = new StringValues(links.ToArray());
         }
         /// <summary>

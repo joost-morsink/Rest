@@ -22,6 +22,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         public bool FSharpSupport { get; set; }
         /// <summary>
+        /// Gets or sets the property name for the link location. 
+        /// Should be set to null for HTTP header location.
+        /// </summary>
+        public string LinkLocation { get; set; }
+        /// <summary>
         /// Applies the default naming strategy to the JsonHttpConverter.
         /// </summary>
         /// <returns>The current instance.</returns>
@@ -47,6 +52,25 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonHttpConverterOptions UseFSharpSupport(bool support = true)
         {
             FSharpSupport = support;
+            return this;
+        }
+        /// <summary>
+        /// Sets the propertyName for the collection of links.
+        /// </summary>
+        /// <param name="propertyName">The property name for the link location.</param>
+        /// <returns>The current instance.</returns>
+        public JsonHttpConverterOptions UseLinkLocation(string propertyName)
+        {
+            LinkLocation = propertyName;
+            return this;
+        }
+        /// <summary>
+        /// Sets the location for the links to the HTTP header area.
+        /// </summary>
+        /// <returns>The current instance.</returns>
+        public JsonHttpConverterOptions UseLinksInHeaders()
+        {
+            LinkLocation = null;
             return this;
         }
     }

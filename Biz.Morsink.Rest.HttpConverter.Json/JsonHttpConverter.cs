@@ -58,7 +58,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 }
                 catch (Exception e)
                 {
-                    throw new RestFailureException(RestResult.BadRequest<object>($"Parse error: {e.Message}"),e.Message, e);
+                    throw new RestFailureException(RestResult.BadRequest<object>($"Parse error: {e.Message}"), e.Message, e);
                 }
             }
         }
@@ -70,7 +70,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes)
         {
             UseSchemaLocationHeader(httpResponse, value);
-            UseLinkHeaders(httpResponse, value);
+            if (options.Value.LinkLocation == null)
+                UseLinkHeaders(httpResponse, value);
             UseCurieHeaders(httpResponse, prefixes);
         }
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
@@ -81,7 +82,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             {
                 using (var swri = new StreamWriter(ms))
                 using (var wri = new JsonTextWriter(swri))
-                    ser.Serialize(wri, value.Value);
+                    ser.Serialize(wri, value);
 
                 var body = ms.ToArray();
                 await bodyStream.WriteAsync(body, 0, body.Length);
