@@ -211,5 +211,131 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
         public static RestValue<T> WithEmbeddings<T>(this RestValue<T> restValue, IEnumerable<object> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
+
+        /// <summary>
+        /// Checks whether a scope item exists.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <returns>True if the item exists in the scope.</returns>
+        public static bool HasScopeItem<T>(this IRestRequestScope scope)
+            => scope.TryGetScopeItem<T>(out var _);
+        /// <summary>
+        /// Gets an item from the scope, and adds one if it is not present yet.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <param name="default">The default value.</param>
+        /// <returns>A scope item of type T.</returns>
+        public static T GetOrAddScopeItem<T>(this IRestRequestScope scope, T @default)
+        {
+            if (scope.TryGetScopeItem<T>(out var res))
+                return res;
+            scope.SetScopeItem(@default);
+            return @default;
+        }
+        /// <summary>
+        /// Gets an item from the scope, and adds one if it is not present yet.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <param name="default">The default value.</param>
+        /// <returns>A scope item of type T.</returns>
+        public static T GetOrAddScopeItem<T>(this IRestRequestScope scope, Func<T> @default)
+        {
+            T res;
+            if (scope.TryGetScopeItem<T>(out res))
+                return res;
+            res = @default();
+            scope.SetScopeItem(res);
+            return res;
+        }
+        /// <summary>
+        /// Modifies an item in the scope.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <param name="modifier">A modifier function.</param>
+        /// <param name="default">The default value.</param>
+        public static void ModifyScopeItem<T>(this IRestRequestScope scope, Func<T, T> modifier, T @default = default)
+        {
+            if (scope.TryGetScopeItem<T>(out var t))
+                scope.SetScopeItem(modifier(t));
+            else
+                scope.SetScopeItem(modifier(@default));
+        }
+        /// <summary>
+        /// Removes an item from the scope.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        public static void RemoveScopeItem<T>(this IRestRequestScope scope)
+            => scope.TryRemoveScopeItem<T>(out var _);
+
+        /// <summary>
+        /// Allocates a Runner. 
+        /// A runner is able to run a piece of code with a scope item, and restores the old situation after the run.
+        /// </summary>
+        /// <typeparam name="T">The type of the scope item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <param name="item">The scope item.</param>
+        /// <returns>A runner.</returns>
+        public static Runner<T> With<T>(this IRestRequestScope scope, T item)
+            => new Runner<T>(scope, item);
+        /// <summary>
+        /// A Runner is able to run a piece of code with a scope item, and restores the old situation after the run.
+        /// </summary>
+        /// <typeparam name="T">The type of the scope item.</typeparam>
+        public struct Runner<T>
+        {
+            private readonly IRestRequestScope scope;
+            private readonly T item;
+
+            internal Runner(IRestRequestScope scope, T item)
+            {
+                this.scope = scope;
+                this.item = item;
+            }
+
+            /// <summary>
+            /// Runs a function with the specified scope item.
+            /// </summary>
+            /// <typeparam name="R">The return type of the function.</typeparam>
+            /// <param name="f">The function.</param>
+            /// <returns>The function's result.</returns>
+            public R Run<R>(Func<R> f)
+            {
+                if (scope.TryGetScopeItem<T>(out var old))
+                {
+                    try
+                    {
+                        scope.SetScopeItem(item);
+                        return f();
+                    }
+                    finally
+                    {
+                        scope.SetScopeItem(old);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        scope.SetScopeItem(item);
+                        return f();
+                    }
+                    finally
+                    {
+                        scope.RemoveScopeItem<T>();
+                    }
+                }
+            }
+            /// <summary>
+            /// Runs an action with the specified scope item.
+            /// </summary>
+            /// <param name="act">The action.</param>
+            public void Run(Action act)
+                => Run(() => { act(); return 0; });
+        }
     }
 }
