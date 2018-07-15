@@ -20,16 +20,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     public class XmlHttpConverter : AbstractHttpRestConverter
     {
         private readonly XmlSerializer serializer;
-
+        private readonly IOptions<XmlHttpConverterOptions> options;
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="serializer">An XmlSerializer instance to use for serialization and deserialization.</param>
         /// <param name="identityProvider">A Rest identity provider for mapping urls to and from identity values.</param>
-        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider, IOptions<RestAspNetCoreOptions> options)
-            : base(identityProvider, options)
+        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider, IOptions<RestAspNetCoreOptions> restOptions, IOptions<XmlHttpConverterOptions> xmlOptions)
+            : base(identityProvider, restOptions)
         {
             this.serializer = serializer;
+            this.options = xmlOptions;
         }
         /// <summary>
         /// Determines if the XML converter applies to the given HttpContext.
@@ -74,7 +75,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="prefixes">The Rest prefix container for this response.</param>
         protected override void ApplyHeaders(HttpResponse httpResponse, RestResponse response, IRestValue value, RestPrefixContainer prefixes)
         {
-            UseLinkHeaders(httpResponse, value);
+            if (options.Value.LinkLocation == null)
+                UseLinkHeaders(httpResponse, value);
             UseSchemaLocationHeader(httpResponse, value);
         }
         /// <summary>
@@ -90,6 +92,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             {
                 var element = serializer.Serialize(value.Value);
                 element.SetAttributeValue(XNamespace.Xmlns + xsi, XSI.NamespaceName);
+                if (options.Value.LinkLocation != null)
+                {
+                    var links = new XElement(options.Value.LinkLocation);
+                    foreach (var link in value.Links)
+                        links.Add(serializer.Serialize(link));
+                    element.Add(links);
+                }
                 element.WriteTo(wri);
                 wri.Flush();
                 ms.Seek(0L, SeekOrigin.Begin);

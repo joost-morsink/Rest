@@ -35,12 +35,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// </summary>
         /// <param name="serviceCollection">The service collection.</param>
         /// <returns>The service collection with the added registrations.</returns>
-        public static IServiceCollection AddXmlHttpConverter(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddXmlHttpConverter(this IServiceCollection serviceCollection, Func<XmlHttpConverterOptions, XmlHttpConverterOptions> configure = null)
         {
+            configure = configure ?? (x => x);
             serviceCollection.AddSingleton<IHttpRestConverter, XmlHttpConverter>();
             serviceCollection.AddSingleton(sp => new XmlSerializer(sp.GetRequiredService<TypeDescriptorCreator>(), DataConverter.Default, sp.GetServices<IXmlSchemaTranslator>(), sp.GetServices<ITypeRepresentation>()));
             serviceCollection.AddXmlSchemaTranslator<XmlSchemaXmlSchemaTranslator>();
             serviceCollection.AddXmlSchemaTranslator<OpenApiXmlSchemaTranslator>();
+            serviceCollection.AddSingleton(sp => configure(new XmlHttpConverterOptions()).GetOptions());
             return serviceCollection;
         }
         /// <summary>
@@ -48,9 +50,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// </summary>
         /// <param name="builder">An IRestServicesBuilder instance.</param>
         /// <returns>The builder.</returns>
-        public static IRestServicesBuilder AddXmlHttpConverter(this IRestServicesBuilder builder)
+        public static IRestServicesBuilder AddXmlHttpConverter(this IRestServicesBuilder builder, Func<XmlHttpConverterOptions, XmlHttpConverterOptions> configure = null)
         {
-            builder.ServiceCollection.AddXmlHttpConverter();
+            builder.ServiceCollection.AddXmlHttpConverter(configure);
             return builder;
         }
     }
