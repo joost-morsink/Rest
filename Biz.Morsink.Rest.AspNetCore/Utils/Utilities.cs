@@ -115,6 +115,14 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 yield return rp[i];
         }
         /// <summary>
+        /// Checks if a certain type of object is available in the HttpContext.
+        /// </summary>
+        /// <typeparam name="T">The type the stored object is supposed to have.</typeparam>
+        /// <param name="httpContext">The HttpContext.</param>
+        /// <returns>True if the object was found, false otherwise.</returns>
+        public static bool HasContextItem<T>(this HttpContext httpContext)
+            => httpContext.Items.ContainsKey(typeof(T));
+        /// <summary>
         /// Tries to retrieve a stored object from an HttpContext's Items collection by using the type as key.
         /// </summary>
         /// <typeparam name="T">The type the stored object is supposed to have.</typeparam>

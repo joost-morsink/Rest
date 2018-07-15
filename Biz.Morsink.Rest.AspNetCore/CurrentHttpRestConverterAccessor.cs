@@ -11,19 +11,19 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     public class CurrentHttpRestConverterAccessor : ICurrentHttpRestConverterAccessor
     {
-        private readonly IHttpContextAccessor contextAccessor;
+        private readonly IRestRequestScopeAccessor scopeAccessor;
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="contextAccessor">The HttpContextAccessor.</param>
-        public CurrentHttpRestConverterAccessor(IHttpContextAccessor contextAccessor)
+        public CurrentHttpRestConverterAccessor(IRestRequestScopeAccessor scopeAccessor)
         {
-            this.contextAccessor = contextAccessor;
+            this.scopeAccessor = scopeAccessor;
         }
         /// <summary>
         /// Gets the actual currently used IHttpRestConverter instance.
         /// </summary>
-        public IHttpRestConverter CurrentHttpRestConverter 
-            => contextAccessor.HttpContext.TryGetContextItem<IHttpRestConverter>(out var res) ? res : null;
+        public IHttpRestConverter CurrentHttpRestConverter
+            => scopeAccessor.Scope.TryGetScopeItem<IHttpRestConverter>(out var res) ? res : null;
     }
 }
