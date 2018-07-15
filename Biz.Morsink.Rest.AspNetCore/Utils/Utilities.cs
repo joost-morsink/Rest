@@ -49,8 +49,6 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
                 var ch = str[i];
                 if (IsSafeCharacter(ch))
                     sb.Append(ch);
-                else if (ch == '%')
-                    sb.Append("%%");
                 else
                 {
                     sb.Append('%');
@@ -76,7 +74,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         public static bool IsSafeCharacter(char ch)
             => ch >= '0' && ch <= '9'
             || ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z'
-            || ch == '-' || ch == '_' || ch == '~';
+            || ch == '.' || ch == '-' || ch == '_' || ch == '~';
 
         /// <summary>
         /// Creates a RestCapabilities structure based on the parameters.

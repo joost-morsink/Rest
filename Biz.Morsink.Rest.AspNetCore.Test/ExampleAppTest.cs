@@ -44,7 +44,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         private const string OPTIONS = nameof(OPTIONS);
 
         private static string SchemaFor<T>()
-            => "http://localhost:5000/schema/" + typeof(T).ToString().Replace(".", "%2E");
+            => "http://localhost:5000/schema/" + typeof(T).ToString();
 
 
         private static ImmutableDictionary<string, string> DefaultHeaders = ImmutableDictionary<string, string>.Empty.Add("Accept", "application/json");
