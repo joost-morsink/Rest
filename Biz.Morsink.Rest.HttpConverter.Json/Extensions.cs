@@ -68,6 +68,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<Header>>();
             serviceCollection.AddJsonSchemaTranslator<OrReferenceConverter<AspNetCore.OpenApi.Schema>>();
             serviceCollection.AddJsonSchemaTranslator<RestValueConverter>();
+            serviceCollection.AddJsonSchemaTranslator<IdentityJsonSchemaTranslator>();
 
             serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
 

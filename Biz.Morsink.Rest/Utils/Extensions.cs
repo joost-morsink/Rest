@@ -211,6 +211,17 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
         public static RestValue<T> WithEmbeddings<T>(this RestValue<T> restValue, IEnumerable<object> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
+        /// <summary>
+        /// Executes an action if the response has a success result.
+        /// </summary>
+        /// <typeparam name="T">The type of the value.</typeparam>
+        /// <param name="response">The response.</param>
+        /// <param name="act">The action.</param>
+        public static void OnSuccess<T>(this RestResponse<T> response, Action<T> act)
+        {
+            if (response.Result is RestResult<T>.Success success)
+                act(success.Value);
+        }
 
         /// <summary>
         /// Checks whether a scope item exists.
@@ -290,6 +301,18 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A runner.</returns>
         public static Runner<T> With<T>(this IRestRequestScope scope, T item)
             => new Runner<T>(scope, item);
+
+        /// <summary>
+        /// Allocates a Runner. 
+        /// A runner is able to run a piece of code with a scope item, and restores the old situation after the run.
+        /// </summary>
+        /// <typeparam name="T">The type of the scope item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <param name="f">A function to modify the scope item.</param>
+        /// <param name="default">A default value to pass to the function.</param>
+        /// <returns>A runner.</returns>
+        public static Runner<T> With<T>(this IRestRequestScope scope, Func<T, T> f, T @default = default)
+            => new Runner<T>(scope, f(scope.TryGetScopeItem<T>(out var res) ? res : @default));
         /// <summary>
         /// A Runner is able to run a piece of code with a scope item, and restores the old situation after the run.
         /// </summary>

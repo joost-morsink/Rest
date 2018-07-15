@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.AspNetCore;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.HttpConverter.Json;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
@@ -86,6 +87,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             scope.With(scope.GetScopeItem<SerializationContext>().With(rv)).Run(() =>
             {
+                if (rv.Value is IHasIdentity hid)
+                    scope.ModifyScopeItem<SerializationContext>(c => c.Without(hid.Id));
+
                 var opts = options.Value;
                 if (opts.LinkLocation != null)
                 {
