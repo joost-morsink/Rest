@@ -235,6 +235,14 @@ namespace Biz.Morsink.Rest.Utils
             return @default;
         }
         /// <summary>
+        /// Gets an item from the scope, and throws an exception if it cannot find it.
+        /// </summary>
+        /// <typeparam name="T">The type of the item.</typeparam>
+        /// <param name="scope">The scope.</param>
+        /// <returns>A scope item of type T.</returns>
+        public static T GetScopeItem<T>(this IRestRequestScope scope)
+            => scope.TryGetScopeItem<T>(out var result) ? result : throw new IndexOutOfRangeException();
+        /// <summary>
         /// Gets an item from the scope, and adds one if it is not present yet.
         /// </summary>
         /// <typeparam name="T">The type of the item.</typeparam>

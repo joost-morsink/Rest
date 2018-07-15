@@ -13,6 +13,7 @@ using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.AspNetCore.Utils;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -23,14 +24,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         public const string MEDIA_TYPE = "application/json";
         private readonly IOptions<JsonHttpConverterOptions> options;
+        private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
+
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
         {
             this.options = options;
+            this.restRequestScopeAccessor = restRequestScopeAccessor;
         }
         /// <summary>
         /// Determines if the converter applies to the given HttpContext.
@@ -80,10 +84,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             using (var ms = new MemoryStream())
             {
-                using (var swri = new StreamWriter(ms))
-                using (var wri = new JsonTextWriter(swri))
-                    ser.Serialize(wri, value);
-
+                var context = SerializationContext.Create(IdentityProvider);
+                restRequestScopeAccessor.Scope.With(context).Run(() =>
+                {
+                    using (var swri = new StreamWriter(ms))
+                    using (var wri = new JsonTextWriter(swri))
+                        ser.Serialize(wri, value);
+                });
                 var body = ms.ToArray();
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
