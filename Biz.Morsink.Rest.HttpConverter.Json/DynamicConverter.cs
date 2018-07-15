@@ -21,26 +21,23 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
 
         /// <summary>
-        /// Returns the type of ExpandoObject.
-        /// </summary>
-        public Type ForType => typeof(ExpandoObject);
-
-        /// <summary>
         /// Returns null.
         /// Newtonsoft.Json handles serialization and deserialization of ExpandoObjects already.
         /// </summary>
         /// <returns>null.</returns>
-        public JsonConverter GetConverter()
+        public JsonConverter GetConverter(Type type)
             => null;
 
         /// <summary>
         /// Gets a schema for a generic (dynamic) object.
         /// </summary>
         /// <returns></returns>
-        public JsonSchema GetSchema()
-            => new JsonSchema(new JObject(
-                new JProperty("$schema", JsonSchema.JSON_SCHEMA_VERSION),
-                new JProperty("properties", new JObject()),
-                new JProperty("required", new JArray())));
+        public JsonSchema GetSchema(Type type)
+            => type == typeof(ExpandoObject)
+                ? new JsonSchema(new JObject(
+                    new JProperty("$schema", JsonSchema.JSON_SCHEMA_VERSION),
+                    new JProperty("properties", new JObject()),
+                    new JProperty("required", new JArray())))
+                : null;
     }
 }

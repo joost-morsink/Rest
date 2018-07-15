@@ -11,10 +11,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public interface IJsonSchemaProvider
     {
         /// <summary>
-        /// This method should return the corresponding JsonSchema object for some TypeDescriptor.
+        /// This method should return the corresponding JsonSchema object for some Type.
         /// </summary>
-        /// <param name="typeDescriptor">The type descriptor to get a schema for.</param>
-        /// <returns>A JsonSchema object that corresponds to the given TypeDescriptor.</returns>
-        JsonSchema GetSchema(TypeDescriptor typeDescriptor);
+        /// <param name="type">The type to get a schema for.</param>
+        /// <returns>A JsonSchema object that corresponds to the given Type.</returns>
+        JsonSchema GetSchema(Type type);
     }
 }

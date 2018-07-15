@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
-{ 
+{
     /// <summary>
     /// JsonConverter for OrReference&lt;T&gt;
     /// </summary>
@@ -26,18 +26,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
             this.schemaProvider = schemaProvider;
             this.typeDescriptorCreator = typeDescriptorCreator;
         }
-        public Type ForType => typeof(OrReference<T>);
-
         public override bool CanConvert(Type objectType)
-            => ForType == objectType;
+            => typeof(OrReference<T>) == objectType;
 
-        public JsonConverter GetConverter()
-            => this;
+        public JsonConverter GetConverter(Type type)
+            => type == typeof(OrReference<T>) ? this : null;
 
-        public JsonSchema GetSchema()
+        public JsonSchema GetSchema(Type type)
         {
-            var typedesc = typeDescriptorCreator.GetDescriptor(typeof(T));
-            var schema = schemaProvider.GetSchema(typedesc);
+            if (type != typeof(OrReference<T>))
+                return null;
+            var schema = schemaProvider.GetSchema(typeof(T));
             return new JsonSchema(new JObject(
                 new JProperty("oneOf", new JArray(
                     new JObject(
@@ -69,7 +68,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
                 writer.WritePropertyName("$ref");
                 writer.WriteValue(x.Reference.Ref);
                 writer.WriteEndObject();
-            }else 
+            }
+            else
                 serializer.Serialize(writer, x.Item);
         }
     }

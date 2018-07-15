@@ -8,26 +8,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
     /// <summary>
     /// OpenAPI Specification documents cannot be serialized in xml.
-    /// This class is designed to cause UnsupportedMediaTypeExceptions to make the Rest Asp.Net core module return status 415.
     /// </summary>
     public class OpenApiXmlSchemaTranslator : IXmlSchemaTranslator<Document>
     {
         /// <summary>
-        /// This translator applies to the OpenAPI Document class.
+        /// Returns null.
         /// </summary>
-        public Type ForType => typeof(Document);
+        public XmlSerializer.Typed<Document> GetConverter(Type type)
+            => null;
 
         /// <summary>
-        /// Throws an UnsupportedMediaTypeException.
+        /// Returns null.
         /// </summary>
-        public XmlSerializer.Typed<Document> GetConverter()
-            => throw new UnsupportedMediaTypeException();
-
-        /// <summary>
-        /// Throws an UnsupportedMediaTypeException.
-        /// </summary>
-        public XmlSchema GetSchema()
-            => throw new UnsupportedMediaTypeException();
+        public XmlSchema GetSchema(Type type)
+            => null;
 
         /// <summary>
         /// Empty implementation.
@@ -36,7 +30,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public void SetSerializer(XmlSerializer parent)
         { }
 
-        XmlSerializer.IForType IXmlSchemaTranslator.GetConverter()
-            => GetConverter();
+        XmlSerializer.IForType IXmlSchemaTranslator.GetConverter(Type type)
+            => GetConverter(type);
     }
 }

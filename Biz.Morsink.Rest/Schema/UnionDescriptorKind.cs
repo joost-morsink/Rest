@@ -28,10 +28,15 @@ namespace Biz.Morsink.Rest.Schema
                 return null;
             var ti = context.Type.GetTypeInfo();
             var rec = RecordDescriptorKind.Instance.GetDescriptor(creator, context);
-            TypeDescriptor res = new TypeDescriptor.Union(rec == null ? context.Type.ToString() : "", ti.DeclaredNestedTypes.Where(nt => nt.BaseType == context.Type && nt.IsPublic).Select(ty => creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type))));
+            TypeDescriptor res = new TypeDescriptor.Union(
+                rec == null ? context.Type.ToString() : "",
+                    from ty in ti.DeclaredNestedTypes
+                    where ty.BaseType == context.Type && ty.IsPublic
+                    select creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type)),
+                rec == null ? context.Type : null);
 
             if (rec != null)
-                res = new TypeDescriptor.Intersection(context.Type.ToString(), new[] { rec, res });
+                res = new TypeDescriptor.Intersection(context.Type.ToString(), new[] { rec, res }, context.Type);
 
             return res;
         }

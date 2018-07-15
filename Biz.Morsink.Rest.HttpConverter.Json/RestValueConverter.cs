@@ -36,22 +36,22 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             this.options = options;
         }
 
-        public Type ForType
-            => typeof(IRestValue);
-
         public override bool CanConvert(Type objectType)
-            => ForType.IsAssignableFrom(objectType);
+            => typeof(IRestValue).IsAssignableFrom(objectType);
 
-        public JsonConverter GetConverter()
-            => this;
+        public JsonConverter GetConverter(Type type)
+            => typeof(IRestValue).IsAssignableFrom(type) ? this : null;
 
         /// <summary>
         /// Getting the schema is not supported, because the value type is unknown.
         /// </summary>
-        /// <returns>Throws a NotSupportedException.</returns>
-        public JsonSchema GetSchema()
+        /// <returns>Null.</returns>
+        public JsonSchema GetSchema(Type type)
         {
-            throw new NotSupportedException();
+            if (!typeof(IRestValue).IsAssignableFrom(type))
+                return null;
+            var valueType = type.GetGeneric(typeof(RestValue<>)) ?? typeof(object);
+            return schemaProvider.GetSchema(valueType);
         }
 
         public override bool CanRead => false;

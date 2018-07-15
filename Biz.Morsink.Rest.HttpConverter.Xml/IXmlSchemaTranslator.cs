@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     /// </summary>
     public interface IXmlSchemaTranslator : ISchemaTranslator<XmlSchema>
     {
-        XmlSerializer.IForType GetConverter();
+        XmlSerializer.IForType GetConverter(Type type);
         void SetSerializer(XmlSerializer parent);
     }
     /// <summary>
@@ -19,6 +19,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     /// <typeparam name="T">The type the translator applies to.</typeparam>
     public interface IXmlSchemaTranslator<T> : ISchemaTranslator<T, XmlSchema>, IXmlSchemaTranslator
     {
-        new XmlSerializer.Typed<T> GetConverter();
+        new XmlSerializer.Typed<T> GetConverter(Type type);
     }
 }

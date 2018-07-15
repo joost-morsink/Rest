@@ -27,7 +27,7 @@ namespace Biz.Morsink.Rest.Schema
             else
             {
                 var t = creator.GetReferableDescriptor(context.WithType(inner));
-                return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance });
+                return t == null ? null : new TypeDescriptor.Union(t.ToString() + "?", new TypeDescriptor[] { t, TypeDescriptor.Null.Instance }, context.Type);
             }
         }
         private static Type GetInner(Type type)

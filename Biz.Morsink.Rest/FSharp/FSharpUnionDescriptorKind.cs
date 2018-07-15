@@ -31,10 +31,10 @@ namespace Biz.Morsink.Rest.FSharp
             {
                 var opt = creator.GetDescriptor(context.Type.GetGenericArguments()[0]);
                 return TypeDescriptor.MakeUnion($"Optional<{opt.Name}>", new[]
-                {
+                    {
                         opt,
                         TypeDescriptor.Null.Instance
-                    });
+                    }, context.Type);
             }
             else
             {
@@ -49,8 +49,8 @@ namespace Biz.Morsink.Rest.FSharp
                                 new PropertyDescriptor<TypeDescriptor>(Tag, TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, c.Name),true)
                         }.Concat(
                             c.Parameters.Select(p => new PropertyDescriptor<TypeDescriptor>(p.Name.CasedToPascalCase(), creator.GetDescriptor(p.Type), true))
-                            )));
-                    return TypeDescriptor.MakeUnion(context.Type.ToString(), typeDescs);
+                            ), null));
+                    return TypeDescriptor.MakeUnion(context.Type.ToString(), typeDescs, context.Type);
                 }
             }
         }

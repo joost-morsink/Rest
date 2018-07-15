@@ -30,17 +30,17 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         /// <param name="typeDescriptor">The type descriptor to get a schema for.</param>
         /// <returns>A JsonSchema object that corresponds to the given TypeDescriptor.</returns>
-        public JsonSchema GetSchema(TypeDescriptor typeDescriptor)
+        public JsonSchema GetSchema(Type type)
         {
-            var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(typeDescriptor) == true);
+            var specific = translators.Value.Select(tr => tr.GetSchema(type)).Where(sch => sch != null).FirstOrDefault();
             if (specific == null)
             {
                 var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
-                var schema = visitor.Transform(typeDescriptor);
+                var schema = visitor.Transform(typeDescriptorCreator.GetDescriptor(type));
                 return new JsonSchema(schema);
             }
             else
-                return specific.GetSchema();
+                return specific;
         }
     }
 }

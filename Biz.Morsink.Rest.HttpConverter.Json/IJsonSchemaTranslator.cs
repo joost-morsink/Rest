@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <summary>
         /// Gets the JsonConverter for conversion of the type to and from Json.
         /// </summary>
-        JsonConverter GetConverter();
+        JsonConverter GetConverter(Type type);
     }
     /// <summary>
     /// This interface specifies types that convert objects to and from Json as well as providing a schema for those types.
