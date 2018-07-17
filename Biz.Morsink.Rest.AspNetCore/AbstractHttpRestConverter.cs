@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -29,6 +30,7 @@ namespace Biz.Morsink.Rest.AspNetCore
 
         public IRestIdentityProvider IdentityProvider { get; }
 
+        private readonly IRestRequestScopeAccessor scopeAccessor;
         private readonly IOptions<RestAspNetCoreOptions> options;
 
         /// <summary>
@@ -40,9 +42,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Constructor.
         /// </summary>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider, IOptions<RestAspNetCoreOptions> options)
+        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> options)
         {
             IdentityProvider = identityProvider;
+            this.scopeAccessor = scopeAccessor;
             this.options = options;
         }
         /// <summary>
@@ -59,6 +62,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A optionally mutated RestRequest.</returns>
         public virtual RestRequest ManipulateRequest(RestRequest req, HttpContext context)
         {
+            scopeAccessor.Scope.SetScopeItem(IdentityProvider.Prefixes.Copy());
+
             Lazy<byte[]> body = new Lazy<byte[]>(() =>
             {
                 using (var ms = new MemoryStream())
@@ -68,7 +73,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
             });
             if (SupportsCuries)
-                ParseCurieHeaders(context.Request, context.RequestServices.GetRequiredService<RestPrefixContainer>());
+                ParseCurieHeaders(context.Request, scopeAccessor.Scope.GetScopeItem<RestPrefixContainer>());
             return new RestRequest(req.Capability, req.Address, req.Parameters, ty => ParseBody(ty, body.Value), req.Metadata);
         }
         /// <summary>
@@ -99,11 +104,12 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 ApplyHeaders(context.Response, response, rv,
                     SupportsCuries && options.Value.UseCuries
-                    ? context.RequestServices.GetRequiredService<RestPrefixContainer>()
+                    ? scopeAccessor.Scope.GetScopeItem<RestPrefixContainer>()
                     : null);
-            
+
                 await WriteValue(context.Response.Body, response, response.UntypedResult, rv);
-            } else
+            }
+            else
             {
                 await WriteResult(context.Response.Body, response, response.UntypedResult);
             }
@@ -214,8 +220,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="response">The response containing the value.</param>
         /// <param name="result">The result containing the value.</param>
         /// <returns>A Task.</returns>
-        protected virtual Task WriteResult(Stream bodyStream, RestResponse response, IRestResult result) 
-            => Task.CompletedTask; 
+        protected virtual Task WriteResult(Stream bodyStream, RestResponse response, IRestResult result)
+            => Task.CompletedTask;
 
         protected virtual void ManipulateHttpContext(RestResponse response, HttpContext context)
         {

@@ -31,7 +31,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions)
+            : base(provider, restRequestScopeAccessor, restOptions)
         {
             this.options = options;
             this.restRequestScopeAccessor = restRequestScopeAccessor;

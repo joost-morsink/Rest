@@ -1,9 +1,11 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore;
+using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
@@ -12,11 +14,12 @@ namespace Biz.Morsink.Rest.HttpConverter
     {
         private readonly JsonConverter inner;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
-
-        public HasIdentityConverterDecorator(JsonConverter inner, IRestRequestScopeAccessor restRequestScopeAccessor)
+        private readonly ITypeRepresentation identityRepresentation;
+        public HasIdentityConverterDecorator(JsonConverter inner, IRestRequestScopeAccessor restRequestScopeAccessor, IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             this.inner = inner;
             this.restRequestScopeAccessor = restRequestScopeAccessor;
+            identityRepresentation = typeRepresentations.First(repr => repr.IsRepresentable(typeof(IIdentity)));
         }
         public override bool CanRead => inner?.CanRead ?? true;
         public override bool CanWrite => inner?.CanWrite ?? true;
@@ -30,9 +33,13 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             if (value is IHasIdentity hid)
             {
-                restRequestScopeAccessor.Scope
-                    .With<SerializationContext>(ctx => ctx.Without(hid.Id))
-                    .Run(() => inner.WriteJson(writer, value, serializer));
+                var scope = restRequestScopeAccessor.Scope;
+                var ctx = scope.GetScopeItem<SerializationContext>();
+                if (ctx.IsInParentChain(hid.Id))
+                    serializer.Serialize(writer, hid.Id);
+                else 
+                    scope.With(ctx.Without(hid.Id).WithParent(hid.Id))
+                        .Run(() => inner.WriteJson(writer, value, serializer));
             }
             else
                 inner.WriteJson(writer, value, serializer);

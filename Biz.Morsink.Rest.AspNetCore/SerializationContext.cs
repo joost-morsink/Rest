@@ -14,22 +14,24 @@ namespace Biz.Morsink.Rest.AspNetCore
     {
         protected IRestIdentityProvider IdentityProvider { get; }
         protected ImmutableDictionary<IIdentity, object> Embeddings { get; }
+        protected ImmutableStack<IIdentity> ParentChain { get; }
 
         /// <summary>
         /// Creates a new and empty SerializationContext.
         /// </summary>
         /// <param name="identityProvider">The Rest identity provider to use for resolving and creating IIdentities.</param>
         /// <returns>A new and empty SerializationContext.</returns>
-        public static SerializationContext Create(IRestIdentityProvider identityProvider) => new SerializationContext(identityProvider, null);
+        public static SerializationContext Create(IRestIdentityProvider identityProvider) => new SerializationContext(identityProvider, null, null, null);
 
-        protected SerializationContext(IRestIdentityProvider identityProvider, SerializationContext previous, ImmutableDictionary<IIdentity, object> embeddings = null)
+        protected SerializationContext(IRestIdentityProvider identityProvider, SerializationContext previous, ImmutableDictionary<IIdentity, object> embeddings, ImmutableStack<IIdentity> parentChain)
         {
             Parent = previous;
             IdentityProvider = identityProvider;
             Embeddings = embeddings ?? ImmutableDictionary<IIdentity, object>.Empty;
+            ParentChain = parentChain ?? ImmutableStack<IIdentity>.Empty; 
         }
-        protected virtual SerializationContext New(ImmutableDictionary<IIdentity, object> embeddings = null)
-            => new SerializationContext(IdentityProvider, this, embeddings ?? Embeddings);
+        protected virtual SerializationContext New(ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null)
+            => new SerializationContext(IdentityProvider, this, embeddings ?? Embeddings, parentChain ?? ParentChain);
 
         /// <summary>
         /// Adds a Rest Value to the lexical scope of the Hal (de-)serialization process.
@@ -73,5 +75,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         public bool TryGetEmbedding(IIdentity id, out object result)
             => Embeddings.TryGetValue(IdentityProvider.Translate(id), out result);
 
+        public bool IsInParentChain(IIdentity id)
+            => ParentChain.Contains(id);
+        public SerializationContext WithParent(IIdentity id)
+            => New(parentChain: ParentChain.Push(id));
     }
 }

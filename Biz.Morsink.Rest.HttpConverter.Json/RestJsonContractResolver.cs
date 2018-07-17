@@ -66,7 +66,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 contract.Converter = contract.Converter
                     ?? new DefaultJsonConverterForObjectContract(objContract, objectType, this.CreateProperties(objectType, MemberSerialization.OptOut));
                 if (typeof(IHasIdentity).IsAssignableFrom(objectType))
-                    contract.Converter = new HasIdentityConverterDecorator(contract.Converter, restRequestScopeAccessor);
+                    contract.Converter = new HasIdentityConverterDecorator(contract.Converter, restRequestScopeAccessor, typeRepresentations);
             }
             return contract;
         }

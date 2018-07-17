@@ -59,7 +59,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                 if (parent.jsonOptions.Value.EmbedEmbeddings
                     && scope.TryGetScopeItem<SerializationContext>(out var ctx)
                     && ctx.TryGetEmbedding((IIdentity)value, out var embedding))
-                    scope.With<SerializationContext>(c => c.Without((IIdentity)value))
+                    scope.With(ctx.Without((IIdentity)value))
                         .Run(() => serializer.Serialize(writer, embedding));
                 else
                     serializer.Serialize(writer, parent.representation.GetRepresentation(value));

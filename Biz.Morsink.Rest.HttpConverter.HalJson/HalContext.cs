@@ -18,12 +18,12 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <returns>A new and empty HalContext.</returns>
         public static new HalContext Create(IRestIdentityProvider identityProvider) => new HalContext(identityProvider, null);
 
-        private HalContext(IRestIdentityProvider identityProvider, HalContext previous, ImmutableDictionary<IIdentity, object> embeddings = null)
-            : base(identityProvider, previous, embeddings)
+        private HalContext(IRestIdentityProvider identityProvider, HalContext previous, ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null)
+            : base(identityProvider, previous, embeddings, parentChain)
         {
         }
-        protected override SerializationContext New(ImmutableDictionary<IIdentity, object> embeddings = null)
-            => new HalContext(IdentityProvider, this, embeddings ?? Embeddings);
+        protected override SerializationContext New(ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null)
+            => new HalContext(IdentityProvider, this, embeddings ?? Embeddings, parentChain ?? ParentChain);
         /// <summary>
         /// Adds a Rest Value to the lexical scope of the Hal (de-)serialization process.
         /// </summary>

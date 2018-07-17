@@ -21,6 +21,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         private readonly IJsonSchemaProvider schemaProvider;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
+        private readonly IRestIdentityProvider identityProvider;
         private readonly IOptions<JsonHttpConverterOptions> options;
 
         /// <summary>
@@ -29,11 +30,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="typeDescriptorCreator">A Type descriptor creator.</param>
         /// <param name="schemaProvider">A Json schema provider.</param>
         /// <param name="options">Options for the Json Http converter component.</param>
-        public RestValueConverter(TypeDescriptorCreator typeDescriptorCreator, IJsonSchemaProvider schemaProvider, IRestRequestScopeAccessor restRequestScopeAccessor, IOptions<JsonHttpConverterOptions> options)
+        public RestValueConverter(TypeDescriptorCreator typeDescriptorCreator, IJsonSchemaProvider schemaProvider, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider identityProvider, IOptions<JsonHttpConverterOptions> options)
         {
             this.schemaProvider = schemaProvider;
             this.typeDescriptorCreator = typeDescriptorCreator;
             this.restRequestScopeAccessor = restRequestScopeAccessor;
+            this.identityProvider = identityProvider;
             this.options = options;
         }
 
@@ -84,8 +86,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             var scope = restRequestScopeAccessor.Scope;
             var rv = (IRestValue)value;
+            scope.With(ctx => ctx.With(rv), SerializationContext.Create(identityProvider))
+                .Run(() => innerWrite());
 
-            scope.With(scope.GetScopeItem<SerializationContext>().With(rv)).Run(() =>
+            void innerWrite()
             {
                 if (rv.Value is IHasIdentity hid)
                     scope.ModifyScopeItem<SerializationContext>(c => c.Without(hid.Id));
@@ -99,7 +103,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 }
                 else
                     serializer.Serialize(writer, rv.Value, rv.ValueType);
-            });
+            }
         }
     }
 }
