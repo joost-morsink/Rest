@@ -1,20 +1,15 @@
 ﻿using Biz.Morsink.Identity;
-using Biz.Morsink.Rest.AspNetCore;
+using Biz.Morsink.Identity.PathProvider;
+using Biz.Morsink.Rest.Schema;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Biz.Morsink.Rest.Schema;
-using Microsoft.Extensions.Options;
 using System.Linq;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
-    using Biz.Morsink.Identity.PathProvider;
-    using Biz.Morsink.Rest.Utils;
-    using Newtonsoft.Json;
-    using System.Reflection;
     using static Biz.Morsink.Rest.FSharp.Utils;
     /// <summary>
     /// A Json Contract Resolver for Rest. 
@@ -125,7 +120,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                     values[prop.PropertyName] = val;
                     reader.Read();
                 }
-                res = contract.OverrideCreator(contract.CreatorParameters.Select(cp => values[cp.PropertyName]).ToArray());
+                res = contract.OverrideCreator(contract.CreatorParameters.Select(cp => GetOrDefault(values, cp.PropertyName, cp.DefaultValue)).ToArray());
                 foreach (var cp in contract.CreatorParameters)
                 {
                     values.Remove(cp.PropertyName);
@@ -133,6 +128,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 foreach (var kvp in values)
                     indexedProperties[kvp.Key].ValueProvider.SetValue(res, kvp.Value);
                 return res;
+
+                V GetOrDefault<K, V>(Dictionary<K, V> dictionary, K key, V defaultValue)
+                    => dictionary.TryGetValue(key, out var x) ? x : defaultValue;
             }
 
             private object DefaultRead(JsonReader reader, JsonSerializer serializer)
