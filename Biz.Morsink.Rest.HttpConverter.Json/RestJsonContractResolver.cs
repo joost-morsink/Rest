@@ -69,20 +69,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             if (contract is JsonObjectContract objContract)
             {
                 contract.Converter = contract.Converter
-                    ?? new DefaultJsonConverter(objContract, objectType, this.CreateProperties(objectType, MemberSerialization.OptOut));
+                    ?? new DefaultJsonConverterForObjectContract(objContract, objectType, this.CreateProperties(objectType, MemberSerialization.OptOut));
                 if (typeof(IHasIdentity).IsAssignableFrom(objectType))
                     contract.Converter = new HasIdentityConverterDecorator(contract.Converter, restRequestScopeAccessor);
             }
             return contract;
         }
-        private class DefaultJsonConverter : JsonConverter
+        private class DefaultJsonConverterForObjectContract : JsonConverter
         {
             private readonly IList<JsonProperty> properties;
             private readonly Dictionary<string, JsonProperty> indexedProperties;
             private readonly JsonObjectContract contract;
             private readonly Type type;
 
-            public DefaultJsonConverter(JsonObjectContract contract, Type type, IList<JsonProperty> properties)
+            public DefaultJsonConverterForObjectContract(JsonObjectContract contract, Type type, IList<JsonProperty> properties)
             {
                 this.contract = contract;
                 this.type = type;
@@ -95,12 +95,51 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
+                object res;
+
                 if (reader.TokenType == JsonToken.Null)
                     return null;
                 if (reader.TokenType != JsonToken.StartObject)
                     throw new JsonSerializationException();
                 reader.Read();
-                var res = contract.DefaultCreator();
+
+                res = DefaultRead(reader, serializer) ?? ImmutableRead(reader, serializer);
+
+                if (reader.TokenType != JsonToken.EndObject)
+                    throw new JsonSerializationException();
+
+                return res;
+            }
+
+            private object ImmutableRead(JsonReader reader, JsonSerializer serializer)
+            {
+                object res;
+                if (contract.OverrideCreator == null)
+                    contract.OverrideCreator = parameters => Activator.CreateInstance(contract.UnderlyingType, parameters);
+                var values = new Dictionary<string, object>(CaseInsensitiveEqualityComparer.Instance);
+                while (reader.TokenType == JsonToken.PropertyName)
+                {
+                    var prop = indexedProperties[reader.Value.ToString()];
+                    reader.Read();
+                    var val = serializer.Deserialize(reader, prop.PropertyType);
+                    values[prop.PropertyName] = val;
+                    reader.Read();
+                }
+                res = contract.OverrideCreator(contract.CreatorParameters.Select(cp => values[cp.PropertyName]).ToArray());
+                foreach (var cp in contract.CreatorParameters)
+                {
+                    values.Remove(cp.PropertyName);
+                }
+                foreach (var kvp in values)
+                    indexedProperties[kvp.Key].ValueProvider.SetValue(res, kvp.Value);
+                return res;
+            }
+
+            private object DefaultRead(JsonReader reader, JsonSerializer serializer)
+            {
+                if (contract.DefaultCreator == null)
+                    return null;
+                object res = contract.DefaultCreator();
                 while (reader.TokenType == JsonToken.PropertyName)
                 {
                     var prop = indexedProperties[reader.Value.ToString()];
@@ -109,8 +148,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                     prop.ValueProvider.SetValue(res, val);
                     reader.Read();
                 }
-                if (reader.TokenType != JsonToken.EndObject)
-                    throw new JsonSerializationException();
 
                 return res;
             }
@@ -120,19 +157,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 writer.WriteStartObject();
                 foreach (var prop in properties)
                 {
-                    //var pi = type.GetTypeInfo()
-                    //    .Iterate(ti => ti.BaseType.GetTypeInfo())
-                    //    .TakeWhile(ti => ti!=typeof(object))
-                    //    .SelectMany(ti => ti.DeclaredProperties)
-                    //    .Where(p => CaseInsensitiveEqualityComparer.Instance.Equals(p.Name, prop.PropertyName) && !p.GetMethod.IsStatic && p.GetMethod.IsPublic)
-                    //    .First();
-                    //.GetProperty(prop.PropertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
                     var val = prop.ValueProvider.GetValue(value);
                     if (val != null)
                     {
                         writer.WritePropertyName(prop.PropertyName);
                         serializer.Serialize(writer, val);
-                        //prop.Converter.WriteJson(writer, val, serializer);
                     }
                 }
                 writer.WriteEndObject();
