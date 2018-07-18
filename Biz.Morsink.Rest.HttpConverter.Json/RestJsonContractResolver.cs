@@ -70,6 +70,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             }
             return contract;
         }
+        /// <summary>
+        /// An implementation of the JsonConverter class that should implement the basic property-based serialization of regular objects.
+        /// </summary>
         private class DefaultJsonConverterForObjectContract : JsonConverter
         {
             private readonly IList<JsonProperty> properties;

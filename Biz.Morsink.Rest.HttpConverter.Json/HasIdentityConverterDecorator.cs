@@ -10,11 +10,20 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
 {
+    /// <summary>
+    /// A decorating JsonConverter for handling instances of IHasIdentity.
+    /// </summary>
     public class HasIdentityConverterDecorator : JsonConverter
     {
         private readonly JsonConverter inner;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
         private readonly ITypeRepresentation identityRepresentation;
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="inner">The JsonConverter that is being decorated/</param>
+        /// <param name="restRequestScopeAccessor">A Rest request scope accessor.</param>
+        /// <param name="typeRepresentations">A collection of type representations/</param>
         public HasIdentityConverterDecorator(JsonConverter inner, IRestRequestScopeAccessor restRequestScopeAccessor, IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             this.inner = inner;
@@ -29,6 +38,13 @@ namespace Biz.Morsink.Rest.HttpConverter
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             => inner.ReadJson(reader, objectType, existingValue, serializer);
 
+        /// <summary>
+        /// This method stores the identity of the IHasIdentity instance in the parent chain of the current SerializationContext.
+        /// It also only writes out the identity value if the instance is in the parent chain of the current SerializationContext.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="value"></param>
+        /// <param name="serializer"></param>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             if (value is IHasIdentity hid)

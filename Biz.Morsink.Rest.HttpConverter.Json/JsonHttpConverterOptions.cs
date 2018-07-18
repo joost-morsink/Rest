@@ -9,6 +9,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverterOptions
     {
+        /// <summary>
+        /// Constructor.
+        /// Sets the ReferenceLoopHandling to Serialize.
+        /// This circumvents some JsonSerializationExceptions occurring due to overly anxious circular reference checks.
+        /// </summary>
         public JsonHttpConverterOptions()
         {
             SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize; // Needed for identity based embeddings.

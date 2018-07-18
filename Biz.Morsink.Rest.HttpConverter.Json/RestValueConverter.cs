@@ -39,16 +39,26 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             this.options = options;
         }
 
+        /// <summary>
+        /// Conversion is supported for types that implement IRestValue.
+        /// </summary>
+        /// <param name="objectType">The type to check.</param>
+        /// <returns>True if the type implements IRestValue, false otherwise.</returns>
         public override bool CanConvert(Type objectType)
             => typeof(IRestValue).IsAssignableFrom(objectType);
 
+        /// <summary>
+        /// Gets a JsonConverter for the Rest value type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>This if the type implements IRestValue, null otherwise.</returns>
         public JsonConverter GetConverter(Type type)
             => typeof(IRestValue).IsAssignableFrom(type) ? this : null;
 
         /// <summary>
-        /// Getting the schema is not supported, because the value type is unknown.
+        /// Gets a JsonSchema for the Rest value type.
         /// </summary>
-        /// <returns>Null.</returns>
+        /// <returns>A schema if the type implements IRestValue, null otherwise.</returns>
         public JsonSchema GetSchema(Type type)
         {
             if (!typeof(IRestValue).IsAssignableFrom(type))

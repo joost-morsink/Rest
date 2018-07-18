@@ -11,6 +11,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
 {
+    /// <summary>
+    /// An IJsonSchemaTranslator implementation for identity values.
+    /// </summary>
     public class IdentityJsonSchemaTranslator : IJsonSchemaTranslator
     {
         private readonly IJsonSchemaProvider schemaProvider;
@@ -18,6 +21,16 @@ namespace Biz.Morsink.Rest.HttpConverter
         private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
         private readonly IdentityRepresentation representation;
 
+        /// <summary>
+        /// Cosntructor.
+        /// </summary>
+        /// <param name="schemaProvider">A Json schema provider.</param>
+        /// <param name="scopeAccessor">A Rest request scope accessor.</param>
+        /// <param name="identityProvider">An identity provider.</param>
+        /// <param name="prefixContainerAccessor">A Rest prefix container accessor.</param>
+        /// <param name="options">Rest options.</param>
+        /// <param name="jsonOptions">Json Http converter options.</param>
+        /// <param name="currentHttpRestConverterAccessor">A current Http Rest converter accessor.</param>
         public IdentityJsonSchemaTranslator(IJsonSchemaProvider schemaProvider, IRestRequestScopeAccessor scopeAccessor, IRestIdentityProvider identityProvider, IRestPrefixContainerAccessor prefixContainerAccessor, IOptions<RestAspNetCoreOptions> options, IOptions<JsonHttpConverterOptions> jsonOptions, ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor)
         {
             this.schemaProvider = schemaProvider;
@@ -25,9 +38,19 @@ namespace Biz.Morsink.Rest.HttpConverter
             this.jsonOptions = jsonOptions;
             representation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
         }
+        /// <summary>
+        /// Gets a JsonConverter for a type that is consistent with a produced schema.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>A JsonConverter for a type that's assignable to IIdentity, null otherwise.</returns>
         public JsonConverter GetConverter(Type type)
             => typeof(IIdentity).IsAssignableFrom(type) ? new Converter(this, type) : null;
 
+        /// <summary>
+        /// Gets a Json Schema object for a specified type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>A JsonSchema for a type that's assignable to IIdentity, null otherwise.</returns>
         public JsonSchema GetSchema(Type type)
             => typeof(IIdentity).IsAssignableFrom(type) ? schemaProvider.GetSchema(representation.GetRepresentationType(typeof(IIdentity))) : null;
 

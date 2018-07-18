@@ -75,8 +75,18 @@ namespace Biz.Morsink.Rest.AspNetCore
         public bool TryGetEmbedding(IIdentity id, out object result)
             => Embeddings.TryGetValue(IdentityProvider.Translate(id), out result);
 
+        /// <summary>
+        /// Checks if serialization is currently (deep) serializing the contents of an object with a specified identity value.
+        /// </summary>
+        /// <param name="id">The identity value to check.</param>
+        /// <returns>True if serialization is currently (deep) serializing the contents of an object with the specified identity value.</returns>
         public bool IsInParentChain(IIdentity id)
             => ParentChain.Contains(id);
+        /// <summary>
+        /// Adds an identity value to the 'parent-chain'.
+        /// </summary>
+        /// <param name="id">The identity value to add.</param>
+        /// <returns>A new SerializationContext with the specified identity value added to the parent chain.</returns>
         public SerializationContext WithParent(IIdentity id)
             => New(parentChain: ParentChain.Push(id));
     }
