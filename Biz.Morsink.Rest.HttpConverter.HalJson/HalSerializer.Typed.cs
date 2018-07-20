@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -475,12 +476,14 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 private readonly Type valueType;
                 private readonly Func<HalContext, T, JToken> serializer;
                 private readonly Func<HalContext, JToken, T> deserializer;
+                private readonly Type kind;
+
                 public Dictionary(HalSerializer parent) : base(parent)
                 {
-
                     var (keyType, valueType) = typeof(T).GetGenerics2(typeof(IDictionary<,>));
                     if (keyType == null || keyType != typeof(string) || valueType == null)
                         throw new ArgumentException("Generic type is not a proper dictionary");
+                    kind = typeof(T).IsGenericType ? typeof(T).GetGenericTypeDefinition() : typeof(T);
                     this.valueType = valueType;
                     serializer = MakeSerializer();
                     deserializer = MakeDeserializer();
@@ -494,22 +497,29 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 {
                     var ctx = Ex.Parameter(typeof(HalContext), "ctx");
                     var input = Ex.Parameter(typeof(JToken), "input");
+                    var @class = kind == typeof(IDictionary<,>) || kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                        ? typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType)
+                        : typeof(T);
                     var result = Ex.Parameter(typeof(T), "result");
                     var props = Ex.Parameter(typeof(IEnumerable<JProperty>), "props");
                     if (valueType == typeof(object))
                     {
                         var block = Ex.Block(new[] { result, props },
-                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(result, Ex.New(@class)),
                             Ex.Assign(props, Ex.Convert(Ex.Call(input, nameof(JToken.Children), new[] { typeof(JProperty) }), typeof(IEnumerable<JProperty>))),
                             props.Foreach(prop =>
-                                Ex.Call(Ex.Convert(result, typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(result, nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(prop, nameof(JProperty.Name)),
                                     Ex.Condition(Ex.TypeIs(Ex.Property(prop, nameof(JProperty.Value)), typeof(JObject)),
                                         Ex.Convert(Ex.Call(Ex.Constant(this), nameof(Deserialize), Type.EmptyTypes,
                                             ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object)),
                                         Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), Type.EmptyTypes,
                                             Ex.Constant(typeof(string)), ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object))))),
-                            result);
+                            Ex.Convert(
+                                kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                                    ? (Ex)Ex.Call(typeof(ImmutableDictionary), nameof(ImmutableDictionary.ToImmutableDictionary), new[] { typeof(string), valueType }, result)
+                                    : result,
+                                typeof(T)));
 
                         var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
                         return lambda.Compile();
@@ -517,14 +527,18 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     else
                     {
                         var block = Ex.Block(new[] { result, props },
-                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(result, Ex.New(@class)),
                             Ex.Assign(props, Ex.Convert(Ex.Call(input, nameof(JToken.Children), new[] { typeof(JProperty) }), typeof(IEnumerable<JProperty>))),
                             props.Foreach(prop =>
-                                Ex.Call(Ex.Convert(result, typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(result, nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(prop, nameof(JProperty.Name)),
-                                    Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { valueType },
-                                        Ex.Constant(typeof(string)), ctx, Ex.Property(prop, nameof(JProperty.First))), typeof(object)))),
-                            result);
+                                    Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { valueType },
+                                        ctx, Ex.Property(prop, nameof(JProperty.First))))),
+                            Ex.Convert(
+                                kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                                    ? (Ex)Ex.Call(typeof(ImmutableDictionary), nameof(ImmutableDictionary.ToImmutableDictionary), new[] { typeof(string), valueType }, result)
+                                    : result,
+                                typeof(T)));
 
                         var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
                         return lambda.Compile();
