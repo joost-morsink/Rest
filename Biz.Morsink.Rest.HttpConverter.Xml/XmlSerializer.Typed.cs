@@ -66,7 +66,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     this.converter = converter;
                 }
 
-                public override T Deserialize(XElement e) => converter.Convert(e.Value).TryTo(out T res) ? res : default(T);
+                public override T Deserialize(XElement e) => converter.Convert(e.Value).TryTo(out T res) ? res : default;
                 public override XElement Serialize(T item)
                 {
                     var ty = item.GetType();
@@ -83,8 +83,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             public class Nullable : Typed<T>
             {
                 private readonly Type valueType;
-                private Func<T, XElement> serializer;
-                private Func<XElement, T> deserializer;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
 
                 /// <summary>
                 /// Constructor.
@@ -334,8 +334,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// </summary>
             public class Default : Typed<T>
             {
-                private Func<T, XElement> serializer;
-                private Func<XElement, T> deserializer;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
                 /// <summary>
                 /// Constructor.
                 /// </summary>
