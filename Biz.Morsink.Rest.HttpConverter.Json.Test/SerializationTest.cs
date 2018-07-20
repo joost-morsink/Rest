@@ -19,10 +19,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
     [TestClass]
     public class SerializationTest
     {
-        private TestRestRequestScopeAccessor restRequestScopeAccessor;
-        private TestOptions options;
-        private TestIdentityProvider identityProvider;
-        private RestJsonContractResolver resolver;
         private ServiceProvider serviceProvider;
         private JsonSerializer serializer;
 
