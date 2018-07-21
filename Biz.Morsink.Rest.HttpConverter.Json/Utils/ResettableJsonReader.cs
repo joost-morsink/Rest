@@ -14,15 +14,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
         private readonly List<Token> tokens;
         private int position;
         private bool resettable;
+        private readonly Token preToken;
         public ResettableJsonReader(JsonReader inner)
         {
             reader = inner;
             tokens = new List<Token>();
-            Reset();
             resettable = true;
+            position = -1;
+            preToken = new Token(reader);
         }
         private struct Token
         {
+            public Token(JsonReader r)
+                : this(r.TokenType, r.ValueType, r.Value, r.Path, r.Depth)
+            { }
             public Token(JsonToken tokenType, Type valueType, object value, string path, int depth)
             {
                 TokenType = tokenType;
@@ -43,7 +48,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
             {
                 if (reader.Read())
                 {
-                    tokens.Add(new Token(reader.TokenType, reader.ValueType, reader.Value, reader.Path, reader.Depth));
+                    tokens.Add(new Token(reader));
                     return true;
                 }
                 else
@@ -66,7 +71,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
             {
                 if (await reader.ReadAsync())
                 {
-                    tokens.Add(new Token(reader.TokenType, reader.ValueType, reader.Value, reader.Path, reader.Depth));
+                    tokens.Add(new Token(reader));
                     return true;
                 }
                 else
@@ -76,25 +81,35 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
                 return true;
         }
         public override string Path
-            => position >= 0 && position < tokens.Count
-                ? tokens[position].Path
-                : reader.Path;
+            => position < 0
+                ? preToken.Path
+                : position < tokens.Count
+                    ? tokens[position].Path
+                    : reader.Path;
         public override JsonToken TokenType
-            => position >= 0 && position < tokens.Count
-                ? tokens[position].TokenType
-                : reader.TokenType;
+            => position < 0
+                ? preToken.TokenType
+                : position < tokens.Count
+                    ? tokens[position].TokenType
+                    : reader.TokenType;
         public override Type ValueType
-            => position >= 0 && position < tokens.Count
-                ? tokens[position].ValueType
-                : reader.ValueType;
+            => position < 0
+                ? preToken.ValueType
+                : position < tokens.Count
+                    ? tokens[position].ValueType
+                    : reader.ValueType;
         public override object Value
-            => position >= 0 && position < tokens.Count
-                ? tokens[position].Value
-                : reader.Value;
+            => position < 0
+                ? preToken.Value
+                : position < tokens.Count
+                    ? tokens[position].Value
+                    : reader.Value;
         public override int Depth
-            => position >= 0 && position < tokens.Count
-                ? tokens[position].Depth
-                : reader.Depth;
+            => position < 0
+                ? preToken.Depth
+                : position < tokens.Count
+                    ? tokens[position].Depth
+                    : reader.Depth;
 
         public bool HasProperty(int level, string name)
         {
@@ -102,7 +117,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
             bool success = false;
             do
             {
-                Read();
                 switch (TokenType)
                 {
                     case JsonToken.StartObject:
@@ -116,6 +130,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
                             success = true;
                         break;
                 }
+                if (depth > 0)
+                    Read();
             } while (depth > 0 && !success);
             Reset(true);
             return success;
