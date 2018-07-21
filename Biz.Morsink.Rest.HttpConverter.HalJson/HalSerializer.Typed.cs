@@ -500,7 +500,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     var @class = kind == typeof(IDictionary<,>) || kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
                         ? typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType)
                         : typeof(T);
-                    var result = Ex.Parameter(typeof(T), "result");
+                    var result = Ex.Parameter(@class, "result");
                     var props = Ex.Parameter(typeof(IEnumerable<JProperty>), "props");
                     if (valueType == typeof(object))
                     {

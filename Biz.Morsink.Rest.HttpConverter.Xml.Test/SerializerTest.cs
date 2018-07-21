@@ -3,6 +3,7 @@ using Biz.Morsink.Rest.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -152,6 +153,55 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
             }
             else
                 Assert.Fail();
+        }
+        [TestMethod]
+        public void XmlSerializer_SortedDictionaries()
+        {
+            var sortedDictioary = new SortedDictionary<string, string>()
+            {
+                ["A"] = "1",
+                ["B"] = "abc",
+                ["C"] = "42x"
+            };
+            CheckDictionary<SortedDictionary<string, string>, string>(sortedDictioary);
+            var sortedDictioary2 = new SortedDictionary<string, object>()
+            {
+                ["A"] = "1",
+                ["B"] = "abc",
+                ["C"] = new SortedDictionary<string, object>()
+                {
+                    ["D"]="x",
+                    ["E"]="y"
+                }
+            };
+            CheckDictionary<SortedDictionary<string, object>, object>(sortedDictioary2);
+        }
+        [TestMethod]
+        public void XmlSerializer_ImmutableDictionaries() {
+
+            var immutableDictionary = ImmutableDictionary<string, string>.Empty
+                .Add("A", "1")
+                .Add("B", "2")
+                .Add("C", "3")
+                .Add("D", "4");
+            CheckDictionary<ImmutableDictionary<string, string>, string>(immutableDictionary);
+            var immutableDictionary2 = ImmutableDictionary<string, object>.Empty
+                 .Add("A", "1")
+                 .Add("B", "2")
+                 .Add("C", ImmutableDictionary<string,object>.Empty.Add("E","abc").Add("F","xyz"))
+                 .Add("D", "4");
+            CheckDictionary<ImmutableDictionary<string, object>, object>(immutableDictionary2);
+        }
+        private void CheckDictionary<T, V>(T x)
+            where T : IReadOnlyDictionary<string, V>
+        {
+            var xml = serializer.Serialize(x);
+            Assert.AreEqual(x.Count, xml.Elements().Count());
+            Assert.IsTrue(x.Keys.All(key => xml.Element(key) != null));
+
+            var dict = serializer.Deserialize<T>(xml);
+            Assert.AreEqual(x.Count, dict.Count);
+            Assert.IsTrue(dict.Keys.All(key => x.ContainsKey(key)));
         }
         public class Container
         {
