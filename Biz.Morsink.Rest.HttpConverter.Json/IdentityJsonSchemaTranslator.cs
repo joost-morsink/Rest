@@ -1,12 +1,16 @@
 ﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Identity.PathProvider;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.HttpConverter.Json;
+using Biz.Morsink.Rest.HttpConverter.Utils;
 using Biz.Morsink.Rest.Utils;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
@@ -72,9 +76,21 @@ namespace Biz.Morsink.Rest.HttpConverter
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
-                var rep = serializer.Deserialize(reader, parent.representation.GetRepresentationType(identityType));
-                return rep == null ? null : parent.representation.GetRepresentable(rep);
+                var rdr = new ResettableJsonReader(reader);
+
+                if (rdr.HasProperty(1, "href"))
+                {
+                    var rep = serializer.Deserialize(rdr, parent.representation.GetRepresentationType(identityType));
+                    return rep == null ? null : parent.representation.GetRepresentable(rep);
+                }
+                else
+                {
+                    var ent = serializer.Deserialize(rdr, entityType) as IHasIdentity;
+                    return ent?.Id;
+                }
             }
+
+
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
             {
