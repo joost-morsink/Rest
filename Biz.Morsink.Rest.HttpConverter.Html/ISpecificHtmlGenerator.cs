@@ -31,6 +31,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         /// </summary>
         /// <param name="value">A Rest value.</param>
         /// <returns>An Html representation of the Rest value.</returns>
-        string GenerateHtml(RestValue<T> value);
+        string GenerateHtml(IRestValue<T> value);
     }
 }

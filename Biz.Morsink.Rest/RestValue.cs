@@ -12,10 +12,10 @@ namespace Biz.Morsink.Rest
     /// A structure containing all the necessary components to form a Rest value.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct RestValue<T> : IRestValue
+    public class RestValue<T> : IRestValue<T>
     {
         /// <summary>
-        /// 
+        /// Constructor.
         /// </summary>
         /// <param name="value"></param>
         public RestValue(T value)
@@ -74,26 +74,10 @@ namespace Biz.Morsink.Rest
         IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<object>> embeddings)
             => Manipulate(links == null ? (Func<RestValue<T>, IEnumerable<Link>>)null : rv => links(rv),
                 embeddings == null ? (Func<RestValue<T>, IEnumerable<object>>)null : rv => embeddings(rv));
-        /// <summary>
-        /// Converts the value to a successful RestResult.
-        /// </summary>
-        /// <returns>A successful RestResult.</returns>
-        public RestResult<T>.Success ToResult()
-            => new RestResult<T>.Success(this);
-        /// <summary>
-        /// Converts the value to a successful RestResponse.
-        /// </summary>
-        /// <param name="metadata">Optional metadata collection for the response.</param>
-        /// <returns>A successful RestResponse.</returns>
-        public RestResponse<T> ToResponse(TypeKeyedDictionary metadata = null)
-            => ToResult().ToResponse(metadata);
-        /// <summary>
-        /// Converts the value to a ValueTask containing a successful RestResponse.
-        /// </summary>
-        /// <param name="metadata">Optional metadata collection for the response.</param>
-        /// <returns>A successful RestResponse wrapped in a ValueTask.</returns>
-        public ValueTask<RestResponse<T>> ToResponseAsync(TypeKeyedDictionary metadata = null)
-            => ToResponse(metadata).ToAsync();
+        IRestValue<T> IRestValue<T>.Manipulate(Func<IRestValue<T>, IEnumerable<Link>> links, Func<IRestValue<T>, IEnumerable<object>> embeddings)
+            => Manipulate(links == null ? (Func<RestValue<T>, IEnumerable<Link>>)null : rv => links(rv),
+                embeddings == null ? (Func<RestValue<T>, IEnumerable<object>>)null : rv => embeddings(rv));
+
         /// <summary>
         /// Create a Builder for a RestValue&lt;T&gt;
         /// </summary>

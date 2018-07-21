@@ -200,6 +200,42 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="restValue">The original Rest Value.</param>
         /// <param name="links">The set of links to put on the new Rest Value.</param>
         /// <returns>A new Rest Value with the specified set of links.</returns>
+        public static IRestValue<T> WithLinks<T>(this IRestValue<T> restValue, IEnumerable<Link> links)
+            => restValue.Manipulate(_ => links, rv => rv.Embeddings);
+        /// <summary>
+        /// Constructs a new Rest Value with an added set of links.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="restValue">The original Rest Value.</param>
+        /// <param name="links">The set of links to add to the new Rest Value.</param>
+        /// <returns>A new Rest Value with the specified set of links added.</returns>
+        public static IRestValue<T> AddLinks<T>(this IRestValue<T> restValue, IEnumerable<Link> links)
+            => restValue.Manipulate(rv => rv.Links.Concat(links), rv => rv.Embeddings);
+        /// <summary>
+        /// Constructs a new Rest Value with an added link.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="restValue">The original Rest Value.</param>
+        /// <param name="links">The link to add to the new Rest Value.</param>
+        /// <returns>A new Rest Value with the specified link added.</returns>
+        public static IRestValue<T> AddLink<T>(this IRestValue<T> restValue, Link link)
+            => restValue.Manipulate(rv => rv.Links.Append(link), rv => rv.Embeddings);
+        /// <summary>
+        /// Constructs a new Rest Value with a different set of embeddings.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="restValue">The original Rest Value.</param>
+        /// <param name="embeddings">The set of embeddings to put on the new Rest Value.</param>
+        /// <returns>A new Rest Value with the specified set of embeddings.</returns>
+        public static IRestValue<T> WithEmbeddings<T>(this IRestValue<T> restValue, IEnumerable<object> embeddings)
+            => restValue.Manipulate(rv => rv.Links, _ => embeddings);
+        /// <summary>
+        /// Constructs a new Rest Value with a different set of links.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="restValue">The original Rest Value.</param>
+        /// <param name="links">The set of links to put on the new Rest Value.</param>
+        /// <returns>A new Rest Value with the specified set of links.</returns>
         public static RestValue<T> WithLinks<T>(this RestValue<T> restValue, IEnumerable<Link> links)
             => restValue.Manipulate(_ => links, rv => rv.Embeddings);
         /// <summary>
@@ -211,6 +247,49 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
         public static RestValue<T> WithEmbeddings<T>(this RestValue<T> restValue, IEnumerable<object> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
+        /// <summary>
+        /// Makes a rest value ready to accept lazily evaluated modifications.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="restValue">The original Rest Value.</param>
+        /// <returns>A lazy variant of the specified Rest value.</returns>
+        public static LazyRestValue<T> ToLazy<T>(this IRestValue<T> restValue)
+            => restValue as LazyRestValue<T> ?? new LazyRestValue<T>(() => restValue.Value, () => restValue.Links, () => restValue.Embeddings);
+        /// <summary>
+        /// Converts a Lazy of some Rest value to a LazyRestValue.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="lazyRestValue">A Lazy of some Rest value.</param>
+        /// <returns>A lazy variant of the specified Rest value.</returns>
+        public static LazyRestValue<T> ExtractLazy<T>(this Lazy<IRestValue<T>> lazyRestValue)
+            => new LazyRestValue<T>(() => lazyRestValue.Value.Value, () => lazyRestValue.Value.Links, () => lazyRestValue.Value.Embeddings);
+        /// <summary>
+        /// Converts the value to a successful RestResult.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="src">The rest value to convert.</param>
+        /// <returns>A successful RestResult.</returns>
+        public static RestResult<T>.Success ToResult<T>(this IRestValue<T> src)
+            => new RestResult<T>.Success(src);
+        /// <summary>
+        /// Converts the value to a successful RestResponse.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="src">The rest value to convert.</param>
+        /// <param name="metadata">Optional metadata collection for the response.</param>
+        /// <returns>A successful RestResponse.</returns>
+        public static RestResponse<T> ToResponse<T>(this IRestValue<T> src, TypeKeyedDictionary metadata = null)
+            => src.ToResult().ToResponse(metadata);
+        /// <summary>
+        /// Converts the value to a ValueTask containing a successful RestResponse.
+        /// </summary>
+        /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
+        /// <param name="src">The rest value to convert.</param>
+        /// <param name="metadata">Optional metadata collection for the response.</param>
+        /// <returns>A successful RestResponse wrapped in a ValueTask.</returns>
+        public static ValueTask<RestResponse<T>> ToResponseAsync<T>(this IRestValue<T> src, TypeKeyedDictionary metadata = null)
+            => src.ToResponse(metadata).ToAsync();
+
         /// <summary>
         /// Executes an action if the response has a success result.
         /// </summary>

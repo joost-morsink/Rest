@@ -26,7 +26,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         private static MethodInfo makeMultiMethod;
 
 
-        public override string GenerateHtml(RestValue<T> value)
+        public override string GenerateHtml(IRestValue<T> value)
         {
 
             return string.Format( 

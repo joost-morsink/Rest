@@ -340,18 +340,25 @@ namespace Biz.Morsink.Rest
         private static Ex WrapExpression(Ex expression, Type retType)
         {
             var (asyncConstructor, restConstructor, inner) = SplitTypes(retType);
+            var restValueParameter = restConstructor?.ContainsGenericParameters == true
+                ? restConstructor.MakeGenericType(inner).GetGeneric(typeof(IRestValue<>))
+                : inner.GetGeneric(typeof(IRestValue<>));
 
             if (asyncConstructor == null && restConstructor == null)
             {
-                return Ex.Call(Ex.New(typeof(RestValue<>).MakeGenericType(inner).GetConstructor(new[] { inner }), expression),
-                    nameof(RestValue<object>.ToResponseAsync), Type.EmptyTypes,
+                return Ex.Call(typeof(Extensions), nameof(Extensions.ToResponseAsync), new[] { inner },
+                    Ex.New(typeof(RestValue<>).MakeGenericType(inner).GetConstructor(new[] { inner }), expression),
                     Ex.Default(typeof(TypeKeyedDictionary)));
             }
             if (asyncConstructor == null)
             {
-                if (restConstructor == typeof(RestValue<>))
-                    return Ex.Call(expression,
-                        nameof(RestValue<object>.ToResponseAsync), Type.EmptyTypes,
+                if (restConstructor == typeof(IRestValue<>))
+                    return Ex.Call(typeof(Extensions), nameof(Extensions.ToResponseAsync), new[] { restValueParameter },
+                        expression,
+                        Ex.Default(typeof(TypeKeyedDictionary)));
+                else if (restValueParameter != null)
+                    return Ex.Call(typeof(Extensions), nameof(Extensions.ToResponseAsync), new[] { restValueParameter },
+                        Ex.Convert(expression, typeof(IRestValue<>).MakeGenericType(restValueParameter)),
                         Ex.Default(typeof(TypeKeyedDictionary)));
                 else if (restConstructor == typeof(RestResult<>))
                     return Ex.Call(expression,
@@ -370,10 +377,14 @@ namespace Biz.Morsink.Rest
                     return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
                         .First(m => m.Name == nameof(ConvertTaskToResponseAsync)).MakeGenericMethod(inner),
                         expression);
-                else if (restConstructor == typeof(RestValue<>))
+                else if (restConstructor == typeof(IRestValue<>))
                     return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
                         .First(m => m.Name == nameof(ConvertValueToResponseAsync)).MakeGenericMethod(inner),
                         expression);
+                else if (restValueParameter != null)
+                    return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
+                        .First(m => m.Name == nameof(ConvertValueToResponseAsync)).MakeGenericMethod(inner),
+                        Ex.Convert(expression, typeof(IRestValue<>).MakeGenericType(restValueParameter)));
                 else if (restConstructor == typeof(RestResult<>))
                     return Ex.Call(typeof(AttributedRestRepositories).GetTypeInfo().DeclaredMethods
                         .First(m => m.Name == nameof(ConvertResultToRestResponseAsync)).MakeGenericMethod(inner),
@@ -427,9 +438,11 @@ namespace Biz.Morsink.Rest
             var (constrs, inner) = ExtractTypeConstructorList(type);
             Type async = null;
             Type rest = null;
+            if (inner.GetGeneric(typeof(IRestValue<>)) != null)
+                rest = inner;
             foreach (var t in constrs.Reverse())
             {
-                if (t == typeof(RestValue<>) || t == typeof(RestResult<>) || t == typeof(RestResponse<>))
+                if (t.MakeGenericType(inner).GetGeneric(typeof(IRestValue<>)) != null || t == typeof(RestResult<>) || t == typeof(RestResponse<>))
                 {
                     if (async != null || rest != null)
                         throw new ArgumentException("Unknown type construction.");
@@ -448,13 +461,13 @@ namespace Biz.Morsink.Rest
         }
         private static async ValueTask<RestResponse<T>> ConvertTaskToResponseAsync<T>(Task<T> val)
             => Rest.Value(await val).ToResponse();
-        private static async ValueTask<RestResponse<T>> ConvertValueToResponseAsync<T>(Task<RestValue<T>> val)
+        private static async ValueTask<RestResponse<T>> ConvertValueToResponseAsync<T>(Task<IRestValue<T>> val)
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertResultToRestResponseAsync<T>(Task<RestResult<T>> val)
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtToResponseAsync<T>(ValueTask<T> val)
             => Rest.Value(await val).ToResponse();
-        private static async ValueTask<RestResponse<T>> ConvertVtValueToResponseAsync<T>(ValueTask<RestValue<T>> val)
+        private static async ValueTask<RestResponse<T>> ConvertVtValueToResponseAsync<T>(ValueTask<IRestValue<T>> val)
             => (await val).ToResponse();
         private static async ValueTask<RestResponse<T>> ConvertVtResultToRestResponseAsync<T>(ValueTask<RestResult<T>> val)
             => (await val).ToResponse();

@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public abstract string GenerateHtml(RestValue<T> value);
+        public abstract string GenerateHtml(IRestValue<T> value);
 
         /// <summary>
         /// Generates an Html representation for a Rest value.
@@ -27,6 +27,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         /// <param name="value">A Rest value.</param>
         /// <returns>An Html representation for the specified Rest value.</returns>
         string ISpecificHtmlGenerator.GenerateHtml(IRestValue value)
-            => GenerateHtml((RestValue<T>)value);
+            => GenerateHtml((IRestValue<T>)value);
     }
 }

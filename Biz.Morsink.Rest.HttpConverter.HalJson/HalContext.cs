@@ -37,7 +37,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
         /// <param name="value">The Rest Value to add.</param>
         /// <returns>A new HalContext with added information from the Rest Value.</returns>
-        public new HalContext With<T>(RestValue<T> value)
+        public new HalContext With<T>(IRestValue<T> value)
             => (HalContext)base.With(value);
         /// <summary>
         /// Removes an object with specified identity value from the embeddings of the context.

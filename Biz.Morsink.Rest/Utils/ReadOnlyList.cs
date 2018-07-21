@@ -13,7 +13,10 @@ namespace Biz.Morsink.Rest.Utils
     public abstract class ReadOnlyList<T> : IReadOnlyList<T>
     {
         private const int MERGE_THRESHOLD = 8;
-
+        /// <summary>
+        /// Contain an empty readonly list.
+        /// </summary>
+        public static ReadOnlyList<T> Empty { get; } = EmptyImpl.Instance;
         /// <summary>
         /// Creates a single element list.
         /// </summary>
@@ -90,6 +93,22 @@ namespace Biz.Morsink.Rest.Utils
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
+        private class EmptyImpl : ReadOnlyList<T>
+        {
+            public static EmptyImpl Instance { get; } = new EmptyImpl();
+            private EmptyImpl() { }
+            public override T this[int index] => throw new IndexOutOfRangeException();
+            public override int Count => 0;
+            public override ReadOnlyList<T> Concat(IReadOnlyList<T> other)
+                => Create(other);
+            public override ReadOnlyList<T> Append(T item)
+                => Create(item);
+            public override ReadOnlyList<T> Preprend(T item)
+                => Create(item);
+
+            public override IEnumerator<T> GetEnumerator()
+                => Enumerable.Empty<T>().GetEnumerator();
+        }
         private class FromSingle : ReadOnlyList<T>
         {
             private readonly T item;

@@ -49,7 +49,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
         /// <param name="value">The Rest Value to add.</param>
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
-        public SerializationContext With<T>(RestValue<T> value)
+        public SerializationContext With<T>(IRestValue<T> value)
         {
             var e = Embeddings.AddRange(value.Embeddings.OfType<IHasIdentity>().Select(o => new KeyValuePair<IIdentity, object>(IdentityProvider.Translate(o.Id), o)));
             return New(embeddings: e);

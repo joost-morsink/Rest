@@ -23,6 +23,6 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets a typed Rest value from the container.
         /// </summary>
-        new RestValue<T> RestValue { get; }
+        new IRestValue<T> RestValue { get; }
     }
 }

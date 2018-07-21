@@ -13,14 +13,22 @@
     <Copyright>(C) 2018 Joost W. Morsink</Copyright>
     <PackageTags>Rest Hal Json</PackageTags>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
     <Configurations>Debug;Release;Prerelease</Configurations>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>7.1</LangVersion>
 
   </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
+    <VersionSuffix>beta001</VersionSuffix>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Release'">
 
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration) == 'Debug'">
+    <VersionSuffix>a000debug</VersionSuffix>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>

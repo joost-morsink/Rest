@@ -126,7 +126,7 @@ namespace Biz.Morsink.Rest
             /// Constructor.
             /// </summary>
             /// <param name="restValue">The underlying Rest value for the successful result.</param>
-            public Success(RestValue<T> restValue)
+            public Success(IRestValue<T> restValue)
             {
                 RestValue = restValue;
             }
@@ -154,7 +154,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the underlying RestValue.
             /// </summary>
-            public RestValue<T> RestValue { get; }
+            public IRestValue<T> RestValue { get; }
 
             IRestValue IHasRestValue.RestValue => RestValue;
         }
@@ -172,7 +172,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was bad.</param>
-                public BadRequest(RestValue<object> restValue)
+                public BadRequest(IRestValue<object> restValue)
                 {
                     RestValue = restValue;
                 }
@@ -188,7 +188,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// A Rest value describing the reason why the request was bad.
                 /// </summary>
-                public RestValue<object> RestValue { get; }
+                public IRestValue<object> RestValue { get; }
                 /// <summary>
                 /// A value describing the reason why the request was bad.
                 /// </summary>
@@ -248,7 +248,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// A Rest value describing the reason why the request was not executed.
                 /// </summary>
-                public RestValue<object> RestValue { get; }
+                public IRestValue<object> RestValue { get; }
                 /// <summary>
                 /// A value describing the reason why the request was not executed.
                 /// </summary>
@@ -275,7 +275,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value containing an exception describing the unexpected error.</param>
-                public Error(RestValue<ExceptionInfo> restValue)
+                public Error(IRestValue<ExceptionInfo> restValue)
                 {
                     RestValue = restValue;
                 }
@@ -291,7 +291,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Gets a Rest value for the exception describing the unexpected error.
                 /// </summary>
-                public RestValue<ExceptionInfo> RestValue { get; }
+                public IRestValue<ExceptionInfo> RestValue { get; }
                 /// <summary>
                 /// Gets the exception describing the unexpected error.
                 /// </summary>
@@ -362,7 +362,7 @@ namespace Biz.Morsink.Rest
                 /// </summary>
                 /// <param name="target">The target of the redirect.</param>
                 /// <param name="value">An optional underlying Rest value.</param>
-                public Permanent(IIdentity target, RestValue<object> value) : base(target)
+                public Permanent(IIdentity target, IRestValue<object> value) : base(target)
                 {
                     if (target == null)
                         throw new ArgumentNullException(nameof(target));
@@ -373,7 +373,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Gets an optional underlying Rest value for the redirect.
                 /// </summary>
-                public RestValue<object> RestValue { get; }
+                public IRestValue<object> RestValue { get; }
 
                 IRestValue IHasRestValue.RestValue => RestValue;
 
@@ -391,7 +391,7 @@ namespace Biz.Morsink.Rest
                 /// </summary>
                 /// <param name="target">The target of the redirect.</param>
                 /// <param name="value">An optional underlying Rest value.</param>
-                public Temporary(IIdentity target, RestValue<object> value) : base(target)
+                public Temporary(IIdentity target, IRestValue<object> value) : base(target)
                 {
                     if (target == null)
                         throw new ArgumentNullException(nameof(target));
@@ -402,7 +402,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Gets an optional underlying Rest value for the redirect.
                 /// </summary>
-                public RestValue<object> RestValue { get; }
+                public IRestValue<object> RestValue { get; }
 
                 IRestValue IHasRestValue.RestValue => RestValue;
 
@@ -453,7 +453,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="U">The new underlying successful value type.</typeparam>
         /// <param name="f">A manipulation function to manipulate successful Rest values.</param>
         /// <returns>A new RestResult</returns>
-        public RestResult<U> Select<U>(Func<RestValue<T>, RestValue<U>> f)
+        public RestResult<U> Select<U>(Func<IRestValue<T>, IRestValue<U>> f)
         {
             switch (this)
             {
@@ -471,7 +471,7 @@ namespace Biz.Morsink.Rest
 
         }
         IRestResult IRestResult.Select(Func<IRestValue, IRestValue> f)
-            => Select(rv => (RestValue<T>)f(rv));
+            => Select(rv => (IRestValue<T>)f(rv));
 
         /// <summary>
         /// Makes this result into a redirect result of type NotNecessary.

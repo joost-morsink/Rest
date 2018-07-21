@@ -129,12 +129,12 @@ namespace Biz.Morsink.Rest
                     var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { repo, request, cap });
                     if (!res.UntypedResult.IsFailure)
                     {
-                        if (cap.Descriptor.Name == "GET")
+                        if (res is RestResponse<T> tres)
                         {
-                            return res.Select(r => r.Select(v =>
-                                    v.Manipulate(rv => rv.Links
+                            return tres.Select(r => r.Select(v =>
+                                    v.ToLazy().Manipulate(rv => rv.Links
                                         .Concat(linkProviders.SelectMany(lp => lp.GetLinks((IIdentity<T>)request.Address)))
-                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks((T)rv.Value)))
+                                        .Concat(dynamicLinkProviders.SelectMany(lp => lp.GetLinks(rv.Value)))
                                         .Where(l => l.IsAllowedBy(authorizationProvider, user)))));
                         }
                         else
