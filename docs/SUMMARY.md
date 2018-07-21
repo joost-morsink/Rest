@@ -9,6 +9,7 @@
   * [Hal](hal.md)
 * [Capabilities](capabilities.md)
 * [Values](values.md)
+  * [Embeddings](embed.md)
 * [Collections](coll.md)
 * [Type Descriptors](typeDesc.md)
 * [Metadata](metadata.md)

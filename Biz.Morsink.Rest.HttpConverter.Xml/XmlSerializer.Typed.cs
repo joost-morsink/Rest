@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using Ex = System.Linq.Expressions.Expression;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 using Biz.Morsink.Rest.Utils;
+using System.Collections.Immutable;
 
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
@@ -66,7 +67,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     this.converter = converter;
                 }
 
-                public override T Deserialize(XElement e) => converter.Convert(e.Value).TryTo(out T res) ? res : default(T);
+                public override T Deserialize(XElement e) => converter.Convert(e.Value).TryTo(out T res) ? res : default;
                 public override XElement Serialize(T item)
                 {
                     var ty = item.GetType();
@@ -83,8 +84,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             public class Nullable : Typed<T>
             {
                 private readonly Type valueType;
-                private Func<T, XElement> serializer;
-                private Func<XElement, T> deserializer;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
 
                 /// <summary>
                 /// Constructor.
@@ -133,6 +134,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             public class Dictionary : Typed<T>
             {
                 private readonly Type valueType;
+                private readonly Type kind;
                 private readonly Func<T, XElement> serializer;
                 private readonly Func<XElement, T> deserializer;
 
@@ -145,6 +147,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                     var (keyType, valueType) = typeof(T).GetGenerics2(typeof(IDictionary<,>));
                     if (keyType == null || keyType != typeof(string) || valueType == null)
                         throw new ArgumentException("Generic type is not a proper dictionary");
+                    kind = typeof(T).IsGenericType ? typeof(T).GetGenericTypeDefinition() : typeof(T);
                     this.valueType = valueType;
                     serializer = MakeSerializer();
                     deserializer = MakeDeserializer();
@@ -159,39 +162,49 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 private Func<XElement, T> MakeDeserializer()
                 {
                     var input = Ex.Parameter(typeof(XElement), "input");
-                    var result = Ex.Parameter(typeof(T), "result");
+                    var @class = kind == typeof(IDictionary<,>) || kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                        ? typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType)
+                        : typeof(T);
+                    var result = Ex.Parameter(@class, "result");
                     var elements = Ex.Parameter(typeof(IEnumerable<XElement>), "elements");
                     var start = Ex.Label("start");
                     var end = Ex.Label("end");
                     if (valueType == typeof(object))
                     {
                         var block = Ex.Block(new[] { result, elements },
-                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(result, Ex.New(@class)),
                             Ex.Assign(elements, Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes)),
                             elements.Foreach(current =>
-                                Ex.Call(Ex.Convert(result, typeof(IDictionary<string, object>)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(result, nameof(Dictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)),
                                     Ex.Condition(Ex.Property(current, nameof(XElement.HasElements)),
                                         Ex.Convert(Ex.Call(Ex.Constant(this), nameof(Deserialize), Type.EmptyTypes, current), typeof(object)),
                                         Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
                                             current, Ex.Constant(typeof(string))),
                                             typeof(object))))),
-                            result);
+                            Ex.Convert(
+                                kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                                    ? (Ex)Ex.Call(typeof(ImmutableDictionary), nameof(ImmutableDictionary.ToImmutableDictionary), new[] { typeof(string), valueType }, result)
+                                    : result,
+                                typeof(T)));
                         var lambda = Ex.Lambda<Func<XElement, T>>(block, input);
                         return lambda.Compile();
                     }
                     else
                     {
                         var block = Ex.Block(new[] { result, elements },
-                            Ex.Assign(result, Ex.New(typeof(Dictionary<,>).MakeGenericType(typeof(string), valueType))),
+                            Ex.Assign(result, Ex.New(@class)),
                             Ex.Assign(elements, Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes)),
                             elements.Foreach(current =>
-                                Ex.Call(Ex.Convert(result, typeof(IDictionary<string, object>)), nameof(IDictionary<string, object>.Add), Type.EmptyTypes,
+                                Ex.Call(result, nameof(Dictionary<string, object>.Add), Type.EmptyTypes,
                                     Ex.Property(Ex.Property(current, nameof(XElement.Name)), nameof(XName.LocalName)),
-                                        Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
-                                            current, Ex.Constant(valueType)),
-                                            typeof(object)))),
-                            result);
+                                    Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), new[] { valueType },
+                                        current))),
+                            Ex.Convert(
+                                kind == typeof(IImmutableDictionary<,>) || kind == typeof(ImmutableDictionary<,>)
+                                    ? (Ex)Ex.Call(typeof(ImmutableDictionary), nameof(ImmutableDictionary.ToImmutableDictionary), new[] { typeof(string), valueType }, result)
+                                    : result,
+                                typeof(T)));
 
                         var lambda = Ex.Lambda<Func<XElement, T>>(block, input);
                         return lambda.Compile();
@@ -334,8 +347,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             /// </summary>
             public class Default : Typed<T>
             {
-                private Func<T, XElement> serializer;
-                private Func<XElement, T> deserializer;
+                private readonly Func<T, XElement> serializer;
+                private readonly Func<XElement, T> deserializer;
                 /// <summary>
                 /// Constructor.
                 /// </summary>

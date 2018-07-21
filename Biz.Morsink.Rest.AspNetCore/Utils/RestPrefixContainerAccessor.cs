@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Biz.Morsink.Rest.Utils;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -11,18 +12,18 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
     /// </summary>
     public class RestPrefixContainerAccessor : IRestPrefixContainerAccessor
     {
-        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IRestRequestScopeAccessor scopeAccessor;
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="httpContextAccessor">An HttpContext accessor.</param>
-        public RestPrefixContainerAccessor(IHttpContextAccessor httpContextAccessor)
+        /// <param name="scopeAccessor">An HttpContext accessor.</param>
+        public RestPrefixContainerAccessor(IRestRequestScopeAccessor scopeAccessor)
         {
-            this.httpContextAccessor = httpContextAccessor;
+            this.scopeAccessor = scopeAccessor;
         }
         /// <summary>
         /// Gets the currently in scope RestPrefixContainer.
         /// </summary>
-        public RestPrefixContainer RestPrefixContainer => httpContextAccessor.HttpContext.RequestServices.GetRequiredService<RestPrefixContainer>();
+        public RestPrefixContainer RestPrefixContainer => scopeAccessor.Scope.GetScopeItem<RestPrefixContainer>();
     }
 }

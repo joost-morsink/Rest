@@ -12,7 +12,8 @@ It contains three important properties:
 * `Links` are links that apply to the `Value` being returned.
 * `Embeddings` are optionally embedded objects, that might alternatively be retrieved in a separate request. 
   They can either be requested for by parameters, or added by the repository as a predictive measure.
-  Either way, the repository implementor is responsible for setting this property.
+  Either way, the repository implementor is responsible for setting this property. 
+  See also the separate [chapter on embeddings](embed.md).
 
 `RestValue<T>` is an immutable struct that contains the above-mentioned properties. 
 The `Value` property is of type T.

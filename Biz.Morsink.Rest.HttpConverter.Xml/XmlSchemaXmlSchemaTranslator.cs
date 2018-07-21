@@ -29,28 +29,27 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         }
 
         /// <summary>
-        /// Gets typeof(TypeDescriptor).
-        /// </summary>
-        public Type ForType => typeof(TypeDescriptor);
-
-        /// <summary>
         /// Gets a typed XmlSerializer instance for TypeDescriptor.
         /// </summary>
         /// <returns>A typed XmlSerializer instance for TypeDescriptor.</returns>
-        public XmlSerializer.Typed<TypeDescriptor> GetConverter()
-            => new XmlSerializer.Typed<TypeDescriptor>.Delegated(serializer, Serialize, Deserialize);
+        public XmlSerializer.Typed<TypeDescriptor> GetConverter(Type type)
+            => typeof(TypeDescriptor).IsAssignableFrom(type)
+                ? new XmlSerializer.Typed<TypeDescriptor>.Delegated(serializer, Serialize, Deserialize)
+                : null;
 
         /// <summary>
         /// Gets a schema for XSD.
         /// </summary>
         /// <returns></returns>
-        public XmlSchema GetSchema()
-            => new XmlSchema(
-                new XElement(XSD + schema,
-                    new XAttribute(XNamespace.Xmlns + xs, XSD.NamespaceName),
-                    new XAttribute(XNamespace.Xmlns + xsi, XSI.NamespaceName),
-                    new XElement(XSD+include,
-                        new XAttribute(schemaLocation, "https://www.w3.org/2009/XMLSchema/XMLSchema.xsd"))));
+        public XmlSchema GetSchema(Type type)
+            => typeof(TypeDescriptor).IsAssignableFrom(type)
+                ? new XmlSchema(
+                    new XElement(XSD + schema,
+                        new XAttribute(XNamespace.Xmlns + xs, XSD.NamespaceName),
+                        new XAttribute(XNamespace.Xmlns + xsi, XSI.NamespaceName),
+                        new XElement(XSD + include,
+                            new XAttribute(schemaLocation, "https://www.w3.org/2009/XMLSchema/XMLSchema.xsd"))))
+                : null;
 
         /// <summary>
         /// Sets the parent XmlSerializer.
@@ -63,19 +62,28 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             serializer = parent;
         }
 
-        XmlSerializer.IForType IXmlSchemaTranslator.GetConverter()
-            => GetConverter();
+        XmlSerializer.IForType IXmlSchemaTranslator.GetConverter(Type type)
+            => GetConverter(type);
 
         private XElement Serialize(TypeDescriptor item)
         {
-            var specific = translators.Value.FirstOrDefault(t => typeDescriptorCreator.GetDescriptor(t.ForType)?.Equals(item) == true);
-            if (specific == null)
+            var type = item.GetAssociatedType();
+            if (type == null)
+                return standardSchema();
+            else
+            {
+                var specific = translators.Value.Select(tr => tr.GetSchema(type)).Where(ty => ty != null).FirstOrDefault();
+                if (specific == null)
+                    return standardSchema();
+                else
+                    return specific.Schema;
+            }
+            
+            XElement standardSchema()
             {
                 var visitor = new XmlSchemaTypeDescriptorVisitor(typeDescriptorCreator);
                 return visitor.Visit(item);
             }
-            else
-                return specific.GetSchema().Schema;
         }
         /// <summary>
         /// Returns null.

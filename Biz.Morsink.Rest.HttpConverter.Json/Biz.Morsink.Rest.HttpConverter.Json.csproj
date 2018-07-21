@@ -9,7 +9,7 @@
     <PackageId>Biz.Morsink.Rest.HttpConverter.Json</PackageId>
     <Description>Implementation of the json format for REST level 3 services.</Description>
     <PackageProjectUrl>https://github.com/joost-morsink/Rest</PackageProjectUrl>
-    <RootNamespace>Biz.Morsink.Rest.HttpConverterJson</RootNamespace>
+    <RootNamespace>Biz.Morsink.Rest.HttpConverter</RootNamespace>
     <Copyright>(C) 2018 Joost W. Morsink</Copyright>
     <PackageTags>Rest Json</PackageTags>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>

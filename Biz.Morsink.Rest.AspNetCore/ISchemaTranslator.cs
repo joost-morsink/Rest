@@ -15,11 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Gets the schema for this translator.
         /// </summary>
         /// <returns></returns>
-        S GetSchema();
-        /// <summary>
-        /// Gets the Type the schema applies to.
-        /// </summary>
-        Type ForType { get; }
+        S GetSchema(Type type);
     }
     /// <summary>
     /// Schema translators translate schemas for a certain type and technology.

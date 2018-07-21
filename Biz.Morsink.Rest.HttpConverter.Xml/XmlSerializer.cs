@@ -147,9 +147,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private IForType Get(Type t)
         {
-            var trans = schemaTranslators.FirstOrDefault(st => st.ForType.IsAssignableFrom(t));
-            if (trans != null)
-                return trans.GetConverter();
+            var translatorConverter = schemaTranslators.Select(st => st.GetConverter(t)).Where(sch => sch != null).FirstOrDefault();
+            if (translatorConverter != null)
+                return translatorConverter;
             var repr = representations.FirstOrDefault(r => r.IsRepresentable(t));
             if (repr != null)
                 return (IForType)Activator.CreateInstance(typeof(Typed<>.Represented).MakeGenericType(t), this, t, repr);

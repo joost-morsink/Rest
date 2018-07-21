@@ -42,8 +42,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         public override bool CanWrite => true;
 
-        Type ISchemaTranslator<JsonSchema>.ForType => typeof(TypeDescriptor);
-
         /// <summary>
         /// Not supported: Throws an exception.
         /// </summary>
@@ -61,13 +59,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var typeDescriptor = (TypeDescriptor)value;
-            schemaProvider.GetSchema(typeDescriptor).Schema.WriteTo(writer, serializer.Converters.ToArray());
+            var type = typeDescriptor.GetAssociatedType();
+            if (type != null)
+                schemaProvider.GetSchema(type).Schema.WriteTo(writer, serializer.Converters.ToArray());
+            else
+            {
+                writer.WriteNull();
+                writer.WriteComment("No associated type");
+            }
         }
 
-        JsonConverter IJsonSchemaTranslator.GetConverter()
-            => this;
+        JsonConverter IJsonSchemaTranslator.GetConverter(Type type)
+            => typeof(TypeDescriptor).IsAssignableFrom(type) ? this : null;
 
-        JsonSchema ISchemaTranslator<JsonSchema>.GetSchema()
-            => new JsonSchema(new JObject(new JProperty("$ref", JsonSchema.JSON_SCHEMA_VERSION)));
+        JsonSchema ISchemaTranslator<JsonSchema>.GetSchema(Type type)
+            => typeof(TypeDescriptor).IsAssignableFrom(type) ? new JsonSchema(new JObject(new JProperty("$ref", JsonSchema.JSON_SCHEMA_VERSION))) : null;
     }
 }

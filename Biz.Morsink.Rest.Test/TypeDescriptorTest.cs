@@ -17,7 +17,7 @@ namespace Biz.Morsink.Rest.Test
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), TypeDescriptor.Primitive.Numeric.Integral.Instance),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName),TypeDescriptor.Primitive.String.Instance)
-            });
+            }, null);
         [TestMethod]
         public void TypeDescriptor_Happy()
         {
@@ -33,10 +33,10 @@ namespace Biz.Morsink.Rest.Test
             var schema = tdc.GetDescriptor(typeof(PersonC));
             var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.PersonC", new[]
             {
-                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union("System.Int64?", new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance })),
+                new PropertyDescriptor<TypeDescriptor>(nameof(Person.Age), new TypeDescriptor.Union("System.Int64?", new TypeDescriptor[] { TypeDescriptor.Primitive.Numeric.Integral.Instance, TypeDescriptor.Null.Instance },null)),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.FirstName), TypeDescriptor.Primitive.String.Instance, true),
                 new PropertyDescriptor<TypeDescriptor>(nameof(Person.LastName), TypeDescriptor.Primitive.String.Instance, true)
-            });
+            }, null);
             Assert.IsTrue(expected.Equals(schema));
         }
         [TestMethod]
@@ -73,22 +73,22 @@ namespace Biz.Morsink.Rest.Test
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "A"), true),
                     new PropertyDescriptor<TypeDescriptor>("A",TypeDescriptor.Primitive.Numeric.Integral.Instance, true)
-                }),
+                },null),
                 new TypeDescriptor.Record("B", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "B"), true),
                     new PropertyDescriptor<TypeDescriptor>("B",TypeDescriptor.Primitive.String.Instance, true)
-                }),
+                },null),
                 new TypeDescriptor.Record("C", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag",TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "C"), true),
                     new PropertyDescriptor<TypeDescriptor>("C",TypeDescriptor.Primitive.Numeric.Float.Instance, true)
-                }),
+                },null),
                 new TypeDescriptor.Record("D", new []
                 {
                     new PropertyDescriptor<TypeDescriptor>("Tag", TypeDescriptor.MakeValue(TypeDescriptor.Primitive.String.Instance, "D"), true)
-                })
-            });
+                },null)
+            }, null);
             Assert.IsTrue(expected.Equals(schema));
         }
         [TestMethod]
@@ -109,7 +109,7 @@ namespace Biz.Morsink.Rest.Test
                 new PropertyDescriptor<TypeDescriptor>("a", TypeDescriptor.Primitive.Numeric.Integral.Instance, true),
                 new PropertyDescriptor<TypeDescriptor>("b", TypeDescriptor.Primitive.String.Instance, true),
                 new PropertyDescriptor<TypeDescriptor>("c", TypeDescriptor.Primitive.Numeric.Float.Instance, true)
-            });
+            }, null);
 
             Assert.IsTrue(expected.Equals(schema));
         }

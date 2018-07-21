@@ -95,14 +95,14 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             {
                 var wildcardDescriptor = wildcardtypes == null || wildcardtypes.Length == 0
                     ? TypeDescriptor.MakeEmpty()
-                    : TypeDescriptor.MakeIntersection("", wildcardtypes.Select(typeDescriptorCreator.GetDescriptor));
+                    : TypeDescriptor.MakeIntersection("", wildcardtypes.Select(typeDescriptorCreator.GetDescriptor), null);
 
                 res[capGroup.Key] = capGroup.Select(cap => new RequestDescription(
                      typeDescriptorCreator.GetDescriptor(cap.BodyType),
                      capGroup.Key == "GET" && wildcardtypes != null && wildcardtypes.Length > 0
                         ? cap.ParameterType == typeof(Empty)
                             ? wildcardDescriptor
-                            : TypeDescriptor.MakeIntersection("", new[] { wildcardDescriptor, typeDescriptorCreator.GetDescriptor(cap.ParameterType) })
+                            : TypeDescriptor.MakeIntersection("", new[] { wildcardDescriptor, typeDescriptorCreator.GetDescriptor(cap.ParameterType) }, null)
                         : typeDescriptorCreator.GetDescriptor(cap.ParameterType),
                      typeDescriptorCreator.GetDescriptor(cap.ResultType)
                 )).ToArray();

@@ -10,6 +10,7 @@ using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.Extensions.Options;
+using System.Collections.Immutable;
 
 namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
 {
@@ -205,6 +206,39 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             Assert.IsNotNull(json["B"]);
             Assert.IsNotNull(json["C"]);
         }
+        public void XmlSerializer_SortedDictionaries()
+        {
+            var sortedDictioary = new SortedDictionary<string, string>()
+            {
+                ["A"] = "1",
+                ["B"] = "abc",
+                ["C"] = "42x"
+            };
+            CheckDictionary<SortedDictionary<string, string>, string>(sortedDictioary);
+        }
+        [TestMethod]
+        public void XmlSerializer_ImmutableDictionaries()
+        {
+
+            var immutableDictionary = ImmutableDictionary<string, string>.Empty
+                .Add("A", "1")
+                .Add("B", "2")
+                .Add("C", "3")
+                .Add("D", "4");
+            CheckDictionary<ImmutableDictionary<string, string>, string>(immutableDictionary);
+        }
+        private void CheckDictionary<T, V>(T x)
+            where T : IReadOnlyDictionary<string, V>
+        {
+            var json = serializer.Serialize(x) as JObject;
+            Assert.IsNotNull(json);
+            Assert.AreEqual(x.Count, json.Children().Count());
+            Assert.IsTrue(x.Keys.All(key => json[key] != null));
+
+            var dict = serializer.Deserialize<T>(json);
+            Assert.AreEqual(x.Count, dict.Count);
+            Assert.IsTrue(dict.Keys.All(key => x.ContainsKey(key)));
+        }
         [TestMethod]
         public void HalSerializer_SemStr()
         {
@@ -223,14 +257,19 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             var a2 = new HelperA { A = "d", B = "e", C = "f" };
             var b1 = new HelperB("A", "B", "C");
             var b2 = new HelperB("X", "Y", "Z");
-            var c = RestValue<HelperC>.Build().WithValue(new HelperC
+            var c = new HelperC
             {
                 A = "123",
                 As = new[] { a1, a2 },
                 Bs = new List<HelperB> { b1, b2 },
                 MoreAs = new[] { new HelperA { A = "!", B = "@", C = "#" } }
-            }).WithEmbeddings(new object[] { a1, a2, b1, b2 }).Build();
-            var json = serializer.Serialize(context(), c) as JObject;
+            };
+            var rv = RestValue<HelperC>.Build()
+                .WithValue(c)
+                .WithEmbeddings(new object[] { a1, a2, b1, b2 })
+                .WithLink(Link.Create("self", c.Id))
+                .Build();
+            var json = serializer.Serialize(context(), rv) as JObject;
             Assert.IsNotNull(json);
             Assert.AreEqual(7, json.Properties().Count());
 
@@ -245,6 +284,13 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
 
             Assert.IsNotNull(json["moreAs"]);
             Assert.AreEqual(1, json.Value<JArray>("moreAs").Count);
+
+            Assert.IsNotNull(json["_embedded"]);
+            Assert.AreEqual(4, json.Value<JArray>("_embedded").Count);
+
+            Assert.IsNotNull(json["_links"]);
+            Assert.AreEqual(1, json["_links"].Children().Count());
+            Assert.IsNotNull(json["_links"]["self"]);
 
             //var dec = serializer.Deserialize<HelperC>(context(), json);
             //Assert.AreEqual("123", dec.A);

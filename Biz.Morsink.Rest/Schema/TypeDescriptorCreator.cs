@@ -86,7 +86,7 @@ namespace Biz.Morsink.Rest.Schema
                 Enclosing = enclosing ?? ImmutableStack<Type>.Empty;
             }
             /// <summary>
-            /// Contains the type a descriptor is neing requested for.
+            /// Contains the type a descriptor is being requested for.
             /// </summary>
             public Type Type { get; }
             /// <summary>

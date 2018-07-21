@@ -42,7 +42,7 @@ namespace Biz.Morsink.Rest.Schema
                        .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, creator.GetReferableDescriptor(context.WithType(x.PropertyType).WithCutoff(null)), x.GetCustomAttributes<RequiredAttribute>().Any()));
 
                 return props.Any()
-                    ? new TypeDescriptor.Record(context.Type.ToString(), props)
+                    ? new TypeDescriptor.Record(context.Type.ToString(), props, context.Type)
                     : null;
             }
             else
@@ -65,7 +65,7 @@ namespace Biz.Morsink.Rest.Schema
                                      CaseInsensitiveEqualityComparer.Instance)
                                  select p;
 
-                return properties.Any() ? new TypeDescriptor.Record(context.Type.ToString(), properties) : null;
+                return properties.Any() ? new TypeDescriptor.Record(context.Type.ToString(), properties, context.Type) : null;
             }
         }
         /// <summary>
@@ -96,10 +96,10 @@ namespace Biz.Morsink.Rest.Schema
                 if (!props.All(pi => pi.CanRead && !pi.CanWrite))
                     return false;
                 var ctors = from ci in ti.DeclaredConstructors
-                                 let ps = ci.GetParameters()
-                                 where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
-                                     && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
-                                 select ci;
+                            let ps = ci.GetParameters()
+                            where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
+                                && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
+                            select ci;
 
                 return ctors.Any();
             }

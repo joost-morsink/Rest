@@ -29,7 +29,7 @@ namespace Biz.Morsink.Rest.Schema
             var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);
             return parameterlessConstructors.Any()
                 && !ti.Iterate(x => x.BaseType?.GetTypeInfo()).TakeWhile(x => x != context.Cutoff && x != null).SelectMany(x => x.DeclaredProperties.Where(p => !p.GetAccessors()[0].IsStatic)).Any()
-                ? new TypeDescriptor.Record(context.Type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>())
+                ? new TypeDescriptor.Record(context.Type.ToString(), Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>(), context.Type)
                 : null;
         }
 

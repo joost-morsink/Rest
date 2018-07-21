@@ -56,10 +56,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<ICurrentHttpRestConverterAccessor, CurrentHttpRestConverterAccessor>();
             serviceCollection.AddSingleton<IRestPrefixContainerAccessor, RestPrefixContainerAccessor>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
-            serviceCollection.AddScoped(sp => sp.GetRequiredService<IRestIdentityProvider>().Prefixes.Copy());
 
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();
 
             var restbuilder = new RestServicesBuilder(serviceCollection);
             builder?.Invoke(restbuilder);

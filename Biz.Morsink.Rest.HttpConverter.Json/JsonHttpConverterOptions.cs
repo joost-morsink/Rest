@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -8,6 +9,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverterOptions
     {
+        /// <summary>
+        /// Constructor.
+        /// Sets the ReferenceLoopHandling to Serialize.
+        /// This circumvents some JsonSerializationExceptions occurring due to overly anxious circular reference checks.
+        /// </summary>
+        public JsonHttpConverterOptions()
+        {
+            SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize; // Needed for identity based embeddings.
+        }
         /// <summary>
         /// Gets or sets the JsonSerializerSettings for the JsonHttpConverter.
         /// </summary>
@@ -26,6 +36,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// Should be set to null for HTTP header location.
         /// </summary>
         public string LinkLocation { get; set; }
+        /// <summary>
+        /// Gets or sets a boolean indicating whether the embeddings from a Rest value should literally be embedded in the Json response.
+        /// </summary>
+        public bool EmbedEmbeddings { get; set; }
         /// <summary>
         /// Applies the default naming strategy to the JsonHttpConverter.
         /// </summary>
@@ -61,7 +75,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>The current instance.</returns>
         public JsonHttpConverterOptions UseLinkLocation(string propertyName)
         {
-            LinkLocation = propertyName;
+            LinkLocation = propertyName ?? throw new ArgumentNullException(nameof(propertyName), "To indicate header area use UseLinksInHeaders method instead.");
             return this;
         }
         /// <summary>
@@ -71,6 +85,15 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonHttpConverterOptions UseLinksInHeaders()
         {
             LinkLocation = null;
+            return this;
+        }
+        /// <summary>
+        /// Sets the EmbedEmbeddings flag.
+        /// </summary>
+        /// <returns>The current instance.</returns>
+        public JsonHttpConverterOptions UseEmbeddings(bool embed = true)
+        {
+            EmbedEmbeddings = embed;
             return this;
         }
     }

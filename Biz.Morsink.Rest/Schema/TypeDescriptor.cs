@@ -18,20 +18,20 @@ namespace Biz.Morsink.Rest.Schema
         public static TypeDescriptor MakeBoolean() => Primitive.Boolean.Instance;
         public static TypeDescriptor MakeNull() => Null.Instance;
         public static TypeDescriptor MakeArray(TypeDescriptor elementType) => new Array(elementType);
-        public static TypeDescriptor MakeRecord(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties) => new Record(name, properties);
+        public static TypeDescriptor MakeRecord(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties, Type associatedType) => new Record(name, properties, associatedType);
         public static TypeDescriptor MakeDictionary(string name, TypeDescriptor valueType) => new Dictionary(name, valueType);
         public static TypeDescriptor MakeValue(TypeDescriptor baseType, object innerValue) => new Value(baseType, innerValue);
-        public static TypeDescriptor MakeEmpty() => MakeRecord("", Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>());
-        public static TypeDescriptor MakeUnion(string name, IEnumerable<TypeDescriptor> options)
+        public static TypeDescriptor MakeEmpty() => MakeRecord("", Enumerable.Empty<PropertyDescriptor<TypeDescriptor>>(), null);
+        public static TypeDescriptor MakeUnion(string name, IEnumerable<TypeDescriptor> options, Type associatedType)
             => options.Any()
                 ? options.Skip(1).Any()
-                    ? new Union(name, options)
+                    ? new Union(name, options, associatedType)
                     : options.First()
                 : MakeEmpty();
-        public static TypeDescriptor MakeIntersection(string name, IEnumerable<TypeDescriptor> parts)
+        public static TypeDescriptor MakeIntersection(string name, IEnumerable<TypeDescriptor> parts, Type associatedType)
             => parts.Any()
                 ? parts.Skip(1).Any()
-                    ? new Intersection(name, parts)
+                    ? new Intersection(name, parts, associatedType)
                     : parts.First()
                 : MakeEmpty();
         public static TypeDescriptor MakeAny() => Any.Instance;
@@ -39,21 +39,29 @@ namespace Biz.Morsink.Rest.Schema
         /// Constructor.
         /// </summary>
         /// <param name="name">The name for the TypeDescriptor.</param>
-        public TypeDescriptor(string name)
+        public TypeDescriptor(string name, Type associatedType = null)
         {
             Name = name;
+            this.associatedType = associatedType;
         }
+        private readonly Type associatedType;
         /// <summary>
         /// Gets the name of the TypeDescriptor.
         /// </summary>
         public string Name { get; }
+        /// <summary>
+        /// Gets the associated type of the TypeDescriptor.
+        /// This value might be null!
+        /// </summary>
+        public Type GetAssociatedType() => associatedType;
+
         /// <summary>
         /// This class represents any value.
         /// </summary>
         public class Any : TypeDescriptor
         {
             private static readonly int hashcode = typeof(Any).GetHashCode();
-            private Any() : base("Any") { }
+            private Any() : base("Any", typeof(object)) { }
             public static Any Instance { get; } = new Any();
             public override bool Equals(TypeDescriptor other)
                 => other is Any;
@@ -67,13 +75,13 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public abstract class Primitive : TypeDescriptor
         {
-            public Primitive(string name) : base(name) { }
+            public Primitive(string name, Type associatedType) : base(name, associatedType) { }
             /// <summary>
             /// This class represents the string type.
             /// </summary>
             public class String : Primitive
             {
-                public String() : base(nameof(String)) { }
+                public String() : base(nameof(String), typeof(String)) { }
                 private readonly static int hashcode = typeof(String).GetHashCode();
                 /// <summary>
                 /// Singleton instance for String.
@@ -90,14 +98,14 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public abstract class Numeric : Primitive
             {
-                public Numeric(string name) : base(name) { }
+                public Numeric(string name, Type associatedType) : base(name, associatedType) { }
                 /// <summary>
                 /// This class represents floating point numeric types.
                 /// </summary>
                 public class Float : Numeric
                 {
                     public Float() : this(null) { }
-                    public Float(string name) : base(name ?? nameof(Float)) { }
+                    public Float(string name) : base(name ?? nameof(Float), typeof(double)) { }
                     private readonly static int hashcode = typeof(Float).GetHashCode();
                     /// <summary>
                     /// Singleton instance for Float.
@@ -115,7 +123,7 @@ namespace Biz.Morsink.Rest.Schema
                 public class Integral : Numeric
                 {
                     public Integral() : this(null) { }
-                    public Integral(string name) : base(name ?? nameof(Integral)) { }
+                    public Integral(string name) : base(name ?? nameof(Integral), typeof(long)) { }
                     private readonly static int hashcode = typeof(Integral).GetHashCode();
                     /// <summary>
                     /// Singleton instance for Integral.
@@ -134,7 +142,7 @@ namespace Biz.Morsink.Rest.Schema
             public class DateTime : Primitive
             {
                 public DateTime() : this(null) { }
-                public DateTime(string name) : base(name ?? nameof(DateTime)) { }
+                public DateTime(string name) : base(name ?? nameof(DateTime), typeof(DateTime)) { }
                 private readonly static int hashcode = typeof(DateTime).GetHashCode();
                 public static DateTime Instance { get; } = new DateTime();
 
@@ -149,7 +157,7 @@ namespace Biz.Morsink.Rest.Schema
             public class Boolean : Primitive
             {
                 public Boolean() : this(null) { }
-                public Boolean(string name) : base(name ?? nameof(Boolean)) { }
+                public Boolean(string name) : base(name ?? nameof(Boolean), typeof(bool)) { }
                 private readonly static int hashcode = typeof(Boolean).GetHashCode();
                 public static Boolean Instance { get; } = new Boolean();
                 public override bool Equals(TypeDescriptor other)
@@ -168,7 +176,9 @@ namespace Biz.Morsink.Rest.Schema
             /// <summary>
             /// Constructor.
             /// </summary>
-            public Array(TypeDescriptor elementType) : base(string.Concat(nameof(Array), "<", elementType.Name, ">"))
+            public Array(TypeDescriptor elementType)
+                : base(string.Concat(nameof(Array), "<", elementType.Name, ">"),
+                      elementType.GetAssociatedType() == null ? null : typeof(IEnumerable<>).MakeGenericType(elementType.GetAssociatedType()))
             {
                 ElementType = elementType;
             }
@@ -199,7 +209,7 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="properties">The property descriptors for all properties of the record.</param>
-            public Record(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties) : base(name)
+            public Record(string name, IEnumerable<PropertyDescriptor<TypeDescriptor>> properties, Type associatedType) : base(name, associatedType)
             {
                 Properties = properties.ToDictionary(x => x.Name);
             }
@@ -234,7 +244,8 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             /// <param name="name">he name for the type descriptor.T</param>
             /// <param name="valueType">A type descriptor for the values in the dictionary.</param>
-            public Dictionary(string name, TypeDescriptor valueType) : base(name)
+            public Dictionary(string name, TypeDescriptor valueType)
+                : base(name, valueType?.GetAssociatedType() == null ? null : (typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType?.GetAssociatedType())))
             {
                 ValueType = valueType;
             }
@@ -279,7 +290,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             /// <param name="baseType">The base type of the value.</param>
             /// <param name="innerValue">The actual value.</param>
-            public Value(TypeDescriptor baseType, object innerValue) : base(string.Concat(baseType.Name, "=", innerValue.ToString()))
+            public Value(TypeDescriptor baseType, object innerValue) : base(string.Concat(baseType.Name, "=", innerValue.ToString()), baseType.GetAssociatedType())
             {
                 BaseType = baseType;
                 InnerValue = innerValue;
@@ -310,7 +321,7 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="options">A collection of the options for this union type.</param>
-            public Union(string name, IEnumerable<TypeDescriptor> options) : base(name)
+            public Union(string name, IEnumerable<TypeDescriptor> options, Type associatedType) : base(name, associatedType)
             {
                 Options = options.ToArray();
             }
@@ -342,7 +353,7 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="parts">A collection of the parts for this intersection type.</param>
-            public Intersection(string name, IEnumerable<TypeDescriptor> parts) : base(name)
+            public Intersection(string name, IEnumerable<TypeDescriptor> parts, Type associatedType) : base(name, associatedType)
             {
                 Parts = parts.ToArray();
             }
@@ -373,7 +384,7 @@ namespace Biz.Morsink.Rest.Schema
             /// Constructor.
             /// </summary>
             /// <param name="refname">The name of the reference.</param>
-            public Reference(string refname) : base("&" + refname)
+            public Reference(string refname) : base("&" + refname, null)
             {
                 RefName = refname;
             }
@@ -402,7 +413,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             /// <param name="refname">The name of the reference.</param>
             /// <param name="expandedDescriptor">The expanded type descriptor for the reference.</param>
-            public Referable(string refname, Lazy<TypeDescriptor> expandedDescriptor) : base("&+" + refname)
+            public Referable(string refname, Lazy<TypeDescriptor> expandedDescriptor, Type associatedType) : base("&+" + refname, associatedType)
             {
                 RefName = refname;
                 this.expandedDescriptor = expandedDescriptor;
@@ -414,7 +425,7 @@ namespace Biz.Morsink.Rest.Schema
             /// <param name="expandedDescriptor"></param>
             /// <returns>A new referable TypeDescriptor.</returns>
             public static Referable Create(string refname, TypeDescriptor expandedDescriptor)
-                => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor));
+                => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor), expandedDescriptor?.GetAssociatedType());
 
             private readonly Lazy<TypeDescriptor> expandedDescriptor;
             /// <summary>

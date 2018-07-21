@@ -125,7 +125,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="C">The capability type.</typeparam>
         /// <returns>An instance of the capability if it is supported, or null otherwise.</returns>
         public virtual C GetCapability<C>() where C : class, IRestCapability<T>
-            => GetCapabilities(RestCapabilityDescriptorKey.Create(typeof(C))) as C;
+            => GetCapabilities(RestCapabilityDescriptorKey.Create(typeof(C))).Select(cap => cap.Instance as C).FirstOrDefault();
         /// <summary>
         /// The entity/resource type for the repository.
         /// </summary>

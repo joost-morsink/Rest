@@ -19,7 +19,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         /// <summary>
         /// Constructor.
         /// </summary>
-        public HtmlHttpConverter(IGeneralHtmlGenerator generator, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions) : base(provider, restOptions)
+        public HtmlHttpConverter(IGeneralHtmlGenerator generator, IRestIdentityProvider provider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions)
+            : base(provider, scopeAccessor, restOptions)
         {
             this.generator = generator;
         }
