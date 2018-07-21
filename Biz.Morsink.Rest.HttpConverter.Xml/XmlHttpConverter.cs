@@ -10,6 +10,7 @@ using System.Xml.Linq;
 using static Biz.Morsink.Rest.HttpConverter.Xml.XsdConstants;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.Extensions.Options;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.HttpConverter.Xml
 {
@@ -21,6 +22,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     {
         private readonly XmlSerializer serializer;
         private readonly IOptions<XmlHttpConverterOptions> options;
+        private readonly IRestRequestScopeAccessor scopeAccessor;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -30,7 +32,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             : base(identityProvider, scopeAccessor, restOptions)
         {
             this.serializer = serializer;
-            this.options = xmlOptions;
+            this.scopeAccessor = scopeAccessor;
+            options = xmlOptions;
         }
         /// <summary>
         /// Determines if the XML converter applies to the given HttpContext.
@@ -53,7 +56,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             using (var xr = XmlReader.Create(sr))
             {
                 var element = XElement.Load(xr);
-                return serializer.Deserialize(element, t);
+                return scopeAccessor.Scope.With(SerializationContext.Create(IdentityProvider))
+                    .Run(() => serializer.Deserialize(element, t));
             }
         }
         /// <summary>
@@ -90,15 +94,21 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
             using (var ms = new MemoryStream())
             using (var wri = XmlWriter.Create(ms))
             {
-                var element = serializer.Serialize(value.Value);
-                element.SetAttributeValue(XNamespace.Xmlns + xsi, XSI.NamespaceName);
-                if (options.Value.LinkLocation != null)
+                var context = SerializationContext.Create(IdentityProvider);
+                var element = scopeAccessor.Scope.With(context).Run(() =>
                 {
-                    var links = new XElement(options.Value.LinkLocation);
-                    foreach (var link in value.Links)
-                        links.Add(serializer.Serialize(link));
-                    element.Add(links);
-                }
+                    var res = serializer.Serialize(value.Value);
+
+                    res.SetAttributeValue(XNamespace.Xmlns + xsi, XSI.NamespaceName);
+                    if (options.Value.LinkLocation != null)
+                    {
+                        var links = new XElement(options.Value.LinkLocation);
+                        foreach (var link in value.Links)
+                            links.Add(serializer.Serialize(link));
+                        res.Add(links);
+                    }
+                    return res;
+                });
                 element.WriteTo(wri);
                 wri.Flush();
                 ms.Seek(0L, SeekOrigin.Begin);

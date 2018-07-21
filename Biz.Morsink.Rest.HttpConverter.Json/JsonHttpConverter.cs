@@ -59,7 +59,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 try
                 {
-                    return ser.Deserialize(jtr, t);
+                    return restRequestScopeAccessor.Scope.With(SerializationContext.Create(IdentityProvider))
+                        .Run(() => ser.Deserialize(jtr, t));
                 }
                 catch (Exception e)
                 {
