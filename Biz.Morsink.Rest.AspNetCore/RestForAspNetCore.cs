@@ -66,8 +66,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             try
             {
                 var (req, conv) = ReadRequest(context);
-                context.SetContextItem(conv); 
-
+                context.SetContextItem(conv);
+                IHttpRestConverter responseConv = null;
                 if (req == null)
                 {
                     context.Response.StatusCode = STATUS_NOTFOUND;
@@ -78,7 +78,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                     if(authorizationProvider.IsAllowed(context.User, req.Address, req.Capability))
                     {
                         var resp = await restRequestDelegate(context, req, conv);
-                        await WriteResponse(conv, context, resp);
+                        responseConv = GetResponseConverter(context, req, resp);
+                        await WriteResponse(responseConv, context, resp);
                     }
                     else
                     {
@@ -114,7 +115,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             decimal bestQ = 0m;
             for (int i = 0; i < converters.Length; i++)
             {
-                var q = converters[i].AppliesScore(context);
+                var q = converters[i].AppliesToRequestScore(context);
                 if (q > bestQ)
                 {
                     bestQ = q;
@@ -122,6 +123,21 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
             }
             return (best?.ManipulateRequest(req, context), best);
+        }
+        private IHttpRestConverter GetResponseConverter(HttpContext context, RestRequest request, RestResponse response)
+        {
+            IHttpRestConverter best = null;
+            decimal bestQ = 0m;
+            for (int i = 0; i < converters.Length; i++)
+            {
+                var q = converters[i].AppliesToResponseScore(context, request, response);
+                if (q > bestQ)
+                {
+                    bestQ = q;
+                    best = converters[i];
+                }
+            }
+            return best;
         }
         private Task WriteResponse(IHttpRestConverter converter, HttpContext context, RestResponse response)
         {

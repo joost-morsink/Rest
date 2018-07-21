@@ -12,11 +12,19 @@ namespace Biz.Morsink.Rest.AspNetCore
     public interface IHttpRestConverter
     {
         /// <summary>
-        /// Determines if the converter applies to the given HttpContext.
+        /// Determines if the converter applies to the given HttpContext for interpretation of the request.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score indicating how well the converter applies to the context.</returns>
-        decimal AppliesScore(HttpContext context);
+        decimal AppliesToRequestScore(HttpContext context);
+        /// <summary>
+        /// Determines if the converter applies to the given HttpContext for serialization of the response.
+        /// </summary>
+        /// <param name="context">The HttpContext associated with the HTTP Request.</param>
+        /// <param name="request">The Rest request as constructed by the Request converter.</param>
+        /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
+        /// <returns>A score indicating how well the converter applies to the context.</returns>
+        decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
         /// <summary>
         /// A converter is able to manipulate the RestRequest using this method.
         /// </summary>

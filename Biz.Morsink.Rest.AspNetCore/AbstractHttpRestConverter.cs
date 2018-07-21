@@ -49,11 +49,19 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.options = options;
         }
         /// <summary>
-        /// Determines if the converter applies to the given HttpContext.
+        /// Determines if the converter applies to the given HttpContext for interpretation of the request.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public abstract decimal AppliesScore(HttpContext context);
+        public abstract decimal AppliesToRequestScore(HttpContext context);
+        /// <summary>
+        /// Determines if the converter applies to the given HttpContext for serialization of the response.
+        /// </summary>
+        /// <param name="context">The HttpContext associated with the HTTP Request.</param>
+        /// <param name="request">The Rest request as constructed by the Request converter.</param>
+        /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
+        /// <returns>A score ranging from 0 to 1.</returns>
+        public abstract decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
         /// <summary>
         /// A converter is able to manipulate the RestRequest using this method.
         /// </summary>
@@ -177,6 +185,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>True if the Accept header is found with the specified value.</returns>
         protected bool HasAcceptHeader(HttpRequest request, string acceptValue)
             => HasHeader(request, "Accept", acceptValue);
+
         /// <summary>
         /// Scores the Accept header based on some mimetype.
         /// </summary>
@@ -190,6 +199,31 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return HasAcceptHeader(request, mimeType) ? 1m : 0m;
         }
+        /// <summary>
+        /// Tries to get the Content-Type header.
+        /// </summary>
+        /// <param name="request">The HttpRequest</param>
+        /// <param name="mimeType">The contents of the Content-Type header.</param>
+        /// <returns>True if the request has a Content-Type header, false otherwise.</returns>
+        protected bool TryGetContentTypeHeader(HttpRequest request, out string mimeType)
+        {
+            var contentType = request.GetTypedHeaders().ContentType;
+            if (contentType != null && contentType.Type.HasValue)
+            {
+                mimeType = contentType.Type.Value;
+                return true;
+            }
+            else
+            {
+                mimeType = null;
+                return false;
+            }
+        }
+        protected decimal ScoreContentTypeAndAcceptHeaders(HttpRequest request, string mimeType)
+            => TryGetContentTypeHeader(request, out var mediaType)
+                ? mediaType == mimeType ? 1m : 0.1m
+                : ScoreAcceptHeader(request, mimeType) * 0.5m;
+         
         /// <summary>
         /// Override to apply general HTTP headers (like Content-Type).
         /// </summary>
