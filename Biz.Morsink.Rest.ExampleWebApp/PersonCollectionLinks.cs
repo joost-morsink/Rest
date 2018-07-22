@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
-    public class PersonCollectionLinks : IDynamicLinkProvider<PersonCollection>
+    public class PersonCollectionLinks : IDynamicLinkProvider<PersonV2Collection>
     {
-        public IReadOnlyList<Link> GetLinks(PersonCollection resource)
+        public IReadOnlyList<Link> GetLinks(PersonV2Collection resource)
         {
             var res = new List<Link>();
             var conv = resource.Id.Provider.GetConverter(typeof(PersonCollection), false).Convert(resource.Id.Value);
