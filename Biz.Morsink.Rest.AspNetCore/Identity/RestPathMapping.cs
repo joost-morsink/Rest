@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Identity
 {
+    using static Utils.Utilities;
     /// <summary>
     /// Implementation of the IRestPathMapping interface.
     /// Represents mapping of a resource type to a Rest path.
     /// </summary>
     public class RestPathMapping : IRestPathMapping
     {
-        private static readonly Version VERSION_ONE = new Version(1, 0);
         /// <summary>
         /// Constructor.
         /// </summary>

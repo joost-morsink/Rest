@@ -617,5 +617,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             }
             return hc;
         }
+        public override string ToString()
+            => $"{PathBase}/{string.Join("/", segments)}{query.ToUriSuffix()}";
     }
 }

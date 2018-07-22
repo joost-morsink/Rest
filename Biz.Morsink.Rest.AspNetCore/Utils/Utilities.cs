@@ -9,6 +9,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
 {
     public static class Utilities
     {
+        public static readonly Version VERSION_ONE = new Version(1, 0);
         /// <summary>
         /// Unescape a string into proper content
         /// </summary>

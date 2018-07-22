@@ -13,6 +13,7 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
+    using static Utilities;
     /// <summary>
     /// IdentityProvider for a Rest service.
     /// </summary>
@@ -76,7 +77,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         protected struct EntryBuilder
         {
-            private static readonly Version VERSION_ONE = new Version(1, 0);
             /// <summary>
             /// Creates a new EntryBuilder.
             /// </summary>
@@ -176,7 +176,13 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 if (!paths.IsEmpty)
                 {
-                    parent.entries.Add(allTypes[allTypes.Length - 1], new Entry(allTypes[allTypes.Length - 1], allTypes, version, paths.Select(t => t.Item1)));
+                    var entry = new Entry(allTypes[allTypes.Length - 1], allTypes, version, paths.Select(t => t.Item1));
+                    parent.entries.Add(allTypes[allTypes.Length - 1], entry);
+                    foreach (var path in paths)
+                        if (parent.paths.TryGetValue(path.Item1, out var types))
+                            types.Add(entry);
+                        else
+                            parent.paths[path.Item1] = new List<Entry> { entry }; 
                     parent.matchTree = new Lazy<RestPathMatchTree<Entry>>(parent.GetMatchTree);
                 }
             }
@@ -245,6 +251,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             RecordConverter.ForDictionaries()
         }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();
+        private Dictionary<RestPath, List<Entry>> paths = new Dictionary<RestPath, List<Entry>>();
         private readonly string localPrefix;
         private Lazy<RestPathMatchTree<Entry>> matchTree;
 
@@ -298,6 +305,16 @@ namespace Biz.Morsink.Rest.AspNetCore
         protected override IIdentityCreator<T> GetCreator<T>()
             => (IIdentityCreator<T>)GetCreator(typeof(T));
 
+        public virtual IEnumerable<(Version, Type)> GetSupportedVersions(Type type)
+        {
+            if(entries.TryGetValue(type, out var entry))
+            {
+                if (paths.TryGetValue(entry.PrimaryPath, out var entries))
+                    return entries.Select(e => (e.Version, e.Type));
+            }
+            return new[] { (VERSION_ONE, type) };
+        }
+
 
         public virtual IEnumerable<RestIdentityMatch> Match(string path, RestPrefixContainer prefixes = null)
         {
@@ -327,7 +344,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>An IIdentity value for the path.</returns>
         public virtual IIdentity Parse(string path, bool nullOnFailure = false, RestPrefixContainer prefixes = null, VersionMatcher versionMatcher = default)
         {
-            
             var matches = Match(path, prefixes);
             var match = versionMatcher.Match(matches.Select(m => (m.Version,m))).Item2;
             if (match.IsSuccessful)
