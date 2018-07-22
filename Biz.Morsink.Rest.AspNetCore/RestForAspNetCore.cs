@@ -1,5 +1,8 @@
-﻿using Biz.Morsink.Rest.AspNetCore.Utils;
+﻿using Biz.Morsink.Identity.PathProvider;
+using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +42,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly IRestIdentityProvider identityProvider;
         private readonly RestRequestDelegate restRequestDelegate;
         private readonly IAuthorizationProvider authorizationProvider;
+        private readonly IOptions<RestAspNetCoreOptions> options;
 
         /// <summary>
         /// Constructor.
@@ -48,13 +52,14 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="httpHandler">A Rest HTTP pipeline.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="converters">A collection of applicable Rest converters for HTTP.</param>
-        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider)
+        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider, IOptions<RestAspNetCoreOptions> options)
         {
             this.handler = restHandler;
             this.converters = converters.ToArray();
             this.identityProvider = identityProvider;
             this.restRequestDelegate = httpHandler.GetRequestDelegate(restHandler);
             this.authorizationProvider = authorizationProvider;
+            this.options = options;
         }
         /// <summary>
         /// This method implements the RequestDelegate for the Rest middleware component.
@@ -101,7 +106,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         private (RestRequest, IHttpRestConverter) ReadRequest(HttpContext context)
         {
             var request = context.Request;
-            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString),
+            var vm = GetVersionMatcher(context);
+
+            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: vm),
                 request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v))));
             if (context.Request.Headers.TryGetValue("Accept", out var acceptHeaders))
             {
@@ -124,6 +131,31 @@ namespace Biz.Morsink.Rest.AspNetCore
             }
             return (best?.ManipulateRequest(req, context), best);
         }
+
+        private VersionMatcher GetVersionMatcher(HttpContext context)
+        {
+            var vm = default(VersionMatcher);
+            if (options.Value.VersionHeader != null && context.Request.Headers.TryGetValue(options.Value.VersionHeader, out var versHdr))
+            {
+                switch (versHdr.First().ToLower())
+                {
+                    case "latest":
+                    case "newest":
+                        vm = VersionMatcher.Newest;
+                        break;
+                    case "oldest":
+                        vm = VersionMatcher.Oldest;
+                        break;
+                    default:
+                        if (int.TryParse(versHdr.First(), out var x))
+                            vm = VersionMatcher.OnMajor(x);
+                        break;
+                }
+            }
+
+            return vm;
+        }
+
         private IHttpRestConverter GetResponseConverter(HttpContext context, RestRequest request, RestResponse response)
         {
             IHttpRestConverter best = null;

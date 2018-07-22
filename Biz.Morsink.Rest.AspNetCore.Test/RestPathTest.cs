@@ -12,7 +12,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public void RestPath_Trivial()
         {
-            var p = RestPath.Parse("/api/person/1", null);
+            var p = RestPath.Parse("/api/person/1");
             Assert.AreEqual(3, p.Count, "Count property should count all parts.");
             Assert.IsTrue(p[0].Content == "api" && p[1].Content == "person" && p[2].Content == "1", "The parsed RestPath should match the parts in number and order of the parts in the original RestPath string.");
         }
@@ -28,8 +28,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public void RestPath_Star()
         {
-            var p = RestPath.Parse("/api/person/*/test", null);
-            var q = RestPath.Parse("/api/person/123/test", null);
+            var p = RestPath.Parse("/api/person/*/test");
+            var q = RestPath.Parse("/api/person/123/test");
             var m = p.MatchPath(q);
             Assert.IsTrue(m.IsSuccessful, "A wildcard should match any value.");
             Assert.AreEqual(1, m.SegmentValues.Count, "One wildcard should result in a unary match.");

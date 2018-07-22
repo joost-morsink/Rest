@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.DataConvert;
 using Biz.Morsink.DataConvert.Converters;
 using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
 using System;
@@ -45,18 +46,21 @@ namespace Biz.Morsink.Rest.AspNetCore
 
         private class Entry
         {
-            public Entry(Type type, Type[] allTypes, params string[] paths)
-                : this(type, allTypes, paths.Select(path => RestPath.Parse(path, type)))
+            public Entry(Type type, Type[] allTypes, Version version, params string[] paths)
+                : this(type, allTypes, version, paths.Select(path => RestPath.Parse(path)))
             { }
-            public Entry(Type type, Type[] allTypes, IEnumerable<RestPath> paths)
+            public Entry(Type type, Type[] allTypes, Version version, IEnumerable<RestPath> paths)
             {
                 Type = type;
                 AllTypes = allTypes;
                 Paths = paths.ToArray();
+                Version = version;
             }
             public Type Type { get; }
             public Type[] AllTypes { get; }
             public IReadOnlyList<RestPath> Paths { get; }
+            public Version Version { get; }
+
             public RestPath PrimaryPath => Paths[0];
 
             public Type GetUnderlyingType()
@@ -72,6 +76,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         protected struct EntryBuilder
         {
+            private static readonly Version VERSION_ONE = new Version(1, 0);
             /// <summary>
             /// Creates a new EntryBuilder.
             /// </summary>
@@ -79,16 +84,18 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <param name="allTypes">The entity types of the identity value's components.</param>
             /// <returns>An EntryBuilder.</returns>
             internal static EntryBuilder Create(RestIdentityProvider parent, params Type[] allTypes)
-                => new EntryBuilder(parent, allTypes, ImmutableList<(RestPath, Type[])>.Empty);
+                => new EntryBuilder(parent, allTypes, ImmutableList<(RestPath, Type[])>.Empty, VERSION_ONE);
             private readonly RestIdentityProvider parent;
             private readonly Type[] allTypes;
             private readonly ImmutableList<(RestPath, Type[])> paths;
+            private readonly Version version;
 
-            private EntryBuilder(RestIdentityProvider parent, Type[] allTypes, ImmutableList<(RestPath, Type[])> paths)
+            private EntryBuilder(RestIdentityProvider parent, Type[] allTypes, ImmutableList<(RestPath, Type[])> paths, Version version)
             {
                 this.parent = parent;
                 this.allTypes = allTypes;
                 this.paths = paths;
+                this.version = version;
             }
             /// <summary>
             /// Add a path to the entry.
@@ -108,7 +115,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 types = types.Length == 0 ? allTypes : types;
                 if (path.Arity != types.Length)
                     throw new ArgumentException("Number of wildcards does not match arity of identity value.");
-                return new EntryBuilder(parent, allTypes, paths.Add((path, types)));
+                return new EntryBuilder(parent, allTypes, paths.Add((path, types)), version);
             }
             /// <summary>
             /// Adds a path to the entry.
@@ -145,16 +152,23 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <returns>A new EntryBuilder containing the specified path.</returns>
             public EntryBuilder WithPath(string path, params Type[] types)
             {
-                var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
+                var p = RestPath.Parse(path);
                 return WithPath(p, types);
             }
             public EntryBuilder WithPathAndQueryType(string path, params Type[] queryTypes)
             {
-                var p = RestPath.Parse(path, allTypes[allTypes.Length - 1]);
+                var p = RestPath.Parse(path);
                 if (!p.QueryString.IsWildcard)
                     throw new ArgumentException("Query string must be wildcard.");
                 return WithPath(p.WithQuery(q => q.WithWildcardTypes(queryTypes)));
             }
+            public EntryBuilder WithVersion(int major)
+                => new EntryBuilder(parent, allTypes, paths, major == 1 ? VERSION_ONE : new Version(major, 0));
+            public EntryBuilder WithVersion(int major, int minor)
+                => new EntryBuilder(parent, allTypes, paths, new Version(major, minor));
+            public EntryBuilder WithVersion(Version version)
+                => new EntryBuilder(parent, allTypes, paths, version);
+
             /// <summary>
             /// Adds the entry to the parent PathIdentityProvider this builder was created from.
             /// </summary>
@@ -162,8 +176,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 if (!paths.IsEmpty)
                 {
-                    parent.entries.Add(allTypes[allTypes.Length - 1], new Entry(allTypes[allTypes.Length - 1], allTypes, paths.Select(t => t.Item1)));
-                    parent.matchTree = new Lazy<RestPathMatchTree>(parent.GetMatchTree);
+                    parent.entries.Add(allTypes[allTypes.Length - 1], new Entry(allTypes[allTypes.Length - 1], allTypes, version, paths.Select(t => t.Item1)));
+                    parent.matchTree = new Lazy<RestPathMatchTree<Entry>>(parent.GetMatchTree);
                 }
             }
 
@@ -232,17 +246,17 @@ namespace Biz.Morsink.Rest.AspNetCore
         }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();
         private readonly string localPrefix;
-        private Lazy<RestPathMatchTree> matchTree;
+        private Lazy<RestPathMatchTree<Entry>> matchTree;
 
-        private RestPathMatchTree GetMatchTree()
-            => new RestPathMatchTree(entries.SelectMany(e => e.Value.Paths), localPrefix);
+        private RestPathMatchTree<Entry> GetMatchTree()
+            => new RestPathMatchTree<Entry>(entries.SelectMany(e => e.Value.Paths.Select(p => (p, e.Value))), localPrefix);
         /// <summary>
         /// Constructor.
         /// </summary>
         public RestIdentityProvider(string localPrefix = null)
         {
             this.localPrefix = localPrefix;
-            matchTree = new Lazy<RestPathMatchTree>(GetMatchTree);
+            matchTree = new Lazy<RestPathMatchTree<Entry>>(GetMatchTree);
         }
         /// <summary>
         /// Creates an entry builder
@@ -284,14 +298,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         protected override IIdentityCreator<T> GetCreator<T>()
             => (IIdentityCreator<T>)GetCreator(typeof(T));
 
-        /// <summary>
-        /// Parses a path string into an IIdentity value.
-        /// If a match is found, the IIdentity value is properly typed.
-        /// </summary>
-        /// <param name="path">The path to parse.</param>
-        /// <param name="nullOnFailure">When there is not match found for the Path, this boolean indicates whether to return a null or an IIdentity&lt;object&gt;.</param>
-        /// <returns>An IIdentity value for the path.</returns>
-        public virtual IIdentity Parse(string path, bool nullOnFailure = false, RestPrefixContainer prefixes = null)
+
+        public virtual IEnumerable<RestIdentityMatch> Match(string path, RestPrefixContainer prefixes = null)
         {
             prefixes = prefixes ?? Prefixes;
             if (path.StartsWith("[") && path.EndsWith("]"))
@@ -305,13 +313,29 @@ namespace Biz.Morsink.Rest.AspNetCore
                     throw new ArgumentException("Prefix not found.", nameof(path));
                 path = rpref.Prefix + path;
             }
-            var match = matchTree.Value.Walk(RestPath.Parse(path));
+            var matches = matchTree.Value.Walk(RestPath.Parse(path));
+            return from m in matches
+                   where m.Item1.IsSuccessful
+                   select new RestIdentityMatch(m.Item1, m.Item2.Type, m.Item2.AllTypes, null, m.Item2.Version);
+        }
+        /// <summary>
+        /// Parses a path string into an IIdentity value.
+        /// If a match is found, the IIdentity value is properly typed.
+        /// </summary>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="nullOnFailure">When there is not match found for the Path, this boolean indicates whether to return a null or an IIdentity&lt;object&gt;.</param>
+        /// <returns>An IIdentity value for the path.</returns>
+        public virtual IIdentity Parse(string path, bool nullOnFailure = false, RestPrefixContainer prefixes = null, VersionMatcher versionMatcher = default)
+        {
+            
+            var matches = Match(path, prefixes);
+            var match = versionMatcher.Match(matches.Select(m => (m.Version,m))).Item2;
             if (match.IsSuccessful)
             {
                 if (match.Path.Arity == 1)
-                    return Create(match.Path.ForType, match[0]);
+                    return Create(match.ForType, match.Match[0]);
                 else
-                    return Create(match.Path.ForType, match.ToArray());
+                    return Create(match.ForType, match.Match.ToArray());
             }
             else
                 return nullOnFailure ? null : new Identity<object, string>(this, path);

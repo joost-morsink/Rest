@@ -12,7 +12,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// This class represents a Rest path.
     /// It may contain wildcard parts "*".
     /// </summary>
-    public struct RestPath
+    public struct RestPath : IEquatable<RestPath>
     {
         /// <summary>
         /// Enum to indicate whether a RestPath can be considered Local to the current server or Remote.
@@ -80,7 +80,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             public override bool Equals(object obj)
                 => obj is Segment && Equals((Segment)obj);
             public bool Equals(Segment other)
-                => contentType == other.contentType && (IsWildcard || string.Equals(Content, other.Content));
+                => (contentType == other.contentType || contentType!=ContentType.Wildcard && other.contentType!=ContentType.Wildcard) 
+                    && (IsWildcard || string.Equals(Content, other.Content));
             /// <summary>
             /// Determines whether the segments 'matches' the other.
             /// </summary>
@@ -400,19 +401,19 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="pathString">The path string to parse.</param>
         /// <param name="forType">The entity type the path belongs to.</param>
         /// <returns>A parsed RestPath instance.</returns>
-        public static RestPath Parse(string pathString, Type forType = null)
+        public static RestPath Parse(string pathString)
         {
             if (pathString.StartsWith("http://") || pathString.StartsWith("https://"))
             {
                 var start = pathString.IndexOf('/', pathString.IndexOf(':') + 3);
                 var pathBase = pathString.Substring(0, start);
                 var (segments, query) = parseLocal(pathString.Substring(start));
-                return new RestPath(pathBase, segments, query, forType);
+                return new RestPath(pathBase, segments, query);
             }
             else
             {
                 var (segments, query) = parseLocal(pathString);
-                return new RestPath(segments, query, forType);
+                return new RestPath(segments, query);
             }
 
             (IEnumerable<Segment>, Query) parseLocal(string str)
@@ -438,8 +439,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="segments">All the path-parts of the path.</param>
         /// <param name="query">The query string part of the path.</param>
         /// <param name="forType">The entity type the path belongs to.</param>
-        public RestPath(IEnumerable<Segment> segments, Query query, Type forType)
-            : this(null, segments, query, forType)
+        public RestPath(IEnumerable<Segment> segments, Query query)
+            : this(null, segments, query)
         { }
         /// <summary>
         /// Constructor.
@@ -448,21 +449,19 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="segments">All the path-parts of the path.</param>
         /// <param name="query">The query string part of the path.</param>
         /// <param name="forType">The entity type the path belongs to.</param>
-        public RestPath(string pathBase, IEnumerable<Segment> segments, Query query, Type forType)
+        public RestPath(string pathBase, IEnumerable<Segment> segments, Query query)
         {
             this.pathBase = pathBase;
             this.segments = segments.ToArray();
             this.query = query;
             skip = 0;
-            ForType = forType;
         }
-        private RestPath(string pathBase, Segment[] segments, Query query, int skip, Type forType)
+        private RestPath(string pathBase, Segment[] segments, Query query, int skip)
         {
             this.pathBase = pathBase;
             this.segments = segments;
             this.query = query;
             this.skip = skip;
-            ForType = forType;
         }
         private readonly Segment[] segments;
         private readonly Query query;
@@ -500,10 +499,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         public Query QueryString => query;
 
         /// <summary>
-        /// Gets the entity type this RestPath is for.
-        /// </summary>
-        public Type ForType { get; }
-        /// <summary>
         /// Gets a specific element of this RestPath.
         /// </summary>
         /// <param name="index">The index of the part.</param>
@@ -515,7 +510,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="num">The number of segments to skip.</param>
         /// <returns>A shorter RestPath.</returns>
         public RestPath Skip(int num = 1)
-            => new RestPath(pathBase, segments, query, skip + num, ForType);
+            => new RestPath(pathBase, segments, query, skip + num);
         /// <summary>
         /// Tries to match another Path to this one.
         /// </summary>
@@ -544,7 +539,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <returns>A RestPath.</returns>
         public RestPath GetFullPath()
-            => new RestPath(pathBase, segments, query, 0, ForType);
+            => new RestPath(pathBase, segments, query, 0);
 
         private IEnumerable<Segment> fillHelper(IEnumerable<string> stars)
         {
@@ -569,7 +564,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="wildcards">The values for the wildcards</param>
         /// <returns>A new Path</returns>
         public RestPath FillWildcards(IEnumerable<string> wildcards, Query query = default(Query))
-            => new RestPath(fillHelper(wildcards), this.query.IsWildcard ? query : this.query, ForType);
+            => new RestPath(fillHelper(wildcards), this.query.IsWildcard ? query : this.query);
         /// <summary>
         /// Gets a string representation for the Path.
         /// </summary>
@@ -580,27 +575,47 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="pathBase">The base path of the remote server.</param>
         /// <returns>A Remote RestPath.</returns>
         public RestPath ToRemote(string pathBase)
-            => IsLocal ? new RestPath(pathBase, segments, query, skip, ForType) : throw new InvalidOperationException("Path is already remote.");
+            => IsLocal ? new RestPath(pathBase, segments, query, skip) : throw new InvalidOperationException("Path is already remote.");
         /// <summary>
         /// Turn the path into a local path. 'Forgets' its PathBase.
         /// </summary>
         /// <returns>A Local RestPath.</returns>
         public RestPath ToLocal()
-            => IsLocal ? this : new RestPath(null, segments, query, skip, ForType);
+            => IsLocal ? this : new RestPath(null, segments, query, skip);
         /// <summary>
         /// Creates a new RestPath with the specified query string.
         /// </summary>
         /// <param name="q">The new query string.</param>
         /// <returns>A new RestPath with a new query string.</returns>
         public RestPath WithQuery(Query q)
-            => new RestPath(pathBase, segments, q, skip, ForType);
+            => new RestPath(pathBase, segments, q, skip);
         /// <summary>
         /// Creates a new RestPath with a manipulated query string.
         /// </summary>
         /// <param name="q">The query string manipulator.</param>
         /// <returns>A new RestPath with a new query string.</returns>
         public RestPath WithQuery(Func<Query, Query> q)
-            => new RestPath(pathBase, segments, q(query), skip, ForType);
+            => new RestPath(pathBase, segments, q(query), skip);
 
+        public bool Equals(RestPath other)
+            => Location == other.Location
+            && PathBase == other.PathBase
+            && segments.Length == other.segments.Length
+            && segments.Zip(other.segments, (x, y) => x.Equals(y)).All(x => x);
+
+        public override bool Equals(object o)
+            => o is RestPath other ? Equals(other) : false;
+        public override int GetHashCode()
+        {
+            int hc = typeof(RestPath).GetHashCode();
+            hc = (hc << 3) + ((hc >> 29) & 0x7);
+            hc ^= PathBase?.GetHashCode() ?? typeof(string).GetHashCode();
+            for (int i = 0; i < segments.Length; i++)
+            {
+                hc = (hc << 3) + ((hc >> 29) & 0x7);
+                hc ^= segments[i].GetHashCode();
+            }
+            return hc;
+        }
     }
 }
