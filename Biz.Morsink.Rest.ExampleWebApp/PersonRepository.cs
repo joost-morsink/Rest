@@ -133,7 +133,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     /// <summary>
     /// A repository for Person entities.
     /// </summary>
-    [RestDocumentation("Repository for persons. Version 1.")]
+    [RestDocumentation("Repository for persons. Version 2.")]
     public class PersonV2Repository
     {
         private static readonly ResponseCaching CACHING = new ResponseCaching
