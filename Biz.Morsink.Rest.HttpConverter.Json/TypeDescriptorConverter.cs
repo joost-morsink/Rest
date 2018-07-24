@@ -65,7 +65,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             else
             {
                 writer.WriteNull();
-                writer.WriteComment("No associated type");
+                //writer.WriteComment("No associated type");
             }
         }
 

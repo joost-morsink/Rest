@@ -127,6 +127,8 @@ namespace Biz.Morsink.Rest
                             .GetDeclaredMethod(nameof(Handle))
                             .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
                     var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { repo, request, cap });
+                    if (request.Metadata.TryGet(out Versioning ver) && !res.Metadata.TryGet(out Versioning _))
+                        res = res.AddMetadata(ver);
                     if (!res.UntypedResult.IsFailure)
                     {
                         if (res is RestResponse<T> tres)

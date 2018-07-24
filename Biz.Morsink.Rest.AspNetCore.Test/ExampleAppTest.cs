@@ -198,8 +198,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public async Task Http_CheckPersonCollection()
         {
-
-            var resp = await Get(client, "/person?q=Joost&limit=10&skip=0");
+            var headers = DefaultHeaders.Add("Version", "2");
+            var resp = await Get(client, "/person?q=Joost&limit=10&skip=0", headers);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
 
@@ -236,11 +236,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public async Task Http_CheckPersonCollectionInvalidParams()
         {
-            var resp = await Get(client, "/person?limit=0");
+            var headers = DefaultHeaders.Add("Version", "2");
+            var resp = await Get(client, "/person?limit=0", headers);
             Assert.IsFalse(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
 
-            resp = await Get(client, "/person?skip=-1");
+            resp = await Get(client, "/person?skip=-1", headers);
             Assert.IsFalse(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
         }
@@ -403,7 +404,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var vals) && vals.Any());
-            var link = vals.Select(ParseLink).Where(l => l!=null && l.Reltype=="controller").First();
+            var link = vals.Select(ParseLink).Where(l => l != null && l.Reltype == "controller").First();
 
             // Get the controller
             resp = await Get(client, link.Address);
@@ -413,7 +414,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();
             Assert.IsNotNull(finishLink);
-            
+
             // Store Job address
             var jobaddr = json["jobId"]["href"].Value<string>();
 
@@ -466,7 +467,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var linkdict = ParseLinks(links);
             Assert.IsTrue(linkdict.ContainsKey("blogs"));
-            
+
             // See if repository exists
             resp = await Get(client, linkdict["blogs"]);
             Assert.IsTrue(resp.IsSuccessStatusCode);
@@ -484,7 +485,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(json["name"].Value<string>(), "Joost Morsink's REST blog");
 
             // Delete and check
-            resp = await Delete(client,location);
+            resp = await Delete(client, location);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             resp = await Delete(client, location);
             Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);

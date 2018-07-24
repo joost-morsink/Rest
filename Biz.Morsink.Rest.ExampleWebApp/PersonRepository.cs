@@ -21,19 +21,19 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     {
         private static IIdentity<Person> Convert(IIdentity<PersonV2> id)
         {
-            return FreeIdentity<Person>.Create(id.Value);
+            return id.Provider.Creator<Person>().Create(id.Value);
         }
         private static IIdentity<PersonV2> Convert(IIdentity<Person> id)
         {
-            return FreeIdentity<PersonV2>.Create(id.Value);
+            return id.Provider.Creator<PersonV2>().Create(id.Value);
         }
         private static IIdentity<PersonCollection> Convert(IIdentity<PersonV2Collection> id)
         {
-            return FreeIdentity<PersonCollection>.Create(id.Value);
+            return id.Provider.Creator<PersonCollection>().Create(id.Value);
         }
         private static IIdentity<PersonV2Collection> Convert(IIdentity<PersonCollection> id)
         {
-            return FreeIdentity<PersonV2Collection>.Create(id.Value);
+            return id.Provider.Creator<PersonV2Collection>().Create(id.Value);
         }
         public class DelayParameter
         {
