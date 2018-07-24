@@ -7,8 +7,14 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.Utils
 {
+    /// <summary>
+    /// Utility class.
+    /// </summary>
     public static class Utilities
     {
+        /// <summary>
+        /// Version 1.0
+        /// </summary>
         public static readonly Version VERSION_ONE = new Version(1, 0);
         /// <summary>
         /// Unescape a string into proper content

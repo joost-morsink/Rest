@@ -56,6 +56,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             {
                 opts.UseCuries = false;
                 opts.VersionHeader = "Version";
+                opts.SupportedVersionsHeader = "Supported-Versions";
             });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();

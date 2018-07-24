@@ -82,12 +82,12 @@ namespace Biz.Morsink.Rest.AspNetCore
                 }
                 else
                 {
-                    if(authorizationProvider.IsAllowed(context.User, req.Address, req.Capability))
+                    if (authorizationProvider.IsAllowed(context.User, req.Address, req.Capability))
                     {
                         var resp = await restRequestDelegate(context, req, conv);
-                        if(options.Value.VersionHeader!=null && resp.Metadata.TryGet(out Versioning ver))
+                        if (options.Value.VersionHeader != null && resp.Metadata.TryGet(out Versioning ver))
                         {
-                            var supportedHeader = "Supported-Versions";
+                            var supportedHeader = options.Value.SupportedVersionsHeader ?? "Supported-Versions";
                             context.Response.Headers[options.Value.VersionHeader] = ver.Current.ToString();
                             context.Response.Headers[supportedHeader] = new StringValues(ver.Supported.Select(v => v.ToString()).ToArray());
                         }
@@ -106,7 +106,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 context.Response.StatusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 context.Response.StatusCode = STATUS_INTERNALSERVERERROR;
                 await context.Response.WriteAsync("An error occured.");
