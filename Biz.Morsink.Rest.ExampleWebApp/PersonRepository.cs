@@ -235,13 +235,16 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         {
             public void RegisterComponents(IServiceCollection serviceCollection, ServiceLifetime lifetime = ServiceLifetime.Scoped)
             {
+                var wildcards = new[] { typeof(SimpleSearchParameters), typeof(CollectionParameters) };
                 serviceCollection.AddAttributedRestRepository<PersonV2Repository>(lifetime)
                     .AddAttributedRestRepository<PersonRepository>(lifetime)
                     .AddSingleton<IRestResourceCollection<PersonV2Collection, PersonV2>, PersonSource>()
-                    .AddRestPathMapping<Person>("/person/*", new Version(1, 0))
-                    .AddRestPathMapping<PersonV2>("/person/*", new Version(2, 0))
-                    .AddRestPathMapping<PersonCollection>("/person?*", new Version(1, 0), typeof(SimpleSearchParameters), typeof(CollectionParameters))
-                    .AddRestPathMapping<PersonV2Collection>("/person?*", new Version(2, 0), typeof(SimpleSearchParameters), typeof(CollectionParameters))
+                    .OnRestPath("/person/*", bld =>
+                        bld.ForVersion(1).Add<Person>()
+                        .ForVersion(2).Add<PersonV2>())
+                    .OnRestPath("/person?*", bld => 
+                        bld.ForVersion(1).Add<PersonCollection>(wildcards)
+                        .ForVersion(2).Add<PersonV2Collection>(wildcards))
                     .AddScoped<IDynamicLinkProvider<PersonV2Collection>, PersonCollectionLinks>()
                     ;
             }

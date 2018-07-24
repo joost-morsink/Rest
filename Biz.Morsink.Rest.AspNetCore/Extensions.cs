@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.Add(new ServiceDescriptor(typeof(IRestRepository<>).MakeGenericType(entityType), typeof(R), lifetime));
             foreach (var attr in typeof(R).GetTypeInfo().GetCustomAttributes<RestPathAttribute>())
                 serviceCollection.AddRestPathMapping(entityType, attr.Path, attr.ComponentTypes, attr.WildcardTypes);
-           
+
             return serviceCollection;
         }
         /// <summary>
@@ -273,8 +273,8 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="path">The path of the mapping.</param>
         /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
-        public static IServiceCollection AddRestPathMapping<T>(this IServiceCollection serviceCollection, string path,  params Type[] wildcardTypes)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, new [] { typeof(T) }, wildcardTypes));
+        public static IServiceCollection AddRestPathMapping<T>(this IServiceCollection serviceCollection, string path, params Type[] wildcardTypes)
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, new[] { typeof(T) }, wildcardTypes));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -335,7 +335,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
         /// <returns>The builder.</returns>
         public static IServiceCollection AddRestPathMapping<T>(this IServiceCollection serviceCollection, string path, Version version, params Type[] wildcardTypes)
-            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, new [] { typeof(T) }, wildcardTypes, version));
+            => serviceCollection.AddRestPathMapping(new RestPathMapping(typeof(T), path, new[] { typeof(T) }, wildcardTypes, version));
         /// <summary>
         /// Adds a path mapping to the service collection.
         /// </summary>
@@ -402,6 +402,165 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IServiceCollection AddRestPathMapping(this IServiceCollection serviceCollection, Type type, string path, Type[] componentTypes = null, Type[] wildcardTypes = null)
             => serviceCollection.AddRestPathMapping(new RestPathMapping(type, path, componentTypes, wildcardTypes));
+
+        /// <summary>
+        /// Starts building rest path mappings for some path.
+        /// </summary>
+        /// <param name="serviceCollection">A service collection.</param>
+        /// <param name="path">The path.</param>
+        /// <returns>A RestPathMappingBuilder.</returns>
+        public static RestPathMappingBuilder OnRestPath(this IServiceCollection serviceCollection, string path)
+        {
+            return new RestPathMappingBuilder(serviceCollection, path);
+        }
+           /// <summary>
+        /// Starts building rest path mappings for some path.
+        /// </summary>
+        /// <param name="builder">A Rest services builder.</param>
+        /// <param name="path">The path.</param>
+        /// <returns>A RestPathMappingBuilder.</returns>
+        public static RestPathMappingBuilder OnRestPath(this IRestServicesBuilder builder, string path)
+        {
+            return new RestPathMappingBuilder(builder.ServiceCollection, path);
+        }
+        /// <summary>
+        /// Starts building rest path mappings for some path.
+        /// </summary>
+        /// <param name="serviceCollection">A service collection.</param>
+        /// <param name="path">The path.</param>
+        /// <param name="builderAction">An action to perform on the RestPathMappingBuilder.</param>
+        /// <returns>the services collection.</returns>
+        public static IServiceCollection OnRestPath(this IServiceCollection serviceCollection, string path, Action<RestPathMappingBuilder> builderAction)
+        {
+            builderAction(serviceCollection.OnRestPath(path));
+            return serviceCollection;
+        }
+        /// <summary>
+        /// Starts building rest path mappings for some path.
+        /// </summary>
+        /// <param name="builder">A Rest services builder.</param>
+        /// <param name="path">The path.</param>
+        /// <param name="builderAction">An action to perform on the RestPathMappingBuilder.</param>
+        /// <returns>the services collection.</returns>
+        public static IRestServicesBuilder OnPath(this IRestServicesBuilder builder, string path, Action<RestPathMappingBuilder> builderAction)
+        {
+            builderAction(builder.ServiceCollection.OnRestPath(path));
+            return builder;
+        }
+        /// <summary>
+        /// A builder pattern struct for RestPathMappings.
+        /// </summary>
+        public struct RestPathMappingBuilder
+        {
+            private readonly IServiceCollection services;
+            private readonly string path;
+            private readonly Version version;
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="services">A service collection.</param>
+            /// <param name="path">The path to build entries for.</param>
+            public RestPathMappingBuilder(IServiceCollection services, string path)
+            {
+                this.services = services;
+                this.path = path;
+                version = new Version(1, 0);
+            }
+            private RestPathMappingBuilder(IServiceCollection services, string path, Version version)
+            {
+                this.services = services;
+                this.path = path;
+                this.version = version;
+            }
+            /// <summary>
+            /// Sets the version for the next addition.
+            /// </summary>
+            /// <param name="version">The version.</param>
+            public RestPathMappingBuilder ForVersion(Version version)
+                => new RestPathMappingBuilder(services, path, version);
+            /// <summary>
+            /// Sets the version for the next addition.
+            /// </summary>
+            /// <param name="major">The major version.</param>
+            public RestPathMappingBuilder ForVersion(int major)
+                => ForVersion(new Version(major, 0));
+            /// <summary>
+            /// Sets the version for the next addition.
+            /// </summary>
+            /// <param name="major">The major version.</param>
+            /// <param name="minor">The minor version.</param>
+            public RestPathMappingBuilder ForVersion(int major, int minor)
+                => ForVersion(new Version(major, minor));
+            /// <summary>
+            /// Sets the version for the next addition.
+            /// </summary>
+            /// <param name="major">The major version.</param>
+            /// <param name="minor">The minor version.</param>
+            /// <param name="patch">The patch version.</param>
+            public RestPathMappingBuilder ForVersion(int major, int minor, int patch)
+                => ForVersion(new Version(major, minor, patch));
+            /// <summary>
+            /// Adds a Rest path mapping to the service collection.
+            /// </summary>
+            /// <typeparam name="T">The entity type.</typeparam>
+            /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+            public RestPathMappingBuilder Add<T>(params Type[] wildcardTypes)
+            {
+                services.AddRestPathMapping<T>(path, version, wildcardTypes);
+                return new RestPathMappingBuilder(services, path, new Version(version.Major, 0));
+            }
+            /// <summary>
+            /// Adds a Rest path mapping to the service collection.
+            /// </summary>
+            /// <typeparam name="T">The first component type.</typeparam>
+            /// <typeparam name="U">The second component type.</typeparam>
+            /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+            public RestPathMappingBuilder Add<T, U>(params Type[] wildcardTypes)
+            {
+                services.AddRestPathMapping<T, U>(path, version, wildcardTypes);
+                return new RestPathMappingBuilder(services, path, new Version(version.Major, 0));
+            }
+            /// <summary>
+            /// Adds a Rest path mapping to the service collection.
+            /// </summary>
+            /// <typeparam name="T">The first component type.</typeparam>
+            /// <typeparam name="U">The second component type.</typeparam>
+            /// <typeparam name="V">The third component type.</typeparam>
+            /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+            public RestPathMappingBuilder Add<T, U, V>(params Type[] wildcardTypes)
+            {
+                services.AddRestPathMapping<T, U, V>(path, version, wildcardTypes);
+                return new RestPathMappingBuilder(services, path, new Version(version.Major, 0));
+            }
+            /// <summary>
+            /// Adds a Rest path mapping to the service collection.
+            /// </summary>
+            /// <typeparam name="T">The first component type.</typeparam>
+            /// <typeparam name="U">The second component type.</typeparam>
+            /// <typeparam name="V">The third component type.</typeparam>
+            /// <typeparam name="W">The fourth component type.</typeparam>
+            /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+            public RestPathMappingBuilder Add<T, U, V, W>(params Type[] wildcardTypes)
+            {
+                services.AddRestPathMapping<T, U, V, W>(path, version, wildcardTypes);
+                return new RestPathMappingBuilder(services, path, new Version(version.Major, 0));
+            }
+            /// <summary>
+            /// Adds a Rest path mapping to the service collection.
+            /// </summary>
+            /// <typeparam name="T">The first component type.</typeparam>
+            /// <typeparam name="U">The second component type.</typeparam>
+            /// <typeparam name="V">The third component type.</typeparam>
+            /// <typeparam name="W">The fourth component type.</typeparam>
+            /// <typeparam name="X">The fifth component type.</typeparam>            
+            /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
+            public RestPathMappingBuilder Add<T, U, V, W, X>(params Type[] wildcardTypes)
+            {
+                services.AddRestPathMapping<T, U, V, W, X>(path, version, wildcardTypes);
+                return new RestPathMappingBuilder(services, path, new Version(version.Major, 0));
+            }
+
+        }
 
         /// <summary>
         /// Adds a structure to the service collection.
