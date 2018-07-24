@@ -117,11 +117,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var values = new Dictionary<string, object>(CaseInsensitiveEqualityComparer.Instance);
                 while (reader.TokenType == JsonToken.PropertyName)
                 {
-                    var prop = indexedProperties[reader.Value.ToString()];
-                    reader.Read();
-                    var val = serializer.Deserialize(reader, prop.PropertyType);
-                    values[prop.PropertyName] = val;
-                    reader.Read();
+                    if (indexedProperties.TryGetValue(reader.Value.ToString(), out var prop))
+                    {
+                        reader.Read();
+                        var val = serializer.Deserialize(reader, prop.PropertyType);
+                        values[prop.PropertyName] = val;
+                        reader.Read();
+                    }
+                    else
+                    {
+                        reader.Read();
+                        reader.Skip();
+                        reader.Read();
+                    }
                 }
                 res = contract.OverrideCreator(contract.CreatorParameters.Select(cp => GetOrDefault(values, cp.PropertyName, cp.DefaultValue)).ToArray());
                 foreach (var cp in contract.CreatorParameters)
@@ -143,11 +151,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 object res = contract.DefaultCreator();
                 while (reader.TokenType == JsonToken.PropertyName)
                 {
-                    var prop = indexedProperties[reader.Value.ToString()];
-                    reader.Read();
-                    var val = serializer.Deserialize(reader, prop.PropertyType);
-                    prop.ValueProvider.SetValue(res, val);
-                    reader.Read();
+                    if (indexedProperties.TryGetValue(reader.Value.ToString(), out var prop))
+                    {
+                        reader.Read();
+                        var val = serializer.Deserialize(reader, prop.PropertyType);
+                        prop.ValueProvider.SetValue(res, val);
+                        reader.Read();
+                    }
+                    else
+                    {
+                        reader.Read();
+                        reader.Skip();
+                        reader.Read();
+                    }
                 }
 
                 return res;
