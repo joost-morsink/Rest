@@ -41,10 +41,11 @@ td, th {{
     padding: 5px;
 }}
 </style>
+</head>
 <body>
 {0}
 </body>
-</html", Generate(value.Value).ToString());
+</html>", Generate(value.Value).ToString());
         }
 
         public XElement Generate(T value)
