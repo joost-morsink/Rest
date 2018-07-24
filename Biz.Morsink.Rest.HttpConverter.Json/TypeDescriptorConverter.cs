@@ -64,8 +64,37 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 schemaProvider.GetSchema(type).Schema.WriteTo(writer, serializer.Converters.ToArray());
             else
             {
-                writer.WriteNull();
-                writer.WriteComment("No associated type");
+                serializer.Serialize(writer, ConstructFromParts(typeDescriptor));
+            }
+        }
+
+        private JToken ConstructFromParts(TypeDescriptor typeDescriptor)
+        {
+            var type = typeDescriptor.GetAssociatedType();
+            if (type != null)
+            {
+                var res = schemaProvider.GetSchema(type).Schema;
+                res.Property("$schema").Remove();
+                return res;
+            }
+            switch (typeDescriptor)
+            {
+                case TypeDescriptor.Intersection tdi:
+                    return new JObject(new JProperty("allOf", new JArray(tdi.Parts.Select(ConstructFromParts))));
+                case TypeDescriptor.Union tdu:
+                    return new JObject(new JProperty("anyOf", new JArray(tdu.Options.Select(ConstructFromParts))));
+                case TypeDescriptor.Referable tdr:
+                    return ConstructFromParts(tdr.ExpandedDescriptor);
+                case TypeDescriptor.Array tda:
+                    return new JObject(
+                        new JProperty("type", "array"),
+                        new JProperty("items", ConstructFromParts(tda.ElementType)));
+                case TypeDescriptor.Dictionary tdd:
+                    return new JObject(
+                        new JProperty("type", "object"),
+                        new JProperty("additionalProperties", ConstructFromParts(tdd.ValueType)));
+                default:
+                    return JValue.CreateNull();
             }
         }
 
@@ -74,5 +103,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         JsonSchema ISchemaTranslator<JsonSchema>.GetSchema(Type type)
             => typeof(TypeDescriptor).IsAssignableFrom(type) ? new JsonSchema(new JObject(new JProperty("$ref", JsonSchema.JSON_SCHEMA_VERSION))) : null;
+
     }
 }
