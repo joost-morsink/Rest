@@ -319,18 +319,21 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             foreach (var item in ((JArray)json["items"]))
             {
                 var addr = item["id"].Value<string>("href");
-                var resp2 = await Delete(client, addr);
-                Assert.IsTrue(resp2.IsSuccessStatusCode);
-                resp2 = await Get(client, addr);
-                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
-                resp2 = await Delete(client, addr);
-                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                if (!addr.EndsWith("/1"))
+                {
+                    var resp2 = await Delete(client, addr);
+                    Assert.IsTrue(resp2.IsSuccessStatusCode);
+                    resp2 = await Get(client, addr);
+                    Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                    resp2 = await Delete(client, addr);
+                    Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                }
             }
             resp = await Get(client, "/person");
             Assert.IsTrue(resp.IsSuccessStatusCode);
             json = await GetJson(resp);
 
-            Assert.AreEqual(0, json.Value<int>("count"));
+            Assert.AreEqual(1, json.Value<int>("count"));
 
             for (int i = 0; i < 13; i++)
             {
@@ -359,6 +362,9 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                 json = await GetJson(resp2);
                 Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
                 Assert.AreEqual($"Morsink", json.Value<string>("lastName"));
+
+                resp2 = await Delete(client, vals.First());
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
 
             }
         }
@@ -492,6 +498,37 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             resp = await Get(client, location);
             Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
 
+        }
+        [TestMethod]
+        public async Task Http_VersionHappy()
+        {
+            var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "1"));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Version", out var version));
+            Assert.AreEqual(1, version.Count());
+            Assert.IsTrue(version.First().StartsWith("1."));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out var suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
+
+            resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "2"));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Version", out version));
+            Assert.AreEqual(1, version.Count());
+            Assert.IsTrue(version.First().StartsWith("2."));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
+        }
+        [TestMethod]
+        public async Task Http_VersionUnhappy()
+        {
+            var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "3"));
+            Assert.IsTrue(resp.StatusCode == HttpStatusCode.NotFound);
+            Assert.IsFalse(resp.Headers.TryGetValues("Version", out var version));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out var suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
         }
         private class Identity
         {

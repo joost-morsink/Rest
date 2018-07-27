@@ -28,5 +28,11 @@ namespace Biz.Morsink.Rest.Metadata
         /// Contains a list of supported versions for some Rest path.
         /// </summary>
         public IReadOnlyList<Version> Supported => versions.Value.Supported;
+        /// <summary>
+        /// Returns a copy of this versioning instance, but without a current instance.
+        /// </summary>
+        /// <returns>A new versioning instance without a current version.</returns>
+        public Versioning WithoutCurrent()
+            => new Versioning(() => new VersionInRange(null, versions.Value.Supported));
     }
 }

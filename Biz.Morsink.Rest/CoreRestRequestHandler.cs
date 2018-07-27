@@ -108,7 +108,12 @@ namespace Biz.Morsink.Rest
         {
             var repo = GetService<IRestRepository<T>>();
             if (repo == null)
-                return RestResult.NotFound<T>().ToResponse();
+            {
+                var res = RestResult.NotFound<T>().ToResponse();
+                if (request.Metadata.TryGet(out Versioning ver))
+                    res = res.WithMetadata(ver.WithoutCurrent());
+                return res;
+            }
             if (repo is IRestRequestContainer container)
                 container.Request = request;
 

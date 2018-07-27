@@ -30,7 +30,10 @@ namespace Biz.Morsink.Rest.AspNetCore
                 var repo = (IRestRepository)locator.GetService(typeof(IRestRepository<>).MakeGenericType(request.Address.ForType));
                 var idprov = (IRestIdentityProvider)locator.GetService(typeof(IRestIdentityProvider));
                 var res = Utilities.MakeCapabilities(idprov, repo, typeDescriptorCreator);
-                return Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Concat(new[] { "OPTIONS" }))).ToAsync();
+                var resp = Rest.Value(res).ToResponse().AddMetadata(new Capabilities(res.Keys.Append("OPTIONS")));
+                if (request.Metadata.TryGet(out Versioning ver))
+                    resp = resp.AddMetadata(ver);
+                return resp.ToAsync();
             }
             else
                 return next(request);

@@ -88,7 +88,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                         if (options.Value.VersionHeader != null && resp.Metadata.TryGet(out Versioning ver))
                         {
                             var supportedHeader = options.Value.SupportedVersionsHeader ?? "Supported-Versions";
-                            context.Response.Headers[options.Value.VersionHeader] = ver.Current.ToString();
+                            if(ver.Current != null)
+                                context.Response.Headers[options.Value.VersionHeader] = ver.Current.ToString();
                             context.Response.Headers[supportedHeader] = new StringValues(ver.Supported.Select(v => v.ToString()).ToArray());
                         }
 
