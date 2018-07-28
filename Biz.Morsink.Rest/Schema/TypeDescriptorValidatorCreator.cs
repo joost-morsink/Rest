@@ -28,5 +28,18 @@ namespace Biz.Morsink.Rest.Schema
             }
             return type;
         }
+
+        public object GetRepresentation(object item)
+        {
+            if (item == null)
+                return null;
+            foreach(var rep in typeRepresentations)
+            {
+                var repr = rep.GetRepresentation(item);
+                if (repr != null)
+                    return repr;
+            }
+            return item;
+        }
     }
 }
