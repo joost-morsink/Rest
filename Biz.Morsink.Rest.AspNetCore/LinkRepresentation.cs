@@ -11,12 +11,12 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Type representation for Link.
     /// </summary>
-    public class LinkRepresentation : ITypeRepresentation
+    public class LinkRepresentation : SimpleTypeRepresentation<Link,LinkRepresentation.Representation>
     {
         /// <summary>
         /// The representation class.
         /// </summary>
-        private class Representation
+        public class Representation
         {
             /// <summary>
             /// Constructor.
@@ -57,24 +57,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             public object Parameters { get; set; }
         }
 
-        public object GetRepresentable(object rep)
-        {
-            throw new NotSupportedException();
-        }
+        public override Representation GetRepresentation(Link item)
+            => new Representation(item);
 
-        public Type GetRepresentableType(Type type)
-            => type == typeof(Representation) ? typeof(Link) : null;
-
-        public object GetRepresentation(object obj)
-           => new Representation((Link)obj);
-
-        public Type GetRepresentationType(Type type)
-            => typeof(Link).IsAssignableFrom(type) ? typeof(Representation) : null;
-
-        public bool IsRepresentable(Type type)
-            => typeof(Link).IsAssignableFrom(type);
-
-        public bool IsRepresentation(Type type)
-            => typeof(Representation) == type;
+        public override Link GetRepresentable(Representation representation)
+            => throw new NotSupportedException();
     }
 }

@@ -10,9 +10,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
-    public class RestJobResultRepresentation : ITypeRepresentation
+    public class RestJobResultRepresentation : SimpleTypeRepresentation<RestJobResult, RestJobResultRepresentation.Representation>
     {
-        private class representation
+        public class Representation
         {
             [Required]
             public IIdentity Id { get; set; }
@@ -26,21 +26,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             [Required]
             public Dictionary<string, object> Metadata { get; set; }
         }
-        public object GetRepresentable(object rep)
+        public override RestJobResult GetRepresentable(Representation representation)
         {
             throw new NotSupportedException();
         }
 
-        public Type GetRepresentableType(Type type)
-            => type == typeof(representation) ? typeof(RestJobResult) : null;
-
-        public object GetRepresentation(object obj)
+        public override Representation GetRepresentation(RestJobResult res)
         {
-            var res = (RestJobResult)obj;
             if (res.Job.Task.IsCompleted)
             {
                 var rv = res.Job.Task.Result.UntypedResult as IHasRestValue;
-                return new representation
+                return new Representation
                 {
                     Id = res.Id,
                     Type = res.Job.Task.Result.IsSuccess ? "Success" : res.Job.Task.Result.UntypedResult.AsFailure().Reason.ToString(),
@@ -54,14 +50,5 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return null;
         }
-
-        public Type GetRepresentationType(Type type)
-            => type == typeof(RestJobResult) ? typeof(representation) : null;
-
-        public bool IsRepresentable(Type type)
-            => type == typeof(RestJobResult);
-
-        public bool IsRepresentation(Type type)
-            => type == typeof(representation);
     }
 }

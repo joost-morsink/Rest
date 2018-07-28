@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -50,5 +51,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Gets a boolean indicating if Curies are supported by this IHttpRestConverter.
         /// </summary>
         bool SupportsCuries { get; }
+        /// <summary>
+        /// Gets a version matcher to use when no explicit version has been requested.
+        /// </summary>
+        VersionMatcher DefaultVersionMatcher { get; }
     }
 }

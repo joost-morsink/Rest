@@ -116,13 +116,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private (RestRequest, IHttpRestConverter) ReadRequest(HttpContext context)
         {
             var request = context.Request;
-            var vm = GetVersionMatcher(context);
-            var matches = identityProvider.Match(request.Path + request.QueryString);
-            var match = vm.Match(matches.Select(m => (m.Version, m)));
-            var versioning = new Versioning(() => new VersionInRange(match.Item1, matches.Select(m => m.Version)));
 
-            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: vm),
-                request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v)))).AddMetadata(versioning);
             if (context.Request.Headers.TryGetValue("Accept", out var acceptHeaders))
             {
                 var accStruct = new AcceptStructure(acceptHeaders.SelectMany(h => h.Split(',')).ToList());
@@ -142,12 +136,20 @@ namespace Biz.Morsink.Rest.AspNetCore
                     best = converters[i];
                 }
             }
+
+            var vm = GetVersionMatcher(context) ?? best.DefaultVersionMatcher;
+            var matches = identityProvider.Match(request.Path + request.QueryString);
+            var match = vm.Match(matches.Select(m => (m.Version, m)));
+            var versioning = new Versioning(() => new VersionInRange(match.Item1, matches.Select(m => m.Version)));
+
+            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: vm),
+                request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v)))).AddMetadata(versioning);
+           
             return (best?.ManipulateRequest(req, context), best);
         }
 
-        private VersionMatcher GetVersionMatcher(HttpContext context)
+        private VersionMatcher? GetVersionMatcher(HttpContext context)
         {
-            var vm = default(VersionMatcher);
             if (options.Value.VersionHeader != null && context.Request.Headers.TryGetValue(options.Value.VersionHeader, out var versHdr))
             {
                 var requestedVersion = versHdr.First().ToLower();
@@ -155,22 +157,21 @@ namespace Biz.Morsink.Rest.AspNetCore
                 {
                     case "latest":
                     case "newest":
-                        vm = VersionMatcher.Newest;
-                        break;
+                        return VersionMatcher.Newest;
                     case "oldest":
-                        vm = VersionMatcher.Oldest;
-                        break;
+                        return VersionMatcher.Oldest;
                     default:
                         var idx = requestedVersion.IndexOf(".");
                         if (idx > 0)
                             requestedVersion = requestedVersion.Substring(0, idx);
                         if (int.TryParse(requestedVersion, out var x))
-                            vm = VersionMatcher.OnMajor(x);
-                        break;
+                            return VersionMatcher.OnMajor(x);
+                        else
+                            return null;
                 }
             }
-
-            return vm;
+            else
+                return null;
         }
 
         private IHttpRestConverter GetResponseConverter(HttpContext context, RestRequest request, RestResponse response)

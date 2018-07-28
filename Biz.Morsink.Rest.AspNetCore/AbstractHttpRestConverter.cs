@@ -302,6 +302,6 @@ namespace Biz.Morsink.Rest.AspNetCore
                 context.Response.Headers[Location] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
             }
         }
-
+        public virtual VersionMatcher DefaultVersionMatcher => VersionMatcher.Oldest;
     }
 }

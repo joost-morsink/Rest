@@ -60,6 +60,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, VersionRepresentation>();
 
             var restbuilder = new RestServicesBuilder(serviceCollection);
             builder?.Invoke(restbuilder);

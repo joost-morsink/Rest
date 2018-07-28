@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore;
+using Biz.Morsink.Rest.AspNetCore.Identity;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -56,6 +57,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
 
         protected override Task WriteResult(Stream bodyStream, RestResponse response, IRestResult result)
             => WriteHtml(bodyStream, generator.GenerateHtml(result));
-
+        public override VersionMatcher DefaultVersionMatcher => VersionMatcher.Newest;
     }
 }

@@ -4,6 +4,7 @@ using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.HttpConverter.Json;
 using Biz.Morsink.Rest.HttpConverter.Utils;
+using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -63,7 +64,7 @@ namespace Biz.Morsink.Rest.HttpConverter
             private readonly IdentityJsonSchemaTranslator parent;
             private readonly Type identityType;
             private readonly Type entityType;
-
+            private ITypeRepresentation identityRepresentation => parent.representation;
             public Converter(IdentityJsonSchemaTranslator parent, Type identityType)
             {
                 this.parent = parent;
@@ -84,7 +85,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                 if (rdr.HasProperty(1, "href"))
                 {
                     var rep = serializer.Deserialize(rdr, parent.representation.GetRepresentationType(identityType));
-                    return rep == null ? null : parent.representation.GetRepresentable(rep);
+                    return rep == null ? null : identityRepresentation.GetRepresentable(rep);
                 }
                 else
                 {
@@ -92,8 +93,6 @@ namespace Biz.Morsink.Rest.HttpConverter
                     return ent?.Id;
                 }
             }
-
-
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
             {
@@ -104,7 +103,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                     scope.With(ctx.Without((IIdentity)value))
                         .Run(() => serializer.Serialize(writer, embedding));
                 else
-                    serializer.Serialize(writer, parent.representation.GetRepresentation(value));
+                    serializer.Serialize(writer, identityRepresentation.GetRepresentation(value));
             }
         }
     }

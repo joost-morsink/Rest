@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Type representation for Identity values.
     /// </summary>
-    public class IdentityRepresentation : ITypeRepresentation
+    public class IdentityRepresentation : SimpleTypeRepresentation<IIdentity, IdentityRepresentation.Representation>
     {
         private readonly IRestIdentityProvider identityProvider;
         private readonly IRestPrefixContainerAccessor prefixContainerAccessor;
@@ -23,7 +23,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor;
         protected bool UseCuries => useCuries && currentHttpRestConverterAccessor.CurrentHttpRestConverter.SupportsCuries;
 
-        private class representation
+        public class Representation
         {
             [Required]
             public string Href { get; set; }
@@ -43,48 +43,16 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.currentHttpRestConverterAccessor = currentHttpRestConverterAccessor;
             
         }
-        /// <summary>
-        /// Gets the IIdentity value correspoding to the Href representation.
-        /// </summary>
-        /// <param name="rep">An Href representation.</param>
-        /// <returns></returns>
-        public object GetRepresentable(object rep)
-            => identityProvider.Parse(((representation)rep).Href, true, prefixContainerAccessor.RestPrefixContainer);
 
-        /// <summary>
-        /// Gets the Href representation type if the type is an IIdentity.
-        /// </summary>
-        /// <param name="type">The type to check.</param>
-        public Type GetRepresentableType(Type type)
-            => type == typeof(representation) ? typeof(IIdentity) : null;
-
-        /// <summary>
-        /// Gets an Href representation for IIdentity values.
-        /// </summary>
-        /// <param name="obj">An object that is supposed to be an IIdentity.</param>
-        /// <returns>An Href representation if the specified object is an IIdentity.</returns>
-        public object GetRepresentation(object obj)
+        public override Representation GetRepresentation(IIdentity item)
         {
-            var path = identityProvider.ToPath((IIdentity)obj);
+            var path = identityProvider.ToPath(item);
             if (UseCuries && prefixContainerAccessor.RestPrefixContainer.TryMatch(path, out var prefix))
                 path = $"[{prefix.Abbreviation}:{path.Substring(prefix.Prefix.Length)}]";
-            return path == null ? null : new representation { Href = path };
+            return path == null ? null : new Representation { Href = path };
         }
-        /// <summary>
-        /// Gets the Href representation type if the specified type is an IIdentity. 
-        /// </summary>
-        /// <param name="type">The type to check.</param>
-        public Type GetRepresentationType(Type type)
-            => typeof(IIdentity).GetTypeInfo().IsAssignableFrom(type) ? typeof(representation) : null;
-        /// <summary>
-        /// Returns true if the specified type implements or extends IIdentity.
-        /// </summary>
-        public bool IsRepresentable(Type type)
-            => typeof(IIdentity).GetTypeInfo().IsAssignableFrom(type);
-        /// <summary>
-        /// Returns true if the specified type is the nested Href representation type.
-        /// </summary>
-        public bool IsRepresentation(Type type)
-            => type == typeof(representation);
+
+        public override IIdentity GetRepresentable(Representation representation)
+            => identityProvider.Parse(representation.Href, true, prefixContainerAccessor.RestPrefixContainer);
     }
 }
