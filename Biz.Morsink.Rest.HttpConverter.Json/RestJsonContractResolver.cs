@@ -19,6 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         private readonly IJsonSchemaTranslator[] translators;
         private readonly ITypeRepresentation[] typeRepresentations;
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
         private readonly IOptions<JsonHttpConverterOptions> options;
 
@@ -26,10 +27,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// Constructor.
         /// </summary>
         /// <param name="serviceProvider">A service provider to instantiate dependencies.</param>
-        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators, IEnumerable<ITypeRepresentation> typeRepresentations, IRestRequestScopeAccessor restRequestScopeAccessor, IOptions<JsonHttpConverterOptions> options)
+        public RestJsonContractResolver(IEnumerable<IJsonSchemaTranslator> translators, IEnumerable<ITypeRepresentation> typeRepresentations, TypeDescriptorCreator typeDescriptorCreator, IRestRequestScopeAccessor restRequestScopeAccessor, IOptions<JsonHttpConverterOptions> options)
         {
             this.translators = translators.ToArray();
             this.typeRepresentations = typeRepresentations.ToArray();
+            this.typeDescriptorCreator = typeDescriptorCreator;
             this.restRequestScopeAccessor = restRequestScopeAccessor;
             this.options = options;
         }
@@ -64,7 +66,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             if (contract is JsonObjectContract objContract)
             {
                 contract.Converter = contract.Converter
-                    ?? new DefaultJsonConverterForObjectContract(objContract, objectType, this.CreateProperties(objectType, MemberSerialization.OptOut));
+                    ?? new DefaultJsonConverterForObjectContract(objContract, objectType, typeDescriptorCreator.GetDescriptor(objectType), this.CreateProperties(objectType, MemberSerialization.OptOut));
                 if (typeof(IHasIdentity).IsAssignableFrom(objectType))
                     contract.Converter = new HasIdentityConverterDecorator(contract.Converter, restRequestScopeAccessor, typeRepresentations);
             }
@@ -79,11 +81,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             private readonly Dictionary<string, JsonProperty> indexedProperties;
             private readonly JsonObjectContract contract;
             private readonly Type type;
+            private readonly TypeDescriptor typeDescriptor;
 
-            public DefaultJsonConverterForObjectContract(JsonObjectContract contract, Type type, IList<JsonProperty> properties)
+            public DefaultJsonConverterForObjectContract(JsonObjectContract contract, Type type, TypeDescriptor typeDescriptor, IList<JsonProperty> properties)
             {
                 this.contract = contract;
                 this.type = type;
+                this.typeDescriptor = typeDescriptor;
                 this.properties = properties;
                 indexedProperties = properties.ToDictionary(p => p.PropertyName, CaseInsensitiveEqualityComparer.Instance);
             }
