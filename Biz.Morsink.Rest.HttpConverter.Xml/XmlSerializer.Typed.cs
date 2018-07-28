@@ -308,6 +308,30 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                         var lambda = Ex.Lambda<Func<XElement, T>>(block, input);
                         return lambda.Compile();
                     }
+                    else if (typeof(T).GetConstructor(new [] { typeof(IEnumerable<>).MakeGenericType(basetype) })!=null)
+                    {
+                        var elements = Ex.Parameter(typeof(List<>).MakeGenericType(basetype), "elements");
+                        var block = Ex.Block(new[] { children, idx, elements },
+                            Ex.Assign(children,
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(XElement)),
+                                    Ex.Call(input, nameof(XElement.Elements), Type.EmptyTypes))),
+                            Ex.Assign(idx, Ex.Constant(0)),
+                            Ex.Assign(elements, Ex.New(elements.Type)),
+                            Ex.Label(start),
+                            Ex.IfThen(Ex.MakeBinary(System.Linq.Expressions.ExpressionType.GreaterThanOrEqual, idx, Ex.Property(children, nameof(Array.Length))),
+                                Ex.Goto(end)),
+                            Ex.Call(elements, nameof(List<object>.Add), Type.EmptyTypes,
+                                Ex.Convert(Ex.Call(Ex.Constant(Parent), nameof(XmlSerializer.Deserialize), Type.EmptyTypes,
+                                    Ex.ArrayIndex(children, idx), Ex.Constant(basetype)), basetype)),
+                            Ex.Assign(idx, Ex.Increment(idx)),
+                            Ex.Goto(start),
+                            Ex.Label(end),
+                            Ex.New(typeof(T).GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(basetype) }),
+                                Ex.Convert(elements, typeof(IEnumerable<>).MakeGenericType(basetype))));
+
+                        var lambda = Ex.Lambda<Func<XElement, T>>(block, input);
+                        return lambda.Compile();
+                    }
                     else if (typeof(T).GetConstructor(Type.EmptyTypes) != null)
                     {
                         var result = Ex.Parameter(typeof(T), "result");

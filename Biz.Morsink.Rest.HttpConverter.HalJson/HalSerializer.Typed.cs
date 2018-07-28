@@ -346,6 +346,32 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
                         return lambda.Compile();
                     }
+                    else if (typeof(T).GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(baseType) }) != null)
+                    {
+                        var elements = Ex.Parameter(typeof(List<>).MakeGenericType(baseType), "elements");
+                        var block = Ex.Block(new[] { children, idx, elements },
+                            Ex.Assign(children,
+                                Ex.Call(typeof(Enumerable).GetMethod(nameof(Enumerable.ToArray)).MakeGenericMethod(typeof(JToken)),
+                                    Ex.Convert(
+                                        Ex.Call(input, nameof(JToken.Children), Type.EmptyTypes),
+                                        typeof(IEnumerable<JToken>)))),
+                            Ex.Assign(idx, Ex.Constant(0)),
+                            Ex.Assign(elements, Ex.New(elements.Type)),
+                            Ex.Label(start),
+                            Ex.IfThen(Ex.MakeBinary(System.Linq.Expressions.ExpressionType.GreaterThanOrEqual, idx, Ex.Property(children, nameof(Array.Length))),
+                                Ex.Goto(end)),
+                            Ex.Call(elements, nameof(List<object>.Add), Type.EmptyTypes,
+                                Ex.Call(Ex.Constant(Parent), nameof(HalSerializer.Deserialize), new[] { baseType },
+                                    ctx, Ex.ArrayIndex(children, idx))),
+                            Ex.Assign(idx, Ex.Increment(idx)),
+                            Ex.Goto(start),
+                            Ex.Label(end),
+                            Ex.New(typeof(T).GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(baseType) }),
+                                Ex.Convert(elements, typeof(IEnumerable<>).MakeGenericType(baseType))));
+
+                        var lambda = Ex.Lambda<Func<HalContext, JToken, T>>(block, ctx, input);
+                        return lambda.Compile();
+                    }
                     else if (typeof(T).GetConstructor(Type.EmptyTypes) != null)
                     {
                         var result = Ex.Parameter(typeof(T), "result");
