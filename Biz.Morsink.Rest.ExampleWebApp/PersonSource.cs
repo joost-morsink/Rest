@@ -8,13 +8,13 @@ using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.DataConvert;
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
-    public class PersonSource : IRestResourceCollection<PersonCollection, Person>
+    public class PersonSource : IRestResourceCollection<PersonV2Collection, PersonV2>
     {
         private int counter = 1;
 
-        private ConcurrentDictionary<string, Person> data = new ConcurrentDictionary<string, Person>
+        private ConcurrentDictionary<string, PersonV2> data = new ConcurrentDictionary<string, PersonV2>
         {
-            ["1"] = new Person("Joost", "Morsink", 38, FreeIdentity<Person>.Create(1))
+            ["1"] = new PersonV2("Joost", "Morsink", DateTime.Now.Date.AddYears(- 38), FreeIdentity<PersonV2>.Create(1))
         };
         private readonly IRestIdentityProvider idProv;
 
@@ -23,14 +23,14 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             this.idProv = idProv;
         }
 
-        public Task<bool> Delete(IIdentity<Person> entityId)
+        public Task<bool> Delete(IIdentity<PersonV2> entityId)
             => Task.FromResult(data.TryRemove(entityId.Value?.ToString(), out var _));
 
 
-        public Task<Person> Get(IIdentity<Person> entityId)
+        public Task<PersonV2> Get(IIdentity<PersonV2> entityId)
             => Task.FromResult(data.TryGetValue(entityId.Value?.ToString(), out var p) ? p : null);
 
-        public Task<PersonCollection> GetCollection(IIdentity<PersonCollection> collectionId)
+        public Task<PersonV2Collection> GetCollection(IIdentity<PersonV2Collection> collectionId)
         {
             var conv = idProv.GetConverter(typeof(PersonCollection), false);
             var collectionParams = conv.Convert(collectionId.Value).To<CollectionParameters>();
@@ -39,9 +39,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             var limit = collectionParams?.Limit;
             var val = data.Values.Where(p => searchParams == null || p.FirstName.Contains(searchParams.Q) || p.LastName.Contains(searchParams.Q)).ToArray();
 
-            return Task.FromResult(new PersonCollection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0));
+            return Task.FromResult(new PersonV2Collection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0));
         }
-        public Task<Person> Post(Person entity)
+        public Task<PersonV2> Post(PersonV2 entity)
         {
             var id = entity.Id?.Value?.ToString();
             if (id == null)
@@ -51,12 +51,12 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 {
                     pk = Interlocked.Increment(ref counter).ToString();
                 } while (data.ContainsKey(pk));
-                entity = new Person(entity.FirstName, entity.LastName, entity.Age, FreeIdentity<Person>.Create(pk));
+                entity = new PersonV2(entity.FirstName, entity.LastName, entity.Birthday, FreeIdentity<PersonV2>.Create(pk));
             }
             return Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => existing));
         }
 
-        public Task<Person> Put(Person entity)
+        public Task<PersonV2> Put(PersonV2 entity)
             => Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity));
 
     }

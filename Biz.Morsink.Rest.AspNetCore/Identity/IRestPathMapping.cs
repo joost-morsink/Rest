@@ -25,5 +25,9 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// Gets set of optional WildcardTypes for the query string.
         /// </summary>
         Type[] WildcardTypes { get; }
+        /// <summary>
+        /// Gets the version for the Rest path mapping.
+        /// </summary>
+        Version Version { get; }
     }
 }

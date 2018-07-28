@@ -198,8 +198,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public async Task Http_CheckPersonCollection()
         {
-
-            var resp = await Get(client, "/person?q=Joost&limit=10&skip=0");
+            var headers = DefaultHeaders.Add("Version", "2");
+            var resp = await Get(client, "/person?q=Joost&limit=10&skip=0", headers);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
 
@@ -236,11 +236,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
         [TestMethod]
         public async Task Http_CheckPersonCollectionInvalidParams()
         {
-            var resp = await Get(client, "/person?limit=0");
+            var headers = DefaultHeaders.Add("Version", "2");
+            var resp = await Get(client, "/person?limit=0", headers);
             Assert.IsFalse(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
 
-            resp = await Get(client, "/person?skip=-1");
+            resp = await Get(client, "/person?skip=-1", headers);
             Assert.IsFalse(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.BadRequest, resp.StatusCode);
         }
@@ -318,18 +319,21 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             foreach (var item in ((JArray)json["items"]))
             {
                 var addr = item["id"].Value<string>("href");
-                var resp2 = await Delete(client, addr);
-                Assert.IsTrue(resp2.IsSuccessStatusCode);
-                resp2 = await Get(client, addr);
-                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
-                resp2 = await Delete(client, addr);
-                Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                if (!addr.EndsWith("/1"))
+                {
+                    var resp2 = await Delete(client, addr);
+                    Assert.IsTrue(resp2.IsSuccessStatusCode);
+                    resp2 = await Get(client, addr);
+                    Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                    resp2 = await Delete(client, addr);
+                    Assert.AreEqual(HttpStatusCode.NotFound, resp2.StatusCode);
+                }
             }
             resp = await Get(client, "/person");
             Assert.IsTrue(resp.IsSuccessStatusCode);
             json = await GetJson(resp);
 
-            Assert.AreEqual(0, json.Value<int>("count"));
+            Assert.AreEqual(1, json.Value<int>("count"));
 
             for (int i = 0; i < 13; i++)
             {
@@ -358,6 +362,9 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
                 json = await GetJson(resp2);
                 Assert.AreEqual($"Test #{i}", json.Value<string>("firstName"));
                 Assert.AreEqual($"Morsink", json.Value<string>("lastName"));
+
+                resp2 = await Delete(client, vals.First());
+                Assert.IsTrue(resp2.IsSuccessStatusCode);
 
             }
         }
@@ -403,7 +410,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.IsSuccessStatusCode);
             Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var vals) && vals.Any());
-            var link = vals.Select(ParseLink).Where(l => l!=null && l.Reltype=="controller").First();
+            var link = vals.Select(ParseLink).Where(l => l != null && l.Reltype == "controller").First();
 
             // Get the controller
             resp = await Get(client, link.Address);
@@ -413,7 +420,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();
             Assert.IsNotNull(finishLink);
-            
+
             // Store Job address
             var jobaddr = json["jobId"]["href"].Value<string>();
 
@@ -466,7 +473,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var linkdict = ParseLinks(links);
             Assert.IsTrue(linkdict.ContainsKey("blogs"));
-            
+
             // See if repository exists
             resp = await Get(client, linkdict["blogs"]);
             Assert.IsTrue(resp.IsSuccessStatusCode);
@@ -484,13 +491,44 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(json["name"].Value<string>(), "Joost Morsink's REST blog");
 
             // Delete and check
-            resp = await Delete(client,location);
+            resp = await Delete(client, location);
             Assert.IsTrue(resp.IsSuccessStatusCode);
             resp = await Delete(client, location);
             Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
             resp = await Get(client, location);
             Assert.AreEqual(HttpStatusCode.NotFound, resp.StatusCode);
 
+        }
+        [TestMethod]
+        public async Task Http_VersionHappy()
+        {
+            var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "1"));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Version", out var version));
+            Assert.AreEqual(1, version.Count());
+            Assert.IsTrue(version.First().StartsWith("1."));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out var suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
+
+            resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "2"));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            Assert.IsTrue(resp.Headers.TryGetValues("Version", out version));
+            Assert.AreEqual(1, version.Count());
+            Assert.IsTrue(version.First().StartsWith("2."));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
+        }
+        [TestMethod]
+        public async Task Http_VersionUnhappy()
+        {
+            var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "3"));
+            Assert.IsTrue(resp.StatusCode == HttpStatusCode.NotFound);
+            Assert.IsFalse(resp.Headers.TryGetValues("Version", out var version));
+            Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out var suppVers));
+            Assert.AreEqual(2, suppVers.Count());
+            Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
         }
         private class Identity
         {

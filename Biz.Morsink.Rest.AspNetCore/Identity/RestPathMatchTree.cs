@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Utility class to match RestPaths in a tree.
     /// </summary>
-    public class RestPathMatchTree
+    public class RestPathMatchTree<T>
     {
         private class SegmentEqualityComparer : IEqualityComparer<RestPath.Segment>
         {
@@ -22,30 +22,30 @@ namespace Biz.Morsink.Rest.AspNetCore
             public int GetHashCode(RestPath.Segment obj)
                 => obj.IsWildcard ? 0 : obj.Content.GetHashCode();
         }
-        private readonly ILookup<RestPath.Segment, RestPath> lookup;
-        private readonly ConcurrentDictionary<RestPath.Segment, RestPathMatchTree> tree;
+        private readonly ILookup<RestPath.Segment, (RestPath, T)> lookup;
+        private readonly ConcurrentDictionary<RestPath.Segment, RestPathMatchTree<T>> tree;
         private readonly string localPrefix;
 
         /// <summary>
         /// Constructs a matching tree based on a collection of paths
         /// </summary>
-        public RestPathMatchTree(IEnumerable<RestPath> paths, string localPrefix)
+        public RestPathMatchTree(IEnumerable<(RestPath, T)> paths, string localPrefix)
         {
-            lookup = paths.Where(p => p.Count > 0).ToLookup(p => p[0], SegmentEqualityComparer.Instance);
-            tree = new ConcurrentDictionary<RestPath.Segment, RestPathMatchTree>();
+            lookup = paths.Where(p => p.Item1.Count > 0).ToLookup(p => p.Item1[0], SegmentEqualityComparer.Instance);
+            tree = new ConcurrentDictionary<RestPath.Segment, RestPathMatchTree<T>>();
             this.localPrefix = localPrefix;
-            Terminals = paths.Where(p => p.Count == 0).ToArray();
+            Terminals = paths.Where(p => p.Item1.Count == 0).ToArray();
         }
 
         /// <summary>
         /// Gets all the terminal paths at the current location in the tree.
         /// </summary>
-        public IReadOnlyList<RestPath> Terminals { get; }
+        public IReadOnlyList<(RestPath, T)> Terminals { get; }
 
         /// <summary>
         /// Tries to navigate the tree.
         /// </summary>
-        public RestPathMatchTree this[RestPath.Segment segment]
+        public RestPathMatchTree<T> this[RestPath.Segment segment]
         {
             get
             {
@@ -55,7 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 {
                     var paths = lookup[segment];
                     if (paths.Any())
-                        return tree.GetOrAdd(segment, _ => new RestPathMatchTree(paths.Select(p => p.Skip()), localPrefix));
+                        return tree.GetOrAdd(segment, _ => new RestPathMatchTree<T>(paths.Select(p => (p.Item1.Skip(), p.Item2)), localPrefix));
                     else
                         return segment.IsWildcard ? null : this[RestPath.Segment.Wildcard];
                 }
@@ -64,13 +64,13 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Try to match a certain path to some path in the tree.
         /// </summary>
-        public RestPath.Match Walk(RestPath path)
+        public IEnumerable<(RestPath.Match, T)> Walk(RestPath path)
         {
             if (path.Count == 0)
-                return Terminals.Select(p => p.GetFullPath().MatchPath(path.GetFullPath(), localPrefix))
-                    .Where(m => m.IsSuccessful).FirstOrDefault();
+                return Terminals.Select(p => (p.Item1.GetFullPath().MatchPath(path.GetFullPath(), localPrefix), p.Item2))
+                    .Where(m => m.Item1.IsSuccessful);
             else
-                return this[path[0]]?.Walk(path.Skip()) ?? default(RestPath.Match);
+                return this[path[0]]?.Walk(path.Skip()) ?? Enumerable.Empty<(RestPath.Match, T)>();
         }
     }
 }

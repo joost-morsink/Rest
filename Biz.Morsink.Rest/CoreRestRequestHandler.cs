@@ -108,7 +108,12 @@ namespace Biz.Morsink.Rest
         {
             var repo = GetService<IRestRepository<T>>();
             if (repo == null)
-                return RestResult.NotFound<T>().ToResponse();
+            {
+                var res = RestResult.NotFound<T>().ToResponse();
+                if (request.Metadata.TryGet(out Versioning ver))
+                    res = res.WithMetadata(ver.WithoutCurrent());
+                return res;
+            }
             if (repo is IRestRequestContainer container)
                 container.Request = request;
 
@@ -127,6 +132,8 @@ namespace Biz.Morsink.Rest
                             .GetDeclaredMethod(nameof(Handle))
                             .MakeGenericMethod(descriptor.ParameterType, descriptor.ResultType);
                     var res = await (ValueTask<RestResponse>)method.Invoke(this, new object[] { repo, request, cap });
+                    if (request.Metadata.TryGet(out Versioning ver) && !res.Metadata.TryGet(out Versioning _))
+                        res = res.AddMetadata(ver);
                     if (!res.UntypedResult.IsFailure)
                     {
                         if (res is RestResponse<T> tres)

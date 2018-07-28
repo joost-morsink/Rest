@@ -30,7 +30,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         {
             private readonly RestApiDescription apiDescription;
             private readonly IEnumerable<IRestPathMapping> mappings;
-            private readonly Dictionary<Type, IRestPathMapping> mapDict;
+            private readonly ILookup<string, IRestPathMapping> mapLookup;
             private readonly TypeDescriptorCreator typeDescriptorCreator;
             private readonly IRestIdentityProvider idProvider;
 
@@ -45,7 +45,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             {
                 this.apiDescription = apiDescription;
                 this.mappings = mappings;
-                mapDict = mappings.ToDictionary(m => m.ResourceType, m => m);
+                mapLookup = mappings.ToLookup(m => m.RestPath, m => m);
                 this.typeDescriptorCreator = typeDescriptorCreator;
                 this.idProvider = idProvider;
             }
@@ -217,16 +217,30 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 var doc = new Document
                 {
                     OpenApi = "3.0.0",
-                    Paths = new SortedDictionary<string, Path>(apiDescription.EntityTypes
-                        .Where(et => mapDict.ContainsKey(et.Key))
-                        .Select(et => new
+                    Paths = new SortedDictionary<string, Path>(mapLookup
+                        .Select(grp => new
                         {
-                            Mapping = mapDict[et.Key],
-                            Url = MakeApiPath(mapDict[et.Key].RestPath),
-                            Dict = et.ToDictionary(e => e.Name, e => GetOperationForCapability(e, mapDict[et.Key])),
-                            Docs = et.Select(e => e.Method?.DeclaringType)
+                            Path = grp.Key,
+                            Mappings = grp.AsEnumerable(),
+                            Descriptors = grp.SelectMany(m => apiDescription.EntityTypes[m.ResourceType].Select(capDesc => (m, capDesc)))
+                                .OrderByDescending(capDesc => capDesc.m.Version.Major)
+                        })
+                        .Select(p => new
+                        {
+                            Url = MakeApiPath(p.Path),
+                            p.Mappings,
+                            Operations = p.Descriptors
+                                .GroupBy(capDesc => capDesc.capDesc.Name)
+                                .Select(grp => (
+                                    grp.Key,
+                                    Operation: grp.OrderByDescending(capDesc => capDesc.m.Version.Major)
+                                        .Select(capDesc => GetOperationForCapability(capDesc.capDesc, capDesc.m))
+                                        .First()
+                                 ))
+                                .ToDictionary(ops => ops.Key, ops => ops.Operation),
+                            Docs = p.Descriptors.Select(d => d.capDesc.Method?.DeclaringType)
                                 .Where(t => t != null)
-                                .Distinct()
+                                .Take(1)
                                 .SelectMany(t => t.GetCustomAttributes<RestDocumentationAttribute>())
                                 .GetRestDocumentation()
                         })
@@ -235,13 +249,13 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                             d.Url,
                             Path = new Path
                             {
-                                Summary = $"For restpath {d.Mapping.RestPath}",
+                                Summary = $"For restpath {d.Url}",
                                 Description = d.Docs,
-                                Get = GetOrNull(d.Dict, GET),
-                                Put = GetOrNull(d.Dict, PUT),
-                                Post = GetOrNull(d.Dict, POST),
-                                Patch = GetOrNull(d.Dict, PATCH),
-                                Delete = GetOrNull(d.Dict, DELETE)
+                                Get = GetOrNull(d.Operations, GET),
+                                Put = GetOrNull(d.Operations, PUT),
+                                Post = GetOrNull(d.Operations, POST),
+                                Patch = GetOrNull(d.Operations, PATCH),
+                                Delete = GetOrNull(d.Operations, DELETE)
                             }
                         })
                         .ToDictionary(p => p.Url, p => p.Path))

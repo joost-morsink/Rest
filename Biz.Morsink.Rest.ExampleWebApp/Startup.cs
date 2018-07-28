@@ -43,7 +43,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddHtmlHttpConverter()
                 .AddHalJsonHttpConverter()
                 // Configure Repositories
-                .AddStructure<PersonRepository.Structure>()
+                .AddStructure<PersonV2Repository.Structure>()
                 // or: .AddCollection<PersonCollectionRepository, PersonRepository, PersonSource>(sourceLifetime: ServiceLifetime.Singleton)
                 .AddStructure<BlogRepository.Structure>()
                 .AddStructure<ExceptionRepository.Structure>()
@@ -52,7 +52,12 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddPathMapping<FSharp.Tryout.Person>("/fsperson/*")
                 .AddOpenApi()
                 );
-            services.Configure<RestAspNetCoreOptions>(opts => { opts.UseCuries = false; });
+            services.Configure<RestAspNetCoreOptions>(opts =>
+            {
+                opts.UseCuries = false;
+                opts.VersionHeader = "Version";
+                opts.SupportedVersionsHeader = "Supported-Versions";
+            });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
         }
