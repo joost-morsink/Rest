@@ -48,6 +48,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly IRestIdentityProvider identityProvider;
         private readonly RestRequestDelegate restRequestDelegate;
         private readonly IAuthorizationProvider authorizationProvider;
+        private readonly IEnumerable<IRestExceptionListener> exceptionListeners;
         private readonly IOptions<RestAspNetCoreOptions> options;
 
         /// <summary>
@@ -58,13 +59,14 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="httpHandler">A Rest HTTP pipeline.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="converters">A collection of applicable Rest converters for HTTP.</param>
-        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider, IOptions<RestAspNetCoreOptions> options)
+        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider, IEnumerable<IRestExceptionListener> exceptionListeners, IOptions<RestAspNetCoreOptions> options)
         {
             this.handler = restHandler;
             this.converters = converters.ToArray();
             this.identityProvider = identityProvider;
             this.restRequestDelegate = httpHandler.GetRequestDelegate(restHandler);
             this.authorizationProvider = authorizationProvider;
+            this.exceptionListeners = exceptionListeners;
             this.options = options;
         }
         /// <summary>
@@ -111,8 +113,10 @@ namespace Biz.Morsink.Rest.AspNetCore
             {
                 context.Response.StatusCode = hex.StatusCode;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                foreach (var listener in exceptionListeners)
+                    listener.UnexpectedExceptionOccured(ex);
                 context.Response.StatusCode = STATUS_INTERNALSERVERERROR;
                 await context.Response.WriteAsync("An error occured.");
             }

@@ -86,6 +86,7 @@ namespace Biz.Morsink.Rest
             => (X)serviceLocator.GetService(typeof(X));
 
         private readonly IServiceProvider serviceLocator;
+        private readonly IEnumerable<IRestExceptionListener> exceptionListeners;
         private readonly IDataConverter converter;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
         private readonly ILinkProvider<T>[] linkProviders;
@@ -93,10 +94,11 @@ namespace Biz.Morsink.Rest
         private readonly IAuthorizationProvider authorizationProvider;
         private readonly IUser user;
 
-        public RestRequestHandler(IServiceProvider serviceLocator, IDataConverter converter = null)
+        public RestRequestHandler(IServiceProvider serviceLocator,  IDataConverter converter = null)
         {
             this.serviceLocator = serviceLocator;
 
+            exceptionListeners = GetService<IEnumerable<IRestExceptionListener>>();
             linkProviders = GetService<IEnumerable<ILinkProvider<T>>>().ToArray();
             dynamicLinkProviders = GetService<IEnumerable<IDynamicLinkProvider<T>>>().ToArray();
             authorizationProvider = GetService<IAuthorizationProvider>();
@@ -152,6 +154,8 @@ namespace Biz.Morsink.Rest
                 }
                 catch (Exception ex)
                 {
+                    foreach (var listener in exceptionListeners)
+                        listener.UnexpectedExceptionOccured(ex);
                     return RestResult.Error(descriptor.ResultType, ex).ToResponse();
                 }
             }

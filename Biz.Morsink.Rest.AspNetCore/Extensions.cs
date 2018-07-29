@@ -413,7 +413,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             return new RestPathMappingBuilder(serviceCollection, path);
         }
-           /// <summary>
+        /// <summary>
         /// Starts building rest path mappings for some path.
         /// </summary>
         /// <param name="builder">A Rest services builder.</param>
@@ -698,6 +698,86 @@ namespace Biz.Morsink.Rest.AspNetCore
             });
             return builder;
         }
+        /// <summary>
+        /// Adds an exception listener to the service collection.
+        /// </summary>
+        /// <param name="services">The service collection</param>
+        /// <param name="action">The action to execute when an exception occurs.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection OnRestException(this IServiceCollection services, Action<Exception> action)
+        {
+            services.AddSingleton<IRestExceptionListener>(sp => new ExceptionListener(action));
+            return services;
+        }
+        /// <summary>
+        /// Adds an exception listener to the rest services.
+        /// </summary>
+        /// <param name="builder">A Rest services builder instance.</param>
+        /// <param name="action">The action to execute when an exception occurs.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder OnException(this IRestServicesBuilder builder, Action<Exception> action)
+        {
+            builder.ServiceCollection.OnRestException(action);
+            return builder;
+        }
+        /// <summary>
+        /// Adds an exception listener to the service collection.
+        /// </summary>
+        /// <param name="services">The service collection</param>
+        /// <param name="listener">The listener to notify when an exception occurs.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection OnRestException(this IServiceCollection services, IRestExceptionListener listener)
+        {
+            services.AddSingleton(listener);
+            return services;
+        }
+        /// <summary>
+        /// Adds an exception listener to the rest services.
+        /// </summary>
+        /// <param name="builder">A Rest services builder instance.</param>
+        /// <param name="listener">The listener to notify when an exception occurs.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder OnException(this IRestServicesBuilder builder, IRestExceptionListener listener)
+        {
+            builder.ServiceCollection.OnRestException(listener);
+            return builder;
+        }
+        /// <summary>
+        /// Adds an exception listener to the service collection.
+        /// </summary>
+        /// <typeparam name="T">The type of listener to register for notification.</typeparam>
+        /// <param name="services">The service collection</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection OnRestException<T>(this IServiceCollection services)
+            where T : class, IRestExceptionListener
+        {
+            services.AddSingleton<IRestExceptionListener, T>();
+            return services;
+        }
+        /// <summary>
+        /// Adds an exception listener to the rest services.
+        /// </summary>
+        /// <typeparam name="T">The type of listener to register for notification.</typeparam>
+        /// <param name="builder">A Rest services builder instance.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder OnException<T>(this IRestServicesBuilder builder)
+            where T : class, IRestExceptionListener
+        {
+            builder.ServiceCollection.OnRestException<T>();
+            return builder;
+        }
+        private class ExceptionListener : IRestExceptionListener
+        {
+            private readonly Action<Exception> action;
+
+            public ExceptionListener(Action<Exception> action)
+            {
+                this.action = action;
+            }
+            public void UnexpectedExceptionOccured(Exception ex)
+                => action(ex);
+        }
+
         /// <summary>
         /// Adds a Rest job store to the service collection.
         /// </summary>
