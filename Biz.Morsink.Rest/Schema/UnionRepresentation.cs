@@ -10,6 +10,7 @@ namespace Biz.Morsink.Rest.Schema
         internal UnionRepresentation() { }
         public abstract IReadOnlyList<Type> GetTypes();
         public abstract object GetItem();
+
         public static RepresentationCreator FromOptions(params Type[] types)
             => new RepresentationCreator(types);
         

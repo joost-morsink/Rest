@@ -13,6 +13,6 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// <summary>
         /// A reference to the other object.
         /// </summary>
-        public string Ref { get; set; }
+        public string _Ref { get; set; }
     }
 }

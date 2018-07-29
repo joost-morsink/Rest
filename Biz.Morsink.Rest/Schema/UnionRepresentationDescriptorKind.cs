@@ -12,11 +12,17 @@ namespace Biz.Morsink.Rest.Schema
         {
             if (!IsOfKind(context.Type))
                 return null;
-            var typeParams = (IReadOnlyList<Type>)context.Type.GetMethod(nameof(UnionRepresentation<object, object>.GetTypeParameters)).Invoke(null, null);
+            var typeParams = GetTypes(context.Type);
             return TypeDescriptor.MakeUnion(context.Type.Name, typeParams.Select(tp => creator.GetDescriptor(tp)), context.Type);
         }
 
-        public bool IsOfKind(Type type)
+        bool TypeDescriptorCreator.IKind.IsOfKind(Type type) => IsOfKind(type);
+
+        public static bool IsOfKind(Type type)
             => typeof(UnionRepresentation).IsAssignableFrom(type);
+
+        public static IReadOnlyList<Type> GetTypes(Type type)
+            => (IReadOnlyList<Type>)type.GetMethod(nameof(UnionRepresentation<object, object>.GetTypeParameters)).Invoke(null, null);
+
     }
 }

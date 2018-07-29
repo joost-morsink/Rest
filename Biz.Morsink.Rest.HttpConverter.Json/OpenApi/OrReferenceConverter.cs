@@ -56,7 +56,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
                     return new OrReference<T>.ItemImpl(serializer.Deserialize<T>(rdr));
             }
             else
-                return new OrReference<T>.ReferenceImpl(new Reference { Ref = o.Property("$ref").Value<string>() });
+                return new OrReference<T>.ReferenceImpl(new Reference { _Ref = o.Property("$ref").Value<string>() });
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
@@ -66,7 +66,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("$ref");
-                writer.WriteValue(r.Reference.Ref);
+                writer.WriteValue(r.Reference._Ref);
                 writer.WriteEndObject();
             }
             else if(x is OrReference<T>.ItemImpl i)

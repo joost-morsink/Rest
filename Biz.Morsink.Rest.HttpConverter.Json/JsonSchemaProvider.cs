@@ -34,13 +34,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             var specific = translators.Value.Select(tr => tr.GetSchema(type)).Where(sch => sch != null).FirstOrDefault();
             if (specific == null)
-            {
-                var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
-                var schema = visitor.Transform(typeDescriptorCreator.GetDescriptor(type));
-                return new JsonSchema(schema);
-            }
+                return GetDefaultSchema(type);
             else
                 return specific;
+        }
+
+        private JsonSchema GetDefaultSchema(Type type)
+        {
+            var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
+            var schema = visitor.Transform(typeDescriptorCreator.GetDescriptor(type));
+            return new JsonSchema(schema);
         }
     }
 }
