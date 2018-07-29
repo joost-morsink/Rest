@@ -265,24 +265,27 @@ namespace Biz.Morsink.Rest.AspNetCore
                 switch (failure.Reason)
                 {
                     case RestFailureReason.BadRequest:
-                        context.Response.StatusCode = 400;
-                        break;
+                        context.Response.StatusCode = 400; break;
                     case RestFailureReason.NotFound:
-                        context.Response.StatusCode = 404;
-                        break;
+                        switch (failure.FailureOn)
+                        {
+                            case RestEntityKind.Capability:
+                                context.Response.StatusCode = 405; break;
+                            case RestEntityKind.Repository:
+                            case RestEntityKind.Resource:
+                            default:
+                                context.Response.StatusCode = 404; break;
+                        } break;
                     case RestFailureReason.Error:
-                        context.Response.StatusCode = 500;
-                        break;
+                        context.Response.StatusCode = 500; break;
                     case RestFailureReason.NotExecuted:
-                        context.Response.StatusCode = 412;
-                        break;
+                        context.Response.StatusCode = 412; break;
                 }
             else if (response.UntypedResult is IRestRedirect redirect)
                 switch (redirect.Type)
                 {
                     case RestRedirectType.NotNecessary:
-                        context.Response.StatusCode = 304;
-                        break;
+                        context.Response.StatusCode = 304; break;
                     case RestRedirectType.Permanent:
                         context.Response.Headers[Location] = IdentityProvider.ToPath(redirect.Target);
                         context.Response.StatusCode = 308;

@@ -109,7 +109,7 @@ namespace Biz.Morsink.Rest
             var repo = GetService<IRestRepository<T>>();
             if (repo == null)
             {
-                var res = RestResult.NotFound<T>().ToResponse();
+                var res = RestResult<T>.Failure.NotFound.Instance(RestEntityKind.Repository).ToResponse();
                 if (request.Metadata.TryGet(out Versioning ver))
                     res = res.WithMetadata(ver.WithoutCurrent());
                 return res;
@@ -157,7 +157,7 @@ namespace Biz.Morsink.Rest
             }
 
             return failures.OrderBy(f => sortOrder(f.UntypedResult.AsFailure().Reason))
-                .FirstOrDefault() ?? RestResult.NotFound<T>().ToResponse();
+                .FirstOrDefault() ?? RestResult<T>.Failure.NotFound.Instance(RestEntityKind.Capability).ToResponse();
 
             int sortOrder(RestFailureReason reason)
             {

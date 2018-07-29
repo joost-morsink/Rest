@@ -3,6 +3,7 @@ using Biz.Morsink.Rest.Jobs;
 using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@ namespace Biz.Morsink.Rest
         /// <typeparam name="T">The type of the (not found) underlying value.</typeparam>
         /// <returns>A failed Rest result indicating the resource was not found.</returns>
         public static RestResult<T>.Failure.NotFound NotFound<T>() 
-            => RestResult<T>.Failure.NotFound.Instance;
+            => RestResult<T>.Failure.NotFound.Instance(RestEntityKind.Resource);
         /// <summary>
         /// Creates a failed Rest result indicating an unexpected error occurred during processing of the request.
         /// </summary>
@@ -204,24 +205,39 @@ namespace Biz.Morsink.Rest
                 public override RestResult<U>.Failure Select<U>()
                     => new RestResult<U>.Failure.BadRequest(RestValue);
                 public override RestFailureReason Reason => RestFailureReason.BadRequest;
+                public override RestEntityKind FailureOn { get; }
             }
             /// <summary>
             /// This class represents the resource addressed in the request could not be found.
             /// </summary>
             public class NotFound : Failure
             {
+                private static readonly Dictionary<RestEntityKind, NotFound> kinds = ((RestEntityKind[])Enum.GetValues(typeof(RestEntityKind)))
+                    .ToDictionary(e => e, e => new NotFound(e));
+            
                 /// <summary>
                 /// Gets an instance of the NotFound class.
                 /// </summary>
-                public static NotFound Instance { get; } = new NotFound();
+                public static NotFound Instance(RestEntityKind kind) => kinds[kind];
+                private NotFound(RestEntityKind entityKind)
+                {
+                    FailureOn = entityKind;
+                }
                 /// <summary>
                 /// Changes the underlying successful value type for the Failure.
                 /// </summary>
                 /// <typeparam name="U">The new underlying successful value type.</typeparam>
                 /// <returns>A new NotFound failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
-                    => RestResult<U>.Failure.NotFound.Instance;
+                    => RestResult<U>.Failure.NotFound.Instance(FailureOn);
+                /// <summary>
+                /// The reason for the failure is 'Not Found'.
+                /// </summary>
                 public override RestFailureReason Reason => RestFailureReason.NotFound;
+                /// <summary>
+                /// Contains the Rest entity kind the 'not found' pertains to.
+                /// </summary>
+                public override RestEntityKind FailureOn { get; }
             }
             /// <summary>
             /// This class represents the request could not be executed.
@@ -232,9 +248,10 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was not executed.</param>
-                public NotExecuted(RestValue<object> restValue)
+                public NotExecuted(IRestValue<object> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
+                    FailureOn = failureOn;
                 }
                 /// <summary>
                 /// Constructor.
@@ -243,12 +260,13 @@ namespace Biz.Morsink.Rest
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
                 public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
-                    : this(new RestValue<object>(data, links, embeddings))
+                    : this(new RestValue<object>(data, links, embeddings), RestEntityKind.Resource)
                 { }
                 /// <summary>
                 /// A Rest value describing the reason why the request was not executed.
                 /// </summary>
                 public IRestValue<object> RestValue { get; }
+
                 /// <summary>
                 /// A value describing the reason why the request was not executed.
                 /// </summary>
@@ -262,8 +280,9 @@ namespace Biz.Morsink.Rest
                 /// <typeparam name="U">The new underlying successful value type.</typeparam>
                 /// <returns>A new NotExecuted failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
-                    => new RestResult<U>.Failure.NotExecuted(RestValue);
+                    => new RestResult<U>.Failure.NotExecuted(RestValue, FailureOn);
                 public override RestFailureReason Reason => RestFailureReason.NotExecuted;
+                public override RestEntityKind FailureOn { get; }
 
             }
             /// <summary>
@@ -275,9 +294,10 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value containing an exception describing the unexpected error.</param>
-                public Error(IRestValue<ExceptionInfo> restValue)
+                public Error(IRestValue<ExceptionInfo> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
+                    FailureOn = failureOn;
                 }
                 /// <summary>
                 /// Constructor/
@@ -286,12 +306,13 @@ namespace Biz.Morsink.Rest
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
                 public Error(ExceptionInfo ex, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
-                    : this(new RestValue<ExceptionInfo>(ex, links, embeddings))
+                    : this(new RestValue<ExceptionInfo>(ex, links, embeddings), RestEntityKind.Resource)
                 { }
                 /// <summary>
                 /// Gets a Rest value for the exception describing the unexpected error.
                 /// </summary>
                 public IRestValue<ExceptionInfo> RestValue { get; }
+
                 /// <summary>
                 /// Gets the exception describing the unexpected error.
                 /// </summary>
@@ -304,9 +325,9 @@ namespace Biz.Morsink.Rest
                 /// <typeparam name="U">The new underlying successful value type.</typeparam>
                 /// <returns>A new Error failure for type U.</returns>
                 public override RestResult<U>.Failure Select<U>()
-                    => new RestResult<U>.Failure.Error(RestValue);
+                    => new RestResult<U>.Failure.Error(RestValue, FailureOn);
                 public override RestFailureReason Reason => RestFailureReason.Error;
-
+                public override RestEntityKind FailureOn { get; }
             }
             /// <summary>
             /// This abstract method can be used to transform the underlying successful value type into another.
@@ -321,6 +342,7 @@ namespace Biz.Morsink.Rest
             /// Gets the reason for failure of the Rest request.
             /// </summary>
             public abstract RestFailureReason Reason { get; }
+            public abstract RestEntityKind FailureOn { get; }
         }
         /// <summary>
         /// This abstract base class represents Rest redirects.

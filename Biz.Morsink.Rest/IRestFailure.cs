@@ -14,6 +14,10 @@ namespace Biz.Morsink.Rest
         /// </summary>
         RestFailureReason Reason { get; }
         /// <summary>
+        /// Gets the kind of entity the failure occurred on.
+        /// </summary>
+        RestEntityKind FailureOn { get; }
+        /// <summary>
         /// Converts the failure value to a typed result.
         /// </summary>
         /// <typeparam name="T"></typeparam>

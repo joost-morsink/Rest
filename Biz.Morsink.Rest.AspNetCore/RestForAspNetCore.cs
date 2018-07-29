@@ -31,6 +31,10 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         public const int STATUS_NOTFOUND = 404;
         /// <summary>
+        /// Value for the not acceptable HTTP status.
+        /// </summary>
+        public const int STATUS_NOTACCEPTABLE = 406;
+        /// <summary>
         /// Value for the internal server error HTTP status.
         /// </summary>
         public const int STATUS_INTERNALSERVERERROR = 500;
@@ -77,8 +81,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                 IHttpRestConverter responseConv = null;
                 if (req == null)
                 {
-                    context.Response.StatusCode = STATUS_NOTFOUND;
-                    await context.Response.WriteAsync("Cannot find resource");
+                    context.Response.StatusCode = STATUS_NOTACCEPTABLE;
+                    await context.Response.WriteAsync("Not acceptable");
                 }
                 else
                 {
@@ -103,9 +107,9 @@ namespace Biz.Morsink.Rest.AspNetCore
                     }
                 }
             }
-            catch (UnsupportedMediaTypeException)
+            catch (HttpException hex)
             {
-                context.Response.StatusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
+                context.Response.StatusCode = hex.StatusCode;
             }
             catch (Exception)
             {
@@ -136,6 +140,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                     best = converters[i];
                 }
             }
+            if (best == null)
+                return (null, null);
 
             var vm = GetVersionMatcher(context) ?? best.DefaultVersionMatcher;
             var matches = identityProvider.Match(request.Path + request.QueryString);
