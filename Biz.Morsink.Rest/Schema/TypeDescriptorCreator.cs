@@ -193,6 +193,7 @@ namespace Biz.Morsink.Rest.Schema
                 ArrayDescriptorKind.Instance,
                 SemanticStructKind.Instance,
                 FSharpUnionDescriptorKind.Instance,
+                UnionRepresentationDescriptorKind.Instance,
                 UnionDescriptorKind.Instance,
                 RecordDescriptorKind.Instance,
                 UnitDescriptorKind.Instance,

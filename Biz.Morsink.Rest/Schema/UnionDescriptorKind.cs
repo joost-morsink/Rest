@@ -17,6 +17,14 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public static UnionDescriptorKind Instance { get; } = new UnionDescriptorKind();
         private UnionDescriptorKind() { }
+        private IEnumerable<Type> GetNestedTypes(Type type)
+        {
+            var generics = type.GetGenericArguments();
+            if (generics.Length == 0)
+                return type.GetNestedTypes();
+            else
+                return type.GetNestedTypes().Select(nt => nt.MakeGenericType(generics));
+        }
         /// <summary>
         /// Gets a type descriptor for a union type.
         /// A union type is an abstract class containing nested 'case' classes that derive from the abstract class.
@@ -28,11 +36,12 @@ namespace Biz.Morsink.Rest.Schema
                 return null;
             var ti = context.Type.GetTypeInfo();
             var rec = RecordDescriptorKind.Instance.GetDescriptor(creator, context);
+            var options = from ty in GetNestedTypes(ti)
+                          where ty.BaseType == context.Type
+                          select creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type));
             TypeDescriptor res = new TypeDescriptor.Union(
                 rec == null ? context.Type.ToString() : "",
-                    from ty in ti.DeclaredNestedTypes
-                    where ty.BaseType == context.Type && ty.IsPublic
-                    select creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type)),
+                options,
                 rec == null ? context.Type : null);
 
             if (rec != null)
@@ -44,7 +53,7 @@ namespace Biz.Morsink.Rest.Schema
         public bool IsOfKind(Type type)
         {
             var ti = type.GetTypeInfo();
-            return ti.IsAbstract && ti.DeclaredNestedTypes.Any(nt => nt.BaseType == type);
+            return ti.IsAbstract && GetNestedTypes(ti).Any(nt => nt.BaseType == type);
         }
     }
 }
