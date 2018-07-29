@@ -53,24 +53,24 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.OpenApi
             if (o.Property("$ref") == null)
             {
                 using (var rdr = o.CreateReader())
-                    return new OrReference<T>(serializer.Deserialize<T>(rdr));
+                    return new OrReference<T>.ItemImpl(serializer.Deserialize<T>(rdr));
             }
             else
-                return new OrReference<T>(new Reference { Ref = o.Property("$ref").Value<string>() });
+                return new OrReference<T>.ReferenceImpl(new Reference { Ref = o.Property("$ref").Value<string>() });
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var x = (OrReference<T>)value;
-            if (x.IsReference)
+            if (x is OrReference<T>.ReferenceImpl r)
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("$ref");
-                writer.WriteValue(x.Reference.Ref);
+                writer.WriteValue(r.Reference.Ref);
                 writer.WriteEndObject();
             }
-            else
-                serializer.Serialize(writer, x.Item);
+            else if(x is OrReference<T>.ItemImpl i)
+                serializer.Serialize(writer, i.Item);
         }
     }
 }
