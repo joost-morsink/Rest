@@ -6,15 +6,15 @@ It is a method with a resource address and optionally parameters, but no body.
 A request can always be made multiple times without having any side effect on the service.
 In other words, making the request multiple times has the same effect as not making it at all.
 
-The response body type corresponds with the entity type specified by the address (identity of the resource).
+The response body type corresponds with the resource type specified by the address (identity of the resource).
 
 ## Put
 A Put is the operation to use to update a resource with a new version using the resource's representation.
 It is a method with a resource address an optionally parameters.
-The body type corresponds with the entity specified by the address (identity of the resource).
+The body type corresponds with the resource specified by the address (identity of the resource).
 The operation is idempotent, which means making the request multiple times has the same effect as making it once.
 
-The response body type corresponds with the entity type specified by the address (identity of the resource).
+The response body type corresponds with the resource type specified by the address (identity of the resource).
 The response itself should be a representation of the resource as it is after the operation succeeded.
 
 ## Post
@@ -47,9 +47,9 @@ The constraints of all the capability types are:
 
 | Capability | Request body type | Response body type |
 | ---------- | ----------------- | ------------------ |
-| GET        | Empty             | Same as entity     |
+| GET        | Empty             | Same as resource   |
 | POST       | Any               | Any                |
-| PUT        | Same as entity    | Same as entity     |
-| PATCH      | Any               | Same as entity     |
+| PUT        | Same as resource  | Same as resource   |
+| PATCH      | Any               | Same as resource   |
 | DELETE     | Should be empty   | Any                |
  

@@ -12,7 +12,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// </summary>
     /// <typeparam name="C">The Collection type.</typeparam>
     /// <typeparam name="E">The item type.</typeparam>
-    /// <typeparam name="I">The type whose instances contain descriptive information about instances of the entity type.</typeparam>
+    /// <typeparam name="I">The type whose instances contain descriptive information about instances of the resource type.</typeparam>
     public abstract class AbstractRestCollectionStructure<C, E, I> : AbstractRestResourceCollection<C, E>
         where C : RestCollection<E, I>
         where I : IHasIdentity<E>

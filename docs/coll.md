@@ -1,6 +1,6 @@
 # Collections
-A collections is a composition of three distinct components based on two entity types.
-The entity types are:
+A collections is a composition of three distinct components based on two resource types.
+The resource types are:
 
 * The collection type.
 * The entity type.

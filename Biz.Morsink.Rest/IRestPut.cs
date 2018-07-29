@@ -21,8 +21,8 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <param name="target">The identity value of the target resource.</param>
         /// <param name="parameters">THe parameters for the put operation.</param>
-        /// <param name="entity">The resource to put.</param>
+        /// <param name="resource">The resource to put.</param>
         /// <returns>A response potentially containing the up-to-date resource.</returns>
-        ValueTask<RestResponse<T>> Put(IIdentity<T> target, P parameters, T entity, CancellationToken cancellationToken);
+        ValueTask<RestResponse<T>> Put(IIdentity<T> target, P parameters, T resource, CancellationToken cancellationToken);
     }
 }

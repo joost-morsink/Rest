@@ -95,7 +95,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
             var res = new RestCapabilities();
             if (repo == null)
                 return res;
-            var wildcardtypes = idProvider.GetRestPaths(repo.EntityType)
+            var wildcardtypes = idProvider.GetRestPaths(repo.ResourceType)
                 .Where(rp => rp.QueryString.IsWildcard)
                 .Select(rp => rp.QueryString.WildcardTypes)
                 .Where(t => t != null)

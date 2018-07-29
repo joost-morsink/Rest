@@ -399,7 +399,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Parses a string into a RestPath instance.
         /// </summary>
         /// <param name="pathString">The path string to parse.</param>
-        /// <param name="forType">The entity type the path belongs to.</param>
         /// <returns>A parsed RestPath instance.</returns>
         public static RestPath Parse(string pathString)
         {
@@ -438,7 +437,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="segments">All the path-parts of the path.</param>
         /// <param name="query">The query string part of the path.</param>
-        /// <param name="forType">The entity type the path belongs to.</param>
         public RestPath(IEnumerable<Segment> segments, Query query)
             : this(null, segments, query)
         { }
@@ -448,7 +446,6 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="pathBase">The base path for this path.</param>
         /// <param name="segments">All the path-parts of the path.</param>
         /// <param name="query">The query string part of the path.</param>
-        /// <param name="forType">The entity type the path belongs to.</param>
         public RestPath(string pathBase, IEnumerable<Segment> segments, Query query)
         {
             this.pathBase = pathBase;

@@ -19,13 +19,13 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// Constructor.
         /// </summary>
         /// <param name="path">The path for the repository.</param>
-        /// <param name="componentTypes">The component entity types of the underlying identity value.</param>
+        /// <param name="componentTypes">The component resource types of the underlying identity value.</param>
         public RestPathAttribute(string path, Type[] componentTypes) : this(path, componentTypes, null) { }
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="path">The path for the repository.</param>
-        /// <param name="componentTypes">The component entity types of the underlying identity value.</param>
+        /// <param name="componentTypes">The component resource types of the underlying identity value.</param>
         /// <param name="wildcardType">The querystring wildcard datatype, if applicable.</param>
         public RestPathAttribute(string path, Type[] componentTypes, Type[] wildcardTypes)
         {
@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
         /// </summary>
         public string Path { get; set; }
         /// <summary>
-        /// Gets the component entity types of the underlying identity value.
+        /// Gets the component resource types of the underlying identity value.
         /// </summary>
         public Type[] ComponentTypes { get; set; }
         /// <summary>

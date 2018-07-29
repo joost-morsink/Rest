@@ -20,6 +20,8 @@ When implementing a new version alongside an old version, we have the following 
 ## HTTP header
 In case we use an HTTP header for version discrimination, we end up in a situation that the same URI, and thus the same Rest Identity, point to different types and thus different Identities.
 
+These types are associated and ordered (by version number). 
+This means you can always find the 'oldest' or 'newest' version of an API.
 
-
+### VersionMatcher
 

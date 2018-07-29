@@ -127,9 +127,9 @@ namespace Biz.Morsink.Rest
         public virtual C GetCapability<C>() where C : class, IRestCapability<T>
             => GetCapabilities(RestCapabilityDescriptorKey.Create(typeof(C))).Select(cap => cap.Instance as C).FirstOrDefault();
         /// <summary>
-        /// The entity/resource type for the repository.
+        /// The resource type for the repository.
         /// </summary>
-        Type IRestRepository.EntityType => typeof(T);
+        Type IRestRepository.ResourceType => typeof(T);
         /// <summary>
         /// This property returns a collection of types that are used by this repository, based on an overridable implementation.
         /// This information can be used to populate schema information

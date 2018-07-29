@@ -478,7 +478,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             resp = await Get(client, linkdict["blogs"]);
             Assert.IsTrue(resp.IsSuccessStatusCode);
 
-            // Post a new entity
+            // Post a new resource
             resp = await Post(client, linkdict["blogs"], new Blog { Name = "Joost Morsink's REST blog" });
             Assert.AreEqual(HttpStatusCode.Created, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Location", out var locations) && locations.Any());

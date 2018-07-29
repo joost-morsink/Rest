@@ -15,9 +15,9 @@ namespace Biz.Morsink.Rest
         /// <returns>Capability descriptors for all the capabilities the repository provides.</returns>
         IEnumerable<RestCapabilityDescriptor> GetCapabilities();
         /// <summary>
-        /// The entity/resource type for the repository.
+        /// The resource type for the repository.
         /// </summary>
-        Type EntityType { get; }
+        Type ResourceType { get; }
         /// <summary>
         /// This property should return a collection of types that are used by this repository.
         /// This information can be used to populate schema information.

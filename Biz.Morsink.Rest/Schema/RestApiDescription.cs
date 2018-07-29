@@ -24,7 +24,7 @@ namespace Biz.Morsink.Rest.Schema
                 .ToDictionary(t => t, t => typeDescriptorCreator.GetDescriptor(t));
         }
         /// <summary>
-        /// Contains a lookup for all Rest capability descriptors belonging to a given Entity type.
+        /// Contains a lookup for all Rest capability descriptors belonging to a given resource type.
         public ILookup<Type, RestCapabilityDescriptor> EntityTypes { get; }
         /// <summary>
         /// Contains a dictionary for all type descriptors.

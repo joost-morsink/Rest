@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.Jobs
 
         [RestDocumentation("Administers a new 'Job' in the Job repository.")]
         [RestMetaDataOut(typeof(CreatedResource))]
-        public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty entity, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty empty, CancellationToken cancellationToken)
         {
             if (parameters.Secure && user?.Principal == null)
                 return RestResult.BadRequest<Empty>("Cannot be secure without user").ToResponse();

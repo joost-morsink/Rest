@@ -31,17 +31,17 @@ namespace Biz.Morsink.Rest
             if (name == null)
                 return null;
             var method = iti.DeclaredMethods.Single();
-            var entity = (from i in iti.ImplementedInterfaces
-                          where i.GenericTypeArguments.Length == 1
-                          let gen = i.GetGenericTypeDefinition()
-                          where gen == typeof(IRestCapability<>)
-                          select i.GenericTypeArguments[0]).FirstOrDefault();
-            if (entity == null)
+            var resourceType = (from i in iti.ImplementedInterfaces
+                                where i.GenericTypeArguments.Length == 1
+                                let gen = i.GetGenericTypeDefinition()
+                                where gen == typeof(IRestCapability<>)
+                                select i.GenericTypeArguments[0]).FirstOrDefault();
+            if (resourceType == null)
                 return null;
             if (method.GetParameters().Length == 0
-                || method.GetParameters()[0].ParameterType != typeof(IIdentity<>).MakeGenericType(entity))
+                || method.GetParameters()[0].ParameterType != typeof(IIdentity<>).MakeGenericType(resourceType))
                 return null;
-            return new RestCapabilityDescriptorKey(name, entity);
+            return new RestCapabilityDescriptorKey(name, resourceType);
         }
         /// <summary>
         /// Constructor
@@ -87,7 +87,7 @@ namespace Biz.Morsink.Rest
         /// 1. The return type must be ValueTask&lt;RestResponse&;ltR&gt;&gt; for some R.
         /// 2. The first parameter must be IIdentity&lt;T&gt; for some resource type T.
         /// 3. The second parameter must be P for some parameter type P.
-        /// 4. The third parameter is optional and describes an entity of type E used for the execution of the capability.
+        /// 4. The third parameter is optional and describes a resource of type E used for the execution of the capability.
         /// </summary>
         /// <param name="interfaceType">The Rest capability interface's type.</param>
         /// <returns>A Rest capability descriptor key.</returns>
@@ -99,7 +99,7 @@ namespace Biz.Morsink.Rest
                 return null;
 
             var method = iti.DeclaredMethods.Single();
-            
+
 
             var par = method.GetParameters().Skip(1).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();
             var body = method.GetParameters().Skip(2).Select(p => p.ParameterType).Where(pt => pt != typeof(CancellationToken)).FirstOrDefault();

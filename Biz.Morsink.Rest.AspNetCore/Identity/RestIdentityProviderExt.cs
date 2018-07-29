@@ -7,7 +7,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Parses a path string into an IIdentity&lt;T&gt; value.
         /// </summary>
-        /// <typeparam name="T">The entity type.</typeparam>
+        /// <typeparam name="T">The resource type.</typeparam>
         /// <param name="path">The path to parse.</param>
         /// <returns>An IIdentity&lt;T&gt; value if the parse and match were successful.</returns>
         public static IIdentity<T> Parse<T>(this IRestIdentityProvider provider, string path)
@@ -23,7 +23,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
         /// </summary>
-        /// <typeparam name="T">The entity type to parse the value for.</typeparam>
+        /// <typeparam name="T">The resource type to parse the value for.</typeparam>
         /// <param name="objectId">The input identity value.</param>
         /// <returns>An identity value, null if the match is unsuccessful.</returns>
         public static IIdentity<T> Parse<T>(this IRestIdentityProvider provider, IIdentity<object> objectId)

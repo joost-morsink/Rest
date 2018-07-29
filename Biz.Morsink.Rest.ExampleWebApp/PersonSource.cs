@@ -41,9 +41,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
             return Task.FromResult(new PersonV2Collection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0));
         }
-        public Task<PersonV2> Post(PersonV2 entity)
+        public Task<PersonV2> Post(PersonV2 resource)
         {
-            var id = entity.Id?.Value?.ToString();
+            var id = resource.Id?.Value?.ToString();
             if (id == null)
             {
                 string pk;
@@ -51,13 +51,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 {
                     pk = Interlocked.Increment(ref counter).ToString();
                 } while (data.ContainsKey(pk));
-                entity = new PersonV2(entity.FirstName, entity.LastName, entity.Birthday, FreeIdentity<PersonV2>.Create(pk));
+                resource = new PersonV2(resource.FirstName, resource.LastName, resource.Birthday, FreeIdentity<PersonV2>.Create(pk));
             }
-            return Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => existing));
+            return Task.FromResult(data.AddOrUpdate(resource.Id.Value.ToString(), resource, (key, existing) => existing));
         }
 
-        public Task<PersonV2> Put(PersonV2 entity)
-            => Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity));
+        public Task<PersonV2> Put(PersonV2 resource)
+            => Task.FromResult(data.AddOrUpdate(resource.Id.Value.ToString(), resource, (key, existing) => resource));
 
     }
 }

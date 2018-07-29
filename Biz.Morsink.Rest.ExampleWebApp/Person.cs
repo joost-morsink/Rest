@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Biz.Morsink.Rest.ExampleWebApp
 {
     /// <summary>
-    /// A Person Entity.
+    /// A Person reosurce.
     /// </summary>
     public class Person : IHasIdentity<Person>
     {

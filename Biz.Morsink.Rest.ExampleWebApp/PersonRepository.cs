@@ -74,7 +74,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="id">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <returns>An asynchronous Rest response that may contain a Person entity.</returns>
+        /// <returns>An asynchronous Rest response that may contain a Person resource.</returns>
         [RestGet]
         [RestDocumentation("Gets a person from the person store.")]
         public async ValueTask<RestResponse<Person>> Get(IIdentity<Person> id)
@@ -88,13 +88,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="target">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <param name="entity">The entity to put to the backing store.</param>
-        /// <returns>An asynchronous Rest response that may contain the updated Person entity.</returns>
+        /// <param name="entity">The resource to put to the backing store.</param>
+        /// <returns>An asynchronous Rest response that may contain the updated Person resource.</returns>
         [RestPut]
         [RestDocumentation("Upserts a person into the person store.")]
-        public async ValueTask<RestResponse<Person>> Put(IIdentity<Person> target, [RestBody]Person entity)
+        public async ValueTask<RestResponse<Person>> Put(IIdentity<Person> target, [RestBody]Person resource)
         {
-            var resp = await repository.GetCapability<IRestPut<PersonV2, Empty>>().Put(Convert(target), new Empty(), PersonV2.Create(entity), default);
+            var resp = await repository.GetCapability<IRestPut<PersonV2, Empty>>().Put(Convert(target), new Empty(), PersonV2.Create(resource), default);
             return resp.Select(r => r.Select(v => new RestValue<Person>(v.Value.ToV1(), v.Links, v.Embeddings)));
         }
         /// <summary>
@@ -117,15 +117,15 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="target">The identity value for the PersonCollection. Ignored in current implementation.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <param name="entity">The entity to put to the backing store.</param>
+        /// <param name="resource">The resource to put to the backing store.</param>
         /// <returns>An asynchronous Rest response that may contain the posted Person entity.</returns>
         [RestPost]
         [RestDocumentation("Inserts a person into the person store.")]
         [RestMetaDataOut(typeof(CreatedResource))]
-        public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person entity, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<Person>> Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person resource, CancellationToken cancellationToken)
         {
             var resp = await collectionRepository.GetCapability<IRestPost<PersonV2Collection, DelayParameter, PersonV2, PersonV2>>()
-                .Post(Convert(target), parameters, PersonV2.Create(entity), cancellationToken);
+                .Post(Convert(target), parameters, PersonV2.Create(resource), cancellationToken);
             return resp.Select(r => r.Select(v => new RestValue<Person>(v.Value.ToV1(), v.Links, v.Embeddings)));
         }
 
@@ -171,7 +171,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="id">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <returns>An asynchronous Rest response that may contain a Person entity.</returns>
+        /// <returns>An asynchronous Rest response that may contain a Person resource.</returns>
         [RestGet]
         [RestDocumentation("Gets a person from the person store.")]
         public async ValueTask<RestResponse<PersonV2>> Get(IIdentity<PersonV2> id)
@@ -187,13 +187,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="target">The identity value for the Person.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <param name="entity">The entity to put to the backing store.</param>
-        /// <returns>An asynchronous Rest response that may contain the updated Person entity.</returns>
+        /// <param name="resource">The resource to put to the backing store.</param>
+        /// <returns>An asynchronous Rest response that may contain the updated Person resource.</returns>
         [RestPut]
         [RestDocumentation("Upserts a person into the person store.")]
-        public async ValueTask<RestResponse<PersonV2>> Put(IIdentity<PersonV2> target, [RestBody]PersonV2 entity)
-            => entity.Id == null || target.Equals(entity.Id)
-                ? Rest.Value(await resources.Put(entity)).ToResponse()
+        public async ValueTask<RestResponse<PersonV2>> Put(IIdentity<PersonV2> target, [RestBody]PersonV2 resource)
+            => resource.Id == null || target.Equals(resource.Id)
+                ? Rest.Value(await resources.Put(resource)).ToResponse()
                 : RestResult.BadRequest<PersonV2>(new object()).ToResponse();
 
         /// <summary>
@@ -218,16 +218,16 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         /// </summary>
         /// <param name="target">The identity value for the PersonCollection. Ignored in current implementation.</param>
         /// <param name="parameters">No parameters.</param>
-        /// <param name="entity">The entity to put to the backing store.</param>
-        /// <returns>An asynchronous Rest response that may contain the posted Person entity.</returns>
+        /// <param name="resource">The resource to put to the backing store.</param>
+        /// <returns>An asynchronous Rest response that may contain the posted Person resource.</returns>
         [RestPost]
         [RestDocumentation("Inserts a person into the person store.")]
         [RestMetaDataOut(typeof(CreatedResource))]
-        public async ValueTask<RestResponse<PersonV2>> Post(IIdentity<PersonV2Collection> target, PersonRepository.DelayParameter parameters, PersonV2 entity, CancellationToken cancellationToken)
+        public async ValueTask<RestResponse<PersonV2>> Post(IIdentity<PersonV2Collection> target, PersonRepository.DelayParameter parameters, PersonV2 resource, CancellationToken cancellationToken)
         {
             await Task.Delay(TimeSpan.FromSeconds(parameters.Delay), cancellationToken);
 
-            var ent = await resources.Post(entity);
+            var ent = await resources.Post(resource);
             return Rest.Value(ent).ToResponse().WithMetadata(new CreatedResource { Address = ent.Id });
         }
 

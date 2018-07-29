@@ -227,17 +227,17 @@ namespace Biz.Morsink.Rest
         public virtual ItemRepository GetItemRepository() => new ItemRepository(this);
 
         /// <summary>
-        /// Delete an entity from the collection.
+        /// Delete a resource from the collection.
         /// </summary>
-        /// <param name="entityId">The identity value for the entity.</param>
+        /// <param name="resourceId">The identity value for the resource.</param>
         /// <returns>True if the deletion was succesful. (Asynchronous)</returns>
-        public abstract Task<bool> Delete(IIdentity<E> entityId);
+        public abstract Task<bool> Delete(IIdentity<E> resourceId);
         /// <summary>
-        /// Retrieve an entity from the collection.
+        /// Retrieve a resource from the collection.
         /// </summary>
-        /// <param name="entityId">The identity value for the entity.</param>
-        /// <returns>The entity if it was foudn, null otherwise. (Asynchronous)</returns>
-        public abstract Task<E> Get(IIdentity<E> entityId);
+        /// <param name="resourceId">The identity value for the resource.</param>
+        /// <returns>The resource if it was found, null otherwise. (Asynchronous)</returns>
+        public abstract Task<E> Get(IIdentity<E> resourceId);
         /// <summary>
         /// Gets a collection slice from the collection.
         /// </summary>
@@ -245,16 +245,16 @@ namespace Biz.Morsink.Rest
         /// <returns>The collection slice asynchronously.</returns>
         public abstract Task<C> GetCollection(IIdentity<C> collectionId);
         /// <summary>
-        /// Inserts a new entity into the collection.
+        /// Inserts a new resource into the collection.
         /// </summary>
-        /// <param name="entity">The entity to insert.</param>
+        /// <param name="resource">The resource to insert.</param>
         /// <returns>The inserted entity.</returns>
-        public abstract Task<E> Post(E entity);
+        public abstract Task<E> Post(E resource);
         /// <summary>
-        /// Updates an entity in the collection.
+        /// Updates an resource in the collection.
         /// </summary>
-        /// <param name="entity">The entity to update.</param>
-        /// <returns>The updated entity.</returns>
-        public abstract Task<E> Put(E entity);
+        /// <param name="resource">The resource to update.</param>
+        /// <returns>The updated resource.</returns>
+        public abstract Task<E> Put(E resource);
     }
 }

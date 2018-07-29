@@ -21,7 +21,7 @@ In many cases it will need to register some container component for other servic
 At the time of writing, the ExampleWebApp has an implementation of repositories for the `Blog` and `BlogCollection` entities with an `AttributedRestRepository`. 
 The structure is available as the `BlogRepository.Structure` class. 
 It registers the `BlogRepository` as the `BlogRepository` service (as self)  and the collection and item repositories through the `AddAttributedRestRepository` extension method.
-It also registers path mappings for both entity types:
+It also registers path mappings for both resource types:
 
 ```csharp
 serviceCollection.AddAttributedRestRepository<BlogRepository>()

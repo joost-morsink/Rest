@@ -38,11 +38,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                     this.repo = repo;
                 }
 
-                async ValueTask<RestResponse<Person>> IRestPost<PersonCollection, DelayParameter, Person, Person>.Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person entity, CancellationToken cancellationToken)
+                async ValueTask<RestResponse<Person>> IRestPost<PersonCollection, DelayParameter, Person, Person>.Post(IIdentity<PersonCollection> target, DelayParameter parameters, Person resource, CancellationToken cancellationToken)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(parameters.Delay), cancellationToken);
 
-                    var res = await repo.Source.Post(entity);
+                    var res = await repo.Source.Post(resource);
                     if (res == null)
                         return RestResult.BadRequest<Person>(new object()).ToResponse();
                     else
@@ -80,9 +80,9 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
             return Task.FromResult(new PersonCollection(collectionId, val.Skip(skip).Take(limit ?? int.MaxValue), val.Length, collectionParams?.Limit, collectionParams?.Skip ?? 0));
         }
-        public override Task<Person> Post(Person entity)
+        public override Task<Person> Post(Person resource)
         {
-            var id = entity.Id?.Value?.ToString();
+            var id = resource.Id?.Value?.ToString();
             if (id == null)
             {
                 string pk;
@@ -90,13 +90,13 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 {
                     pk = Interlocked.Increment(ref counter).ToString();
                 } while (data.ContainsKey(pk));
-                entity = new Person(entity.FirstName, entity.LastName, entity.Age, FreeIdentity<Person>.Create(pk));
+                resource = new Person(resource.FirstName, resource.LastName, resource.Age, FreeIdentity<Person>.Create(pk));
             }
-            return Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => existing));
+            return Task.FromResult(data.AddOrUpdate(resource.Id.Value.ToString(), resource, (key, existing) => existing));
         }
 
-        public override Task<Person> Put(Person entity)
-            => Task.FromResult(data.AddOrUpdate(entity.Id.Value.ToString(), entity, (key, existing) => entity));
+        public override Task<Person> Put(Person resource)
+            => Task.FromResult(data.AddOrUpdate(resource.Id.Value.ToString(), resource, (key, existing) => resource));
 
 
         public override CollectionRepository GetCollectionRepository() => new PersonCollectionRepository(this);

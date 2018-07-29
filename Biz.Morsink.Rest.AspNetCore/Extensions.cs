@@ -502,7 +502,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// <summary>
             /// Adds a Rest path mapping to the service collection.
             /// </summary>
-            /// <typeparam name="T">The entity type.</typeparam>
+            /// <typeparam name="T">The resource type.</typeparam>
             /// <param name="wildcardTypes">An optional wildcard type for the query string.</param>
             public RestPathMappingBuilder Add<T>(params Type[] wildcardTypes)
             {

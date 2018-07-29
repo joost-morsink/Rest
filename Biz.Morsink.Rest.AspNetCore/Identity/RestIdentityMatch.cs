@@ -8,7 +8,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Identity
     /// This struct represents a match with an entry in the RestIdentityProvider.
     /// </summary>
     public struct RestIdentityMatch
-    { 
+    {
         /// <summary>
         /// Constructor.
         /// </summary>

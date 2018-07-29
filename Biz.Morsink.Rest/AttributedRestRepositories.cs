@@ -235,7 +235,7 @@ namespace Biz.Morsink.Rest
         {
             var r = MakeFunc<C, T>(methodInfo, false);
             if (r.InnerReturn != typeof(T))
-                throw new ArgumentException("Get method should return an entity of the addressed type.");
+                throw new ArgumentException("Get method should return a resource of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestGetMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
 
             return c => new RestCapability<T>(
@@ -246,7 +246,7 @@ namespace Biz.Morsink.Rest
         {
             var r = MakeFunc<C, T>(methodInfo, true);
             if (r.InnerReturn != typeof(T))
-                throw new ArgumentException("Put method should return an entity of the addressed type.");
+                throw new ArgumentException("Put method should return a resource of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter), r.Function);
 
             return c => new RestCapability<T>(
@@ -257,7 +257,7 @@ namespace Biz.Morsink.Rest
         {
             var r = MakeFunc<C, T>(methodInfo, true);
             if (r.InnerReturn != typeof(T))
-                throw new ArgumentException("Patch method should return an entity of the addressed type.");
+                throw new ArgumentException("Patch method should return a resource of the addressed type.");
             var maker = (ICapabilityMaker<C, T>)Activator.CreateInstance(typeof(RestPutMaker<,,>).MakeGenericType(typeof(C), typeof(T), r.Parameter, r.Body), r.Function);
 
             return c => new RestCapability<T>(

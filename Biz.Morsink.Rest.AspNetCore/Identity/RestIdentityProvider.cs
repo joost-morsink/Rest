@@ -81,7 +81,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// Creates a new EntryBuilder.
             /// </summary>
             /// <param name="parent">The ParentIdentityProvider the entry will be added to.</param>
-            /// <param name="allTypes">The entity types of the identity value's components.</param>
+            /// <param name="allTypes">The resource types of the identity value's components.</param>
             /// <returns>An EntryBuilder.</returns>
             internal static EntryBuilder Create(RestIdentityProvider parent, params Type[] allTypes)
                 => new EntryBuilder(parent, allTypes, ImmutableList<(RestPath, Type[])>.Empty, VERSION_ONE);
@@ -108,7 +108,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// Add a path to the entry.
             /// </summary>
             /// <param name="path">The rest path to add to the entry.</param>
-            /// <param name="types">The entity types of the identity value's components.</param>
+            /// <param name="types">The resource types of the identity value's components.</param>
             /// <returns>A new EntryBuilder containing the specified path.</returns>
             public EntryBuilder WithPath(RestPath path, params Type[] types)
             {
@@ -145,10 +145,10 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return res;
             }
             /// <summary>
-            /// Adds a path to the entry with a specific list of entity types.
+            /// Adds a path to the entry with a specific list of resource types.
             /// </summary>
             /// <param name="path">The path to add to the entry.</param>
-            /// <param name="types">The entity types of the identity value's components.</param>
+            /// <param name="types">The resource types of the identity value's components.</param>
             /// <returns>A new EntryBuilder containing the specified path.</returns>
             public EntryBuilder WithPath(string path, params Type[] types)
             {
@@ -299,7 +299,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// Creates an entry builder
         /// </summary>
-        /// <param name="types">The entity types for the identity value's components</param>
+        /// <param name="types">The resource types for the identity value's components</param>
         /// <returns>An EntryBuilder</returns>
         protected EntryBuilder BuildEntry(params Type[] types)
             => EntryBuilder.Create(this, types);
@@ -312,9 +312,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>An IDataConverter that is able to make conversions between different types of values.</returns>
         public override IDataConverter GetConverter(Type t, bool incoming) => converter;
         /// <summary>
-        /// This method should return the type of the underlying value for a certain entity type.
+        /// This method should return the type of the underlying value for a certain resource type.
         /// </summary>
-        /// <param name="forType">The entity type.</param>
+        /// <param name="forType">The resource type.</param>
         /// <returns>The type of the underlying identity values.</returns>
         public override Type GetUnderlyingType(Type forType)
         {
