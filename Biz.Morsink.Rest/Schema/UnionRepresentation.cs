@@ -7,13 +7,20 @@ namespace Biz.Morsink.Rest.Schema
 {
     public abstract class UnionRepresentation
     {
+        public static Type[] GetTypeParameters(Type type)
+        {
+            if (type.BaseType != typeof(UnionRepresentation) && type.BaseType?.BaseType != typeof(UnionRepresentation))
+                return null;
+            else
+                return type.GetGenericArguments();
+        }
         internal UnionRepresentation() { }
         public abstract IReadOnlyList<Type> GetTypes();
         public abstract object GetItem();
 
         public static RepresentationCreator FromOptions(params Type[] types)
             => new RepresentationCreator(types);
-        
+
         public struct RepresentationCreator
         {
             private readonly Type[] types;

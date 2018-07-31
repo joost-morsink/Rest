@@ -2,6 +2,7 @@
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             if (!UnionRepresentationDescriptorKind.IsOfKind(type))
                 return null;
-            return Converter.Instance;
+            return new Converter(type,typeDescriptorCreator);
         }
 
         public JsonSchema GetSchema(Type type)
@@ -40,16 +41,63 @@ namespace Biz.Morsink.Rest.HttpConverter
 
         private class Converter : JsonConverter
         {
-            public static Converter Instance { get; } = new Converter();
-            public override bool CanRead => false;
+            private readonly (Type, TypeDescriptor)[] optionTypes;
+
+            public Converter(Type type, TypeDescriptorCreator creator)
+            {
+                optionTypes = UnionRepresentation.GetTypeParameters(type)?.Select(t => (t, creator.GetDescriptor(t))).ToArray();
+
+                if (optionTypes == null)
+                    throw new ArgumentException("Type is not a UnionRepresentation.");
+            }
+            public override bool CanRead => true;
             public override bool CanWrite => true;
 
             public override bool CanConvert(Type objectType)
                 => UnionRepresentationDescriptorKind.IsOfKind(objectType);
 
+            private int Score(TypeDescriptor td, JToken jtok)
+            {
+                var score = 0;
+                if (jtok is JObject jobj)
+                {
+                    var props = (td as TypeDescriptor.Record)?.Properties;
+                    var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key));
+                    if (props != null)
+                    {
+                        foreach(var prop in jobj.Properties())
+                        {
+                            if(props.TryGetValue(prop.Name, out var desc))
+                            {
+                                if (desc.Required)
+                                    req.Remove(desc.Name);
+                                score += 10;
+                            }
+                        }
+                        if (req.Count == 0)
+                            score *= 10;
+                        return score;
+                    }
+                }
+                return 1;
+            }
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
-                throw new NotSupportedException();
+                var types = UnionRepresentation.GetTypeParameters(objectType);
+                var token = serializer.Deserialize<JToken>(reader);
+                Type best = null;
+                int score = int.MinValue;
+                foreach(var (type,desc) in optionTypes)
+                {
+                    var sc = Score(desc, token);
+                    if(sc > score)
+                    {
+                        best = type;
+                        score = sc;
+                    }
+                }
+                using (var rdr = token.CreateReader())
+                    return UnionRepresentation.FromOptions(types).Create(serializer.Deserialize(rdr, best));
             }
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

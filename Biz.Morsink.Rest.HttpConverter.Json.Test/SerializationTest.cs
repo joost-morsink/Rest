@@ -16,6 +16,7 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json.Test
 {
+    using UPO = UnionRepresentation<SerializationTest.Person, SerializationTest.Organization>;
     [TestClass]
     public class SerializationTest
     {
@@ -221,6 +222,65 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             Assert.IsTrue(json["Nationality"].Value<JArray>("People").OfType<JObject>().All(o => o.Value<string>("Href") == "/person/1" || o.Children().Count() > 1));
             Assert.IsTrue(JToken.DeepEquals(json["CountryOfResidence"], json["Nationality"]));
         }
+        [TestMethod]
+        public void JsonSerializer_UnionRep()
+        {
+            var scope = serviceProvider.GetRequiredService<IRestRequestScopeAccessor>().Scope;
+            var idProv = serviceProvider.GetRequiredService<IRestIdentityProvider>();
+            scope.SetScopeItem(SerializationContext.Create(idProv));
+            scope.SetScopeItem(idProv.Prefixes);
+
+            var joost = new Person
+            {
+                Id = FreeIdentity<Person>.Create(1),
+                FirstName = "Joost",
+                LastName = "Morsink",
+                CountryOfResidence = FreeIdentity<Country>.Create("NL"),
+                Nationality = FreeIdentity<Country>.Create("NL")
+            };
+            var morsinkSoftware = new Organization
+            {
+                Id = FreeIdentity<Organization>.Create(1),
+                LegalName = "Morsink Software",
+                ChamberOfCommerceNo = "12345678",
+                CountryOfEstablishment = FreeIdentity<Country>.Create("NL")
+            };
+            var json = JObject.FromObject(new UPO.Option1(joost), serializer);
+            Assert.IsNotNull(json);
+            Assert.AreEqual(5, json.Properties().Count());
+            Assert.AreEqual("Joost", json.Value<string>("FirstName"));
+            Assert.AreEqual("Morsink", json.Value<string>("LastName"));
+
+            using (var rdr = json.CreateReader())
+            {
+                var up = serializer.Deserialize<UPO>(rdr);
+                if (up is UPO.Option1 p)
+                {
+                    Assert.AreEqual("Joost", p.Item.FirstName);
+                    Assert.AreEqual("Morsink", p.Item.LastName);
+                }
+                else
+                    Assert.Fail("Wrong option/type.");
+            }
+
+            json = JObject.FromObject(new UPO.Option2(morsinkSoftware), serializer);
+            Assert.IsNotNull(json);
+            Assert.AreEqual(4, json.Properties().Count());
+            Assert.AreEqual("Morsink Software", json.Value<string>("LegalName"));
+            Assert.AreEqual("12345678", json.Value<string>("ChamberOfCommerceNo"));
+
+            using(var rdr = json.CreateReader())
+            {
+                var uo = serializer.Deserialize<UPO>(rdr);
+                if(uo is UPO.Option2 o)
+                {
+                    Assert.AreEqual("Morsink Software", o.Item.LegalName);
+                    Assert.AreEqual("12345678", o.Item.ChamberOfCommerceNo);
+                }
+                else
+                    Assert.Fail("Wrong option/type.");
+            }
+        }
         // Would like to have this work, but does not work in original Json.Net either...
         //[TestMethod]
         //public void JsonSerialize_DefaultCtorParam()
@@ -300,6 +360,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             public IIdentity<Country> Nationality { get; set; }
             public IIdentity<Country> CountryOfResidence { get; set; }
         }
+        public class Organization : IHasIdentity<Organization>
+        {
+            IIdentity IHasIdentity.Id => Id;
+            public IIdentity<Organization> Id { get; set; }
+            public string LegalName { get; set; }
+            public string ChamberOfCommerceNo { get; set; }
+            public IIdentity<Country> CountryOfEstablishment { get; set; }
+        }
         public class Country : IHasIdentity<Country>
         {
             IIdentity IHasIdentity.Id => Id;
@@ -308,27 +376,5 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             public string Description { get; set; }
             public List<Person> People { get; set; } = new List<Person>();
         }
-        //public class DefCtorParamA : IEquatable<DefCtorParamA>
-        //{
-        //    public DefCtorParamA(int b, int? c, string d = "xyz")
-        //    {
-        //        B = b;
-        //        C = c;
-        //        D = d;
-        //    }
-        //    public int B { get; }
-        //    public int? C { get; }
-        //    public string D { get; }
-        //    public override int GetHashCode()
-        //        => B;
-        //    public override bool Equals(object obj)
-        //        => obj is DefCtorParamA a ? Equals(a) : false;
-        //    public bool Equals(DefCtorParamA other)
-        //        => B == other.B && C == other.C && D == other.D;
-        //    public static bool operator ==(DefCtorParamA a, DefCtorParamA b)
-        //        => a.Equals(b);
-        //    public static bool operator !=(DefCtorParamA a, DefCtorParamA b)
-        //        => !a.Equals(b);
-        //}
     }
 }

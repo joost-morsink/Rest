@@ -7,6 +7,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public TestIdentityProvider()
         {
             BuildEntry(typeof(SerializationTest.Person)).WithPath("/person/*").Add();
+            BuildEntry(typeof(SerializationTest.Organization)).WithPath("/org/*").Add();
             BuildEntry(typeof(SerializationTest.Country)).WithPath("/country/*").Add();
         }
 
