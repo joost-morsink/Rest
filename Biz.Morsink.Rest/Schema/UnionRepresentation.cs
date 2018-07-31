@@ -30,8 +30,10 @@ namespace Biz.Morsink.Rest.Schema
             {
                 if (val == null)
                     return null;
+                var types = this.types;
                 var baseType = typeof(UnionRepresentation).Assembly.GetType($"{typeof(UnionRepresentation).Namespace}.{nameof(UnionRepresentation)}`{types.Length}");
-                var actualType = GetNestedTypes(baseType).FirstOrDefault(n => n.GetConstructors().Any(c => c.GetParameters()[0].ParameterType.IsAssignableFrom(val.GetType())));
+                var actualType = GetNestedTypes(baseType.MakeGenericType(types))
+                    .FirstOrDefault(n => n.GetConstructors().Any(c => c.GetParameters()[0].ParameterType.IsAssignableFrom(val.GetType())));
                 return (UnionRepresentation)Activator.CreateInstance(actualType, val);
             }
             private IEnumerable<Type> GetNestedTypes(Type type)

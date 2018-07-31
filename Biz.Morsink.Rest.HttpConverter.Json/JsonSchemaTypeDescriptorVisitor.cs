@@ -14,14 +14,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         private Dictionary<string, string> done;
         private Dictionary<string, string> todo;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly IEnumerable<IJsonSchemaTranslator> translators;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator to resolve 'references'.</param>
-        public JsonSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator)
+        public JsonSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator, IEnumerable<IJsonSchemaTranslator> translators)
         {
             this.typeDescriptorCreator = typeDescriptorCreator;
+            this.translators = translators;
         }
         private string CamelCase(string name)
         {
@@ -50,14 +52,27 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             res["$schema"] = JsonSchema.JSON_SCHEMA_VERSION;
             return res;
         }
+        public override JObject Visit(TypeDescriptor t)
+        {
+            var assoc = t.GetAssociatedType();
+            if (assoc != null) { 
+                foreach(var translator in translators)
+                {
+                    var res = translator.GetSchema(assoc);
+                    if (res != null)
+                        return res.Schema;
+                }
+            }
+            return base.Visit(t);
+        }
         private string GetSchemaAddress(string name)
         {
             if (todo.TryGetValue(name, out var res))
                 return res;
             if (done.TryGetValue(name, out res))
                 return res;
-            
-            res = "#/definitions/"+( name?.Substring(name.LastIndexOf('.') + 1));
+
+            res = "#/definitions/" + (name?.Substring(name.LastIndexOf('.') + 1));
             todo.Add(name, res);
 
             return res;

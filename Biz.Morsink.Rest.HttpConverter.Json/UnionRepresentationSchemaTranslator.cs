@@ -1,20 +1,23 @@
 ﻿using Biz.Morsink.Rest.HttpConverter.Json;
 using Biz.Morsink.Rest.Schema;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
 {
     public class UnionRepresentationSchemaTranslator : IJsonSchemaTranslator
     {
-        private readonly IJsonSchemaProvider schemaProvider;
+        private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
         private readonly TypeDescriptorCreator typeDescriptorCreator;
 
-        public UnionRepresentationSchemaTranslator(IJsonSchemaProvider schemaProvider, TypeDescriptorCreator typeDescriptorCreator)
+        public UnionRepresentationSchemaTranslator(IServiceProvider serviceProvider, TypeDescriptorCreator typeDescriptorCreator)
         {
-            this.schemaProvider = schemaProvider;
+            this.translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() =>
+                serviceProvider.GetServices<IJsonSchemaTranslator>().Where(tr => tr != this));
             this.typeDescriptorCreator = typeDescriptorCreator;
         }
 
@@ -30,7 +33,7 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             if (!UnionRepresentationDescriptorKind.IsOfKind(type))
                 return null;
-            var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator);
+            var visitor = new JsonSchemaTypeDescriptorVisitor(typeDescriptorCreator, translators.Value);
             var schema = visitor.Transform(typeDescriptorCreator.GetDescriptor(type));
             return new JsonSchema(schema);
         }

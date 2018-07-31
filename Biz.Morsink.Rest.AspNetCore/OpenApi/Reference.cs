@@ -1,6 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.OpenApi
@@ -13,6 +14,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// <summary>
         /// A reference to the other object.
         /// </summary>
-        public string _Ref { get; set; }
+        [Required]
+        public string Ref { get; set; }
     }
 }

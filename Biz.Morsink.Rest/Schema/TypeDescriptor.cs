@@ -81,7 +81,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public class String : Primitive
             {
-                public String() : base(nameof(String), typeof(String)) { }
+                public String() : base(nameof(String), typeof(string)) { }
                 private readonly static int hashcode = typeof(String).GetHashCode();
                 /// <summary>
                 /// Singleton instance for String.
@@ -142,7 +142,7 @@ namespace Biz.Morsink.Rest.Schema
             public class DateTime : Primitive
             {
                 public DateTime() : this(null) { }
-                public DateTime(string name) : base(name ?? nameof(DateTime), typeof(DateTime)) { }
+                public DateTime(string name) : base(name ?? nameof(DateTime), typeof(System.DateTime)) { }
                 private readonly static int hashcode = typeof(DateTime).GetHashCode();
                 public static DateTime Instance { get; } = new DateTime();
 

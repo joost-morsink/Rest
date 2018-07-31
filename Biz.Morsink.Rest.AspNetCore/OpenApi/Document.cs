@@ -164,7 +164,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                         return new Schema { Type = "string" };
                 }
                 else
-                    return new Reference { _Ref = GetTypeDescriptorPath(typeDescriptorCreator.GetTypeName(type)) };
+                    return new Reference { Ref = GetTypeDescriptorPath(typeDescriptorCreator.GetTypeName(type)) };
             }
             private OrReference<Schema> GetSchemaForTypeDescriptor(TypeDescriptor typeDescriptor)
             {
@@ -180,7 +180,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                         return new Schema { Type = "string" };
                 }
                 else
-                    return new Reference { _Ref = GetTypeDescriptorPath(typeDescriptor.Name) };
+                    return new Reference { Ref = GetTypeDescriptorPath(typeDescriptor.Name) };
             }
 
             private string GetTypeDescriptorPath(string type)

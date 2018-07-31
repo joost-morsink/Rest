@@ -3,7 +3,7 @@ using Biz.Morsink.Identity.PathProvider;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.HttpConverter.Json;
-using Biz.Morsink.Rest.HttpConverter.Utils;
+using Biz.Morsink.Rest.HttpConverter.Json.Utils;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Utils;
 using Microsoft.Extensions.Options;
