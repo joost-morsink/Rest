@@ -22,6 +22,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         private readonly IDataConverter converter;
         private readonly ITypeRepresentation[] representations;
         private readonly IRestIdentityProvider identityProvider;
+        private readonly TypeDescriptorCreator typeDescriptorCreator;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -35,6 +37,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             this.converter = converter;
             representations = typeRepresentations.ToArray();
             this.identityProvider = identityProvider;
+            this.typeDescriptorCreator = typeDescriptorCreator;
             InitializeDefaultSerializers();
         }
 
@@ -198,6 +201,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return (IForType)Activator.CreateInstance(typeof(Typed<>.SemanticStruct<>).MakeGenericType(t, SemanticStructKind.GetUnderlyingType(t)), this);
                 else if (t == typeof(System.DateTime))
                     return new DateTime(this);
+                else if (UnionRepresentationDescriptorKind.IsOfKind(t))
+                    return (IForType)Activator.CreateInstance(typeof(Typed<>.UnionRep).MakeGenericType(t), this);
                 else
                     return (IForType)Activator.CreateInstance(typeof(Typed<>.Default).MakeGenericType(t), this);
             }

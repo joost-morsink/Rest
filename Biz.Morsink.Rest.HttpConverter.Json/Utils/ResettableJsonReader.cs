@@ -6,8 +6,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest.HttpConverter.Utils
+namespace Biz.Morsink.Rest.HttpConverter.Json.Utils
 {
+    /// <summary>
+    /// A JsonReader decoration that can be reset to its starting point.
+    /// </summary>
     public class ResettableJsonReader : JsonReader
     {
         private readonly JsonReader reader;
@@ -15,6 +18,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
         private int position;
         private bool resettable;
         private readonly Token preToken;
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="inner">The inner JsonReader that does the actual reading.</param>
         public ResettableJsonReader(JsonReader inner)
         {
             reader = inner;
@@ -57,6 +64,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
             else
                 return true;
         }
+        /// <summary>
+        /// Resets the JsonReader to the position it was created from.
+        /// </summary>
+        /// <param name="allowNextReset">Flag indicating whether another reset is permitted.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the reader is not permitted to be reset.</exception>
         public void Reset(bool allowNextReset = false)
         {
             if (!resettable)
@@ -111,6 +123,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Utils
                     ? tokens[position].Depth
                     : reader.Depth;
 
+        /// <summary>
+        /// Method that uses the reset functionality to determine whether the object at the starting point has a certain property on a certain level.
+        /// </summary>
+        /// <param name="level">The level the property should be on.</param>
+        /// <param name="name">The name of the property (case insensitive).</param>
+        /// <returns>True if the property was found, false otherwise.</returns>
         public bool HasProperty(int level, string name)
         {
             int depth = 0;

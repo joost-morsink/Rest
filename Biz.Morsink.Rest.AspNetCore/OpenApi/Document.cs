@@ -83,7 +83,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                 {
                     if (typeDescriptor is TypeDescriptor.Record r)
                     {
-                        res.Parameters.AddRange(r.Properties.Select(p => new OrReference<Parameter>(new Parameter
+                        res.Parameters.AddRange(r.Properties.Select(p => new OrReference<Parameter>.ItemImpl(new Parameter
                         {
                             Name = CamelCase(p.Key),
                             Description = string.Join(Environment.NewLine, capDesc.ParameterType.GetProperty(p.Key)
@@ -95,7 +95,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                     }
                     if (capDesc.Method != null)
                         res.Parameters.AddRange(capDesc.Method.GetRestParameterProperties().Select(p =>
-                        new OrReference<Parameter>(new Parameter
+                        new OrReference<Parameter>.ItemImpl(new Parameter
                         {
                             Name = CamelCase(p.Name),
                             Description = p.GetRestDocumentation(),
@@ -108,7 +108,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
                         .Zip(restPath.GetSegments().Where(s => s.IsComponent), (c, s) => new { s.IsWildcard, Component = c })
                         .Where(x => x.IsWildcard)
                         .Select(x => x.Component)
-                        .Select((p, i) => new OrReference<Parameter>(new Parameter
+                        .Select((p, i) => new OrReference<Parameter>.ItemImpl(new Parameter
                         {
                             Name = $"id{i}",
                             Description = $"Id for {p.Name}",
