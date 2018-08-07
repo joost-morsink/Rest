@@ -62,10 +62,10 @@ namespace Biz.Morsink.Rest.HttpConverter
                 if (jtok is JObject jobj)
                 {
                     var props = (td as TypeDescriptor.Record)?.Properties;
-                    var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key));
                     if (props != null)
                     {
-                        foreach(var prop in jobj.Properties())
+                        var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key));
+                        foreach (var prop in jobj.Properties())
                         {
                             if(props.TryGetValue(prop.Name, out var desc))
                             {
