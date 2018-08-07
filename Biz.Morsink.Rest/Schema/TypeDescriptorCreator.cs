@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Biz.Morsink.Rest.Utils;
 using Biz.Morsink.Rest.FSharp;
+using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
@@ -54,6 +55,16 @@ namespace Biz.Morsink.Rest.Schema
             /// <param name="type">The type to check.</param>
             /// <returns>True if the specified type is of this kind.</returns>
             bool IsOfKind(Type type);
+            /// <summary>
+            /// Gets a serializer for a certain type.
+            /// </summary>
+            /// <typeparam name="C">The serialization context type.</typeparam>
+            /// <param name="serializer"
+            /// <param name="creator">The TypeDescriptorCreator instance that is processing the request.</param>
+            /// <param name="type">The type to create a serializer for.</param>
+            /// <returns></returns>
+            Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type)
+                where C : SerializationContext<C>;
         }
         /// <summary>
         /// The interface for a kind pipeline.

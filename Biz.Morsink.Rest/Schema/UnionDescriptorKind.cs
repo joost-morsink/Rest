@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-
+using Biz.Morsink.Rest.Serialization;
+using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
 {
     /// <summary>
@@ -17,7 +18,7 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public static UnionDescriptorKind Instance { get; } = new UnionDescriptorKind();
         private UnionDescriptorKind() { }
-        private IEnumerable<Type> GetNestedTypes(Type type)
+        private static IEnumerable<Type> GetNestedTypes(Type type)
         {
             var generics = type.GetGenericArguments();
             if (generics.Length == 0)
@@ -36,9 +37,7 @@ namespace Biz.Morsink.Rest.Schema
                 return null;
             var ti = context.Type.GetTypeInfo();
             var rec = RecordDescriptorKind.Instance.GetDescriptor(creator, context);
-            var options = from ty in GetNestedTypes(ti)
-                          where ty.BaseType == context.Type
-                          select creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type));
+            var options = GetOptionsForType(ti).Select(ty => creator.GetReferableDescriptor(context.WithType(ty).WithCutoff(context.Type)));
             TypeDescriptor res = new TypeDescriptor.Union(
                 rec == null ? context.Type.ToString() : "",
                 options,
@@ -49,11 +48,44 @@ namespace Biz.Morsink.Rest.Schema
 
             return res;
         }
-
+        public static IEnumerable<Type> GetOptionsForType(Type baseType)
+            => GetNestedTypes(baseType).Where(ty => ty.BaseType == baseType);
         public bool IsOfKind(Type type)
         {
             var ti = type.GetTypeInfo();
             return ti.IsAbstract && GetNestedTypes(ti).Any(nt => nt.BaseType == type);
+        }
+
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+            => IsOfKind(type)
+            ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
+            : null;
+        private class SerializerImpl<C,T> : Serializer<C>.Typed<T>.Func
+            where C:SerializationContext<C>
+        {
+            public SerializerImpl(Serializer<C> parent) : base(parent) { }
+
+            protected override Func<C, SItem, T> MakeDeserializer()
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override Func<C, T, SItem> MakeSerializer()
+            {
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(T), "input");
+                var options = GetOptionsForType(typeof(T)).Select((ot, idx) => (Ex.Parameter(ot, $"opt{idx}"), RecordDescriptorKind.Instance.GetSerializer(Parent, Parent.TypeDescriptorCreator, ot))).ToArray();
+                var end = Ex.Label(typeof(SItem), "end");
+                var block = Ex.Block(options.Select(o => o.Item1),
+                    Ex.Block(options.Select(opt => Ex.Block(
+                        Ex.Assign(opt.Item1, Ex.TypeAs(input, opt.Item1.Type)),
+                        Ex.IfThen(Ex.MakeBinary(System.Linq.Expressions.ExpressionType.NotEqual, opt.Item1, Ex.Default(opt.Item1.Type)),
+                            Ex.Goto(end, Ex.Call(Ex.Constant(opt.Item2, typeof(Serializer<>.Typed<>).MakeGenericType(typeof(C), opt.Item1.Type)), SERIALIZE, Type.EmptyTypes,
+                                ctx, opt.Item1)))))),
+                    Ex.Label(end, Ex.Default(typeof(SItem))));
+                var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
+                return lambda.Compile();
+            }
         }
     }
 }

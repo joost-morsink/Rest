@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-
+using Biz.Morsink.Rest.Serialization;
+using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
 {
     /// <summary>
@@ -19,6 +20,9 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="type">The type of a semantic struct.</param>
         /// <returns>The underlying type if the specified type is a semantic struct, null otherwise.</returns>
         public static Type GetUnderlyingType(Type type)
+            => GetUnderlyingProperty(type)?.PropertyType;
+
+        public static PropertyInfo GetUnderlyingProperty(Type type)
         {
             var ti = type.GetTypeInfo();
             var ctors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.IsPublic).ToArray();
@@ -29,7 +33,7 @@ namespace Biz.Morsink.Rest.Schema
                 var props = ti.DeclaredProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic && p.GetMethod.IsPublic).ToArray();
                 if (props.Length == 1 && props[0].CanRead && !props[0].CanWrite && props[0].PropertyType == param.ParameterType)
                 {
-                    return param.ParameterType;
+                    return props[0];
                 }
             }
             return null;
@@ -54,5 +58,38 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         public bool IsOfKind(Type type)
             => GetUnderlyingType(type) != null;
+
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+            => IsOfKind(type)
+            ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
+            : null;
+        private class SerializerImpl<C, T> : Serializer<C>.Typed<T>.Func
+            where C : SerializationContext<C>
+        {
+            public SerializerImpl(Serializer<C> parent) : base(parent) { }
+
+            protected override Func<C, SItem, T> MakeDeserializer()
+            {
+                var ci = typeof(T).GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic && !c.IsStatic).First();
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(SItem), "input");
+                var block = Ex.New(ci,
+                    Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { ci.GetParameters()[0].ParameterType },
+                        ctx, input));
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
+                return lambda.Compile();
+            }
+
+            protected override Func<C, T, SItem> MakeSerializer()
+            {
+                var prop = GetUnderlyingProperty(typeof(T));
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(T), "input");
+                var block = Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
+                    ctx, Ex.Property(input, prop));
+                var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
+                return lambda.Compile();
+            }
+        }
     }
 }

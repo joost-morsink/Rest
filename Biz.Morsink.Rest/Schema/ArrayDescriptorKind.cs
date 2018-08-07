@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-
+using Biz.Morsink.Rest.Serialization;
+using Biz.Morsink.Rest.Utils;
+using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
 {
     /// <summary>
@@ -52,6 +54,111 @@ namespace Biz.Morsink.Rest.Schema
         /// A collection type implements IEnumerable, and ideally IEnumerable&lt;T&gt; for some T.
         /// </summary>
         public bool IsOfKind(Type type)
-            => GetElementType(type) != null;
+            => GetElementType(type) != null
+                && type.GetGenerics2(typeof(IDictionary<,>)).Item1 == null
+                && type.GetGenerics2(typeof(IReadOnlyDictionary<,>)).Item1 == null;
+
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+            => IsOfKind(type)
+                ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
+                : null;
+
+        private class SerializerImpl<C, T> : Serializer<C>.Typed<T>.Func
+            where C : SerializationContext<C>
+        {
+            public SerializerImpl(Serializer<C> parent) : base(parent) { }
+
+            protected override Func<C, SItem, T> MakeDeserializer()
+            {
+                var eType = GetElementType(typeof(T));
+                var enumConstr = typeof(T).GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(eType) });
+                var lessConstr = typeof(T).GetConstructor(Type.EmptyTypes);
+                if (typeof(T).IsArray
+                    || !typeof(ICollection<>).MakeGenericType(eType).IsAssignableFrom(typeof(T)) && typeof(T).IsAssignableFrom(eType.MakeArrayType()))
+                    return MakeArrayDeserializer(eType);
+                else if (enumConstr != null)
+                    return MakeEnumConstDeserializer(eType, enumConstr);
+                else if (lessConstr != null && typeof(ICollection<>).MakeGenericType(eType).IsAssignableFrom(typeof(T)))
+                    return MakeLessConstrDeserializer(eType, lessConstr);
+                else
+                    throw new RestSerializationException($"{typeof(T)} does not support deserialization as a collection.");
+            }
+
+            private Func<C, SItem, T> MakeLessConstrDeserializer(Type eType, ConstructorInfo constr)
+            {
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var item = Ex.Parameter(typeof(SItem), "item");
+                var arr = Ex.Parameter(typeof(SArray), "arr");
+                var result = Ex.Parameter(typeof(T), "result");
+                var block = Ex.Block(new[] { arr, result },
+                    Ex.Assign(arr, Ex.Convert(item, typeof(SArray))),
+                    Ex.Assign(result, Ex.New(constr)),
+                    Ex.Property(arr, nameof(SArray.Content)).Foreach(el =>
+                        Ex.Call(Ex.Convert(result, typeof(ICollection<>).MakeGenericType(eType)), "Add", Type.EmptyTypes,
+                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { eType },
+                                ctx, el))),
+                    result);
+
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, item);
+                return lambda.Compile();
+            }
+
+            private Func<C, SItem, T> MakeEnumConstDeserializer(Type eType, ConstructorInfo constr)
+            {
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var item = Ex.Parameter(typeof(SItem), "item");
+                var arr = Ex.Parameter(typeof(SArray), "arr");
+                var result = Ex.Parameter(eType.MakeArrayType(), "result");
+                var idx = Ex.Parameter(typeof(int), "idx");
+                var block = Ex.Block(new[] { arr, idx, result },
+                    Ex.Assign(arr, Ex.Convert(item, typeof(SArray))),
+                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(Ex.Property(arr, nameof(SArray.Content)), "Count"))),
+                    Ex.Assign(idx, Ex.Constant(0)),
+                    Ex.Property(arr, nameof(SArray.Content)).Foreach(el =>
+                        Ex.Assign(Ex.ArrayAccess(result, Ex.PostIncrementAssign(idx)),
+                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { eType },
+                                ctx, el))),
+                    Ex.New(constr, result));
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, item);
+                return lambda.Compile();
+            }
+
+            private Func<C, SItem, T> MakeArrayDeserializer(Type eType)
+            {
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var item = Ex.Parameter(typeof(SItem), "item");
+                var arr = Ex.Parameter(typeof(SArray), "arr");
+                var result = Ex.Parameter(eType.MakeArrayType(), "result");
+                var idx = Ex.Parameter(typeof(int), "idx");
+                var block = Ex.Block(new[] { arr, idx, result },
+                    Ex.Assign(arr, Ex.Convert(item, typeof(SArray))),
+                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(Ex.Property(arr, nameof(SArray.Content)), "Count"))),
+                    Ex.Assign(idx, Ex.Constant(0)),
+                    Ex.Property(arr, nameof(SArray.Content)).Foreach(el =>
+                        Ex.Assign(Ex.ArrayAccess(result, Ex.PostIncrementAssign(idx)),
+                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { eType },
+                                ctx, el))),
+                    Ex.Convert(result, typeof(T)));
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, item);
+                return lambda.Compile();
+            }
+
+            protected override Func<C, T, SItem> MakeSerializer()
+            {
+                var eType = GetElementType(typeof(T));
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(T), "input");
+                var result = Ex.Parameter(typeof(List<SItem>), "result");
+                var block = Ex.Block(new[] { result },
+                    Ex.Assign(result, Ex.New(typeof(List<SItem>))),
+                    input.Foreach(item =>
+                        Ex.Call(result, nameof(List<SItem>.Add), Type.EmptyTypes,
+                            Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { eType },
+                                ctx, item))),
+                    Ex.New(typeof(SArray).GetConstructor(new[] { typeof(IEnumerable<SItem>) }), result));
+                var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
+                return lambda.Compile();
+            }
+        }
     }
 }
