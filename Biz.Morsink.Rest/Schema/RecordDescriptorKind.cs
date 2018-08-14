@@ -48,8 +48,8 @@ namespace Biz.Morsink.Rest.Schema
                     return null;
                 var properties = GetConstructorProperties(ti)
                     .Select(g => g.Select(p => new PropertyDescriptor<TypeDescriptor>(
-                        p.Item1.Name, 
-                        creator.GetReferableDescriptor(context.WithType(p.Item1.PropertyType).WithCutoff(null)), 
+                        p.Item1.Name,
+                        creator.GetReferableDescriptor(context.WithType(p.Item1.PropertyType).WithCutoff(null)),
                         !p.Item2.GetCustomAttributes<OptionalAttribute>().Any())))
                     .FirstOrDefault();
 
@@ -115,10 +115,10 @@ namespace Biz.Morsink.Rest.Schema
 
         public static bool IsOfKindImmutable(Type type)
             => GetConstructorProperties(type).Any();
-        
+
         public static bool IsOfKindMutable(Type type)
             => GetWriteableProperties(type).Any();
-        
+
 
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
@@ -153,9 +153,11 @@ namespace Biz.Morsink.Rest.Schema
                         Ex.Switch(Ex.Call(Ex.Property(prop, nameof(SProperty.Name)), nameof(string.ToLower), Type.EmptyTypes),
                             props.Select((p, idx) =>
                                 Ex.SwitchCase(
-                                    Ex.Assign(parameters[idx],
-                                        Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { parameters[idx].Type },
-                                            ctx, Ex.Property(prop, nameof(SProperty.Token)))),
+                                    Ex.Block(
+                                        Ex.Assign(parameters[idx],
+                                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { parameters[idx].Type },
+                                                ctx, Ex.Property(prop, nameof(SProperty.Token)))),
+                                        Ex.Default(typeof(void))),
                                     Ex.Constant(p.Item1.Name.ToLower()))).ToArray())),
                     Ex.New(ci, parameters));
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
@@ -169,16 +171,19 @@ namespace Biz.Morsink.Rest.Schema
                 var input = Ex.Parameter(typeof(SItem), "input");
                 var obj = Ex.Parameter(typeof(SObject), "obj");
                 var result = Ex.Parameter(typeof(T), "result");
-                var block = Ex.Block(new[] { obj },
+                var block = Ex.Block(new[] { obj, result },
                     Ex.Assign(result, Ex.New(typeof(T))),
                     Ex.Assign(obj, Ex.Convert(input, typeof(SObject))),
                     Ex.Property(obj, nameof(SObject.Properties)).Foreach(prop =>
                         Ex.Switch(Ex.Call(Ex.Property(prop, nameof(SProperty.Name)), nameof(string.ToLower), Type.EmptyTypes),
                             props.Select(p =>
                                 Ex.SwitchCase(
-                                    Ex.Assign(Ex.Property(result, p),
-                                        Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { p.PropertyType },
-                                            ctx, Ex.Property(prop, nameof(SProperty.Token)))), Ex.Constant(p.Name.ToLower()))).ToArray())),
+                                    Ex.Block(
+                                        Ex.Assign(Ex.Property(result, p),
+                                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { p.PropertyType },
+                                                ctx, Ex.Property(prop, nameof(SProperty.Token)))),
+                                        Ex.Default(typeof(void))),
+                                    Ex.Constant(p.Name.ToLower()))).ToArray())),
                     result);
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
                 return lambda.Compile();

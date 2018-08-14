@@ -45,14 +45,15 @@ namespace Biz.Morsink.Rest.FSharp
         internal static UnionCase Create(CreateParameters m)
         {
             var q = GetParameters(m, a => !m.IsStruct || (int)a.GetType().GetProperty(VariantNumber).GetValue(a) == m.Tag);
-            return new UnionCase(m.ConstructorMethod, m.Tag, q, AdjustName(m.Name));
+            return new UnionCase(m.ConstructorMethod, m.Tag, q, AdjustName(m.Name), m.CaseClass);
         }
-        internal UnionCase(MethodInfo constructorMethod, int tag, IEnumerable<UnionCaseParameter> parameters, string name)
+        internal UnionCase(MethodInfo constructorMethod, int tag, IEnumerable<UnionCaseParameter> parameters, string name, Type type)
         {
             ConstructorMethod = constructorMethod;
             Tag = tag;
             Parameters = parameters.ToArray();
             Name = name;
+            Type = type;
         }
         /// <summary>
         /// Contains the MethodInfo that can be used to construct an instance of the case.
@@ -70,5 +71,6 @@ namespace Biz.Morsink.Rest.FSharp
         /// Contains the case's name.
         /// </summary>
         public string Name { get; }
+        public Type Type { get; }
     }
 }

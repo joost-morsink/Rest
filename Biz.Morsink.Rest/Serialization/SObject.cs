@@ -19,5 +19,12 @@ namespace Biz.Morsink.Rest.Serialization
 
         public Dictionary<string, SItem> ToDictionary(IEqualityComparer<string> equalityComparer = null)
             => Properties.ToDictionary(p => p.Name, p => p.Token, equalityComparer ?? EqualityComparer<string>.Default);
+
+        public override int GetHashCode()
+            => Properties.Aggregate(0, (acc, p) => acc ^ p.GetHashCode());
+        public override bool Equals(SItem other)
+            => other is SObject obj && Equals(obj);
+        public bool Equals(SObject other)
+            => Properties.OrderBy(p => p.Name).SequenceEqual(other.Properties.OrderBy(p => p.Name));
     }
 }

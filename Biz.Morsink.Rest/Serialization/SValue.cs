@@ -13,5 +13,11 @@ namespace Biz.Morsink.Rest.Serialization
         }
 
         public object Value { get; }
+        public override int GetHashCode()
+            => Value == null ? 0 : Value.GetHashCode();
+        public override bool Equals(SItem other)
+            => other is SValue val && Equals(val);
+        public bool Equals(SValue other)
+            => object.Equals(Value, other.Value);
     }
 }

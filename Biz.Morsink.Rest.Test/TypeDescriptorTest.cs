@@ -1,8 +1,8 @@
-﻿using Biz.Morsink.Rest.Schema;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Test.Helpers;
 using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ using System.Text;
 namespace Biz.Morsink.Rest.Test
 {
     [TestClass]
-    public class TypeDescriptorTest
+    public partial class TypeDescriptorTest
     {
         private static readonly TypeDescriptor personDescriptor = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
             {
@@ -140,6 +140,20 @@ namespace Biz.Morsink.Rest.Test
             var email = tdc.GetDescriptor(typeof(EmailAddress));
             Assert.IsNotNull(email);
             Assert.IsInstanceOfType(email, typeof(TypeDescriptor.Primitive.String));
+        }
+        [TestMethod]
+        public void TypeDescriptor_Representation()
+        {
+            var tdc = new TypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance });
+            var identity = tdc.GetDescriptor(typeof(IIdentity));
+            Assert.IsNotNull(identity);
+            var rec = identity as TypeDescriptor.Record;
+            Assert.IsNotNull(rec);
+            Assert.AreEqual(1, rec.Properties.Count);
+            var prop = rec.Properties.First().Value;
+            Assert.AreEqual("Href", prop.Name);
+            Assert.IsTrue(prop.Required);
+            Assert.IsInstanceOfType(prop.Type, typeof(TypeDescriptor.Primitive.String));
         }
         public struct EmailAddress
         {

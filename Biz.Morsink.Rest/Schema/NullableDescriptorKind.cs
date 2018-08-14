@@ -92,7 +92,7 @@ namespace Biz.Morsink.Rest.Schema
                     Ex.Property(input, nameof(Nullable<int>.HasValue)),
                     Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { valueType },
                         ctx, Ex.Property(input, nameof(Nullable<int>.Value))),
-                    Ex.New(typeof(SValue).GetConstructor(new[] { typeof(object) }), Ex.Default(typeof(object))));
+                    Ex.Convert(Ex.New(typeof(SValue).GetConstructor(new[] { typeof(object) }), Ex.Default(typeof(object))), typeof(SItem)));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
             }

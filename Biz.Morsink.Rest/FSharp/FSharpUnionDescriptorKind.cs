@@ -46,6 +46,11 @@ namespace Biz.Morsink.Rest.FSharp
                         TypeDescriptor.Null.Instance
                     }, context.Type);
             }
+            else if (typeof(IEnumerable).IsAssignableFrom(context.Type))
+            {
+                var elementType = context.Type.GetGeneric(typeof(IEnumerable<>));
+                return TypeDescriptor.MakeArray(creator.GetDescriptor(elementType));
+            }
             else
             {
                 var utype = UnionType.Create(context.Type);
@@ -68,8 +73,13 @@ namespace Biz.Morsink.Rest.FSharp
             => type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1
             ? type.GetGenericArguments()[0]
             : null;
+        public static Type GetListKindInnerType(Type type)
+            => type.Namespace == Microsoft_FSharp_Collections && type.Name == FSharpList_1
+            ? type.GetGenericArguments()[0]
+            : null;
+
         public bool IsOfKind(Type type)
-            => IsFsharpUnionType(type) && !typeof(IEnumerable).IsAssignableFrom(type);
+            => IsFsharpUnionType(type);
 
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
@@ -80,20 +90,41 @@ namespace Biz.Morsink.Rest.FSharp
         {
             public SerializerImpl(Serializer<C> parent) : base(parent)
             {
-                UnionType = UnionType.Create(GetFsharpUnionType(typeof(T)));
             }
 
-            public UnionType UnionType { get; }
+            public UnionType UnionType { get; private set; }
 
             protected override Func<C, SItem, T> MakeDeserializer()
             {
+                UnionType = UnionType.Create(GetFsharpUnionType(typeof(T)));
                 var opt = GetOptionKindInnerType(typeof(T));
+                var lst = GetListKindInnerType(typeof(T));
                 if (opt != null)
                     return MakeOptionDeserializer(opt);
+                else if (lst != null)
+                    return MakeListDeserializer(lst);
                 else if (UnionType.IsSingleValue)
                     return MakeSingleValueDeserializer();
                 else
                     return MakeRegularDeserializer();
+            }
+
+            private Func<C, SItem, T> MakeListDeserializer(Type lst)
+            {
+                var input = Ex.Parameter(typeof(SItem), "input");
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var sarray = Ex.Parameter(typeof(SArray), "sarray");
+                var res = Ex.Parameter(typeof(List<>).MakeGenericType(lst), "res");
+
+                var block = Ex.Block(new[] { sarray, res },
+                    Ex.Assign(sarray, Ex.Convert(input, typeof(SArray))),
+                    Ex.Assign(res, Ex.New(res.Type)),
+                    Ex.Property(sarray, nameof(SArray.Content)).Foreach(element =>
+                        Ex.Call(res, nameof(List<object>.Add), Type.EmptyTypes,
+                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { lst }, ctx, element))),
+                    Ex.Call(typeof(T).Assembly.GetType($"{Microsoft_FSharp_Collections}.{ListModule}").GetMethod(OfSeq).MakeGenericMethod(lst), res));
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
+                return lambda.Compile();
             }
 
             private Func<C, SItem, T> MakeOptionDeserializer(Type opt)
@@ -122,17 +153,24 @@ namespace Biz.Morsink.Rest.FSharp
                 var dictIndexer = dict.Type.GetProperties().First(p => p.GetIndexParameters().Length > 0);
                 var res = Ex.Parameter(typeof(T), "res");
                 var getOrDef = typeof(SerializerImpl<C, T>).GetMethod(nameof(GetOrDefault), BindingFlags.NonPublic | BindingFlags.Instance);
-                var block = Ex.Block(new[] { dict },
+                var block = Ex.Block(new[] { dict, tag, res },
                     Ex.Assign(dict,
                         Ex.Call(Ex.Convert(input, typeof(SObject)), nameof(SObject.ToDictionary), Type.EmptyTypes,
                             Ex.Constant(CaseInsensitiveEqualityComparer.Instance))),
-                    Ex.Assign(tag, Ex.MakeIndex(dict, dictIndexer, new[] { Ex.Constant(Tag) })),
+                    Ex.Assign(tag,
+                        Ex.Convert(
+                            Ex.Property(
+                                Ex.Convert(Ex.MakeIndex(dict, dictIndexer, new[] { Ex.Constant(Tag) }), typeof(SValue)),
+                                nameof(SValue.Value)),
+                            typeof(string))),
                     Ex.Switch(Ex.Call(tag, nameof(string.ToLowerInvariant), Type.EmptyTypes),
                         UnionType.Cases.Values.Select(@case =>
                             Ex.SwitchCase(
-                                Ex.Assign(res,
-                                    Ex.Call(@case.ConstructorMethod,
-                                        @case.Parameters.Select(par => Ex.Call(Ex.Constant(this), getOrDef.MakeGenericMethod(par.Type), ctx, dict, Ex.Constant(par.Name))))),
+                                Ex.Block(
+                                    Ex.Assign(res,
+                                        Ex.Call(@case.ConstructorMethod,
+                                            @case.Parameters.Select(par => Ex.Call(Ex.Constant(this), getOrDef.MakeGenericMethod(par.Type), ctx, dict, Ex.Constant(par.Name))))),
+                                    Ex.Default(typeof(void))),
                                 Ex.Constant(@case.Name.ToLowerInvariant()))).ToArray()),
                     res);
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
@@ -160,14 +198,37 @@ namespace Biz.Morsink.Rest.FSharp
             }
             protected override Func<C, T, SItem> MakeSerializer()
             {
+                UnionType = UnionType.Create(GetFsharpUnionType(typeof(T)));
+
                 var opt = GetOptionKindInnerType(typeof(T));
+                var lst = GetListKindInnerType(typeof(T));
                 if (opt != null)
                     return MakeOptionSerializer(opt);
+                else if (lst != null)
+                    return MakeListSerializer(lst);
                 else if (UnionType.IsSingleValue)
                     return MakeSingleCaseSerializer();
                 else
                     return MakeRegularSerializer();
             }
+
+            private Func<C, T, SItem> MakeListSerializer(Type lst)
+            {
+                var eType = lst;
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(T), "input");
+                var result = Ex.Parameter(typeof(List<SItem>), "result");
+                var block = Ex.Block(new[] { result },
+                    Ex.Assign(result, Ex.New(typeof(List<SItem>))),
+                    input.Foreach(item =>
+                        Ex.Call(result, nameof(List<SItem>.Add), Type.EmptyTypes,
+                            Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { eType },
+                                ctx, item))),
+                    Ex.New(typeof(SArray).GetConstructor(new[] { typeof(IEnumerable<SItem>) }), result));
+                var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
+                return lambda.Compile();
+            }
+
             private Func<C, T, SItem> MakeOptionSerializer(Type opt)
             {
                 var input = Ex.Parameter(typeof(T), "input");
@@ -200,7 +261,7 @@ namespace Biz.Morsink.Rest.FSharp
                                     Ex.Call(res, nameof(List<SProperty>.Add), Type.EmptyTypes,
                                         Ex.New(newSprop, Ex.Constant(par.Name),
                                             Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { par.Type },
-                                                ctx, Ex.Property(input, par.Property))))))),
+                                                ctx, Ex.Property(Ex.Convert(input, @case.Value.Type), par.Property))))))),
                             Ex.Constant(@case.Key))).ToArray()),
                     Ex.New(newSObject, res));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);

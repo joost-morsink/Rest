@@ -32,7 +32,7 @@ namespace Biz.Morsink.Rest.Schema
             }
 
             public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
-                => kinds.Select(kind => kind.GetSerializer(serializer, type)).Where(s => s != null).FirstOrDefault();
+                => kinds.AsEnumerable().Select(kind => kind.GetSerializer(serializer, type)).Where(s => s != null).FirstOrDefault();
 
             public bool IsOfKind(Type type)
                 => kinds.Any(k => k.IsOfKind(type));
@@ -151,6 +151,7 @@ namespace Biz.Morsink.Rest.Schema
         }
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
+
         private readonly IKindPipeline kindPipeline;
         private readonly IEnumerable<ITypeRepresentation> representations;
         /// <summary>
@@ -202,11 +203,12 @@ namespace Biz.Morsink.Rest.Schema
             byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
 
             this.kindPipeline = kindPipeline ?? CreateKindPipeline(new IKind[] {
+                new RepresentableDescriptorKind(representations),
                 NullableDescriptorKind.Instance,
                 DictionaryDescriptorKind.Instance,
-                ArrayDescriptorKind.Instance,
                 SemanticStructKind.Instance,
                 FSharpUnionDescriptorKind.Instance,
+                ArrayDescriptorKind.Instance,
                 UnionRepresentationDescriptorKind.Instance,
                 UnionDescriptorKind.Instance,
                 RecordDescriptorKind.Instance,
@@ -259,7 +261,7 @@ namespace Biz.Morsink.Rest.Schema
                 return new TypeDescriptor.Reference(GetTypeName(context.Type));
             return descriptors.GetOrAdd(context.Type, ty =>
             {
-                ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
+                //ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
                 var ctx = context.WithType(ty).PushEnclosing(context.Type);
                 var desc = kindPipeline.GetDescriptor(this, ctx);
                 byString.AddOrUpdate(GetTypeName(context.Type), desc, (_, __) => desc);
@@ -282,5 +284,13 @@ namespace Biz.Morsink.Rest.Schema
         public string GetTypeName(Type type)
             => type.ToString().Replace('+', '.');
 
+        public Serializer<C>.IForType CreateSerializer<C>(Serializer<C> serializer, Type t)
+            where C : SerializationContext<C>
+        {
+            var specificSerializer = kindPipeline.GetSerializer(serializer, t);
+            if (specificSerializer == null)
+                throw new InvalidOperationException("Cannot create serializer for type.");
+            return specificSerializer;
+        }
     }
 }

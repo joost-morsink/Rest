@@ -15,5 +15,12 @@ namespace Biz.Morsink.Rest.Serialization
         { }
 
         public IReadOnlyList<SItem> Content { get; }
+
+        public override int GetHashCode()
+            => Content.Aggregate(0, (acc, item) => acc ^ item.GetHashCode());
+        public override bool Equals(SItem other)
+            => other is SArray arr && Equals(arr);
+        public bool Equals(SArray other)
+            => Content.Count == other.Content.Count && Content.SequenceEqual(other.Content);
     }
 }

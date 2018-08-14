@@ -13,15 +13,14 @@ namespace Biz.Morsink.Rest.Serialization
     {
         private readonly ConcurrentDictionary<Type, IForType> serializers;
         public TypeDescriptorCreator TypeDescriptorCreator { get; }
-        private readonly ITypeRepresentation[] typeRepresentations;
         public IDataConverter Converter { get; }
 
-        public Serializer(TypeDescriptorCreator typeDescriptorCreator, IEnumerable<ITypeRepresentation> typeRepresentations, IDataConverter converter = null)
+        public Serializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             TypeDescriptorCreator = typeDescriptorCreator;
-            this.typeRepresentations = typeRepresentations.ToArray();
             Converter = converter ?? DataConverter.Default;
+            InitializeDefaultSerializers();
         }
         private void InitializeDefaultSerializers()
         {
@@ -47,25 +46,44 @@ namespace Biz.Morsink.Rest.Serialization
         {
             serializers[typeof(T)] = new Typed<T>.Simple(this);
         }
+        private IForType GetSerializer(Type t)
+            => serializers.GetOrAdd(t, ty => TypeDescriptorCreator.CreateSerializer(this, ty));
+
+        private Typed<T> GetSerializer<T>()
+            => (Typed<T>)GetSerializer(typeof(T));
+
         public SItem Serialize<T>(C context, T item)
         {
-            return new SObject();
+            if (item == null)
+                return SValue.Null;
+
+            return GetSerializer<T>().Serialize(context, item);
         }
         public SItem Serialize(C context, object item)
         {
-            return new SObject();
+            if (item == null)
+                return SValue.Null;
+            var ty = item.GetType();
+
+            return Serialize(context, ty, item);
         }
         public SItem Serialize(C context, Type type, object item)
         {
-            return new SObject();
+            if (item == null)
+                return SValue.Null;
+            return GetSerializer(type).Serialize(context, item);
         }
         public T Deserialize<T>(C context, SItem item)
         {
-            return default;
+            if (item is SValue val && val.Value == null)
+                return default;
+            return GetSerializer<T>().Deserialize(context, item);
         }
         public object Deserialize(C context, Type type, SItem item)
         {
-            return null;
+            if (item is SValue val && val.Value == null)
+                return default;
+            return GetSerializer(type).Deserialize(context, item);
         }
 
         /// <summary>
