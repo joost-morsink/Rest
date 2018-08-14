@@ -16,5 +16,8 @@ namespace Biz.Morsink.Rest.Serialization
         }
 
         public IReadOnlyList<SProperty> Properties { get; }
+
+        public Dictionary<string, SItem> ToDictionary(IEqualityComparer<string> equalityComparer = null)
+            => Properties.ToDictionary(p => p.Name, p => p.Token, equalityComparer ?? EqualityComparer<string>.Default);
     }
 }

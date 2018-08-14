@@ -120,7 +120,7 @@ namespace Biz.Morsink.Rest.Schema
             => GetWriteableProperties(type).Any();
         
 
-        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
             ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
             : null;
@@ -134,6 +134,8 @@ namespace Biz.Morsink.Rest.Schema
                     return MakeMutableDeserializer();
                 else if (IsOfKindImmutable(typeof(T)))
                     return MakeImmutableDeserializer();
+                else
+                    throw new NotSupportedException();
             }
 
             private Func<C, SItem, T> MakeImmutableDeserializer()

@@ -30,6 +30,10 @@ namespace Biz.Morsink.Rest.Schema
                     result = kinds[i].GetDescriptor(creator, context);
                 return result;
             }
+
+            public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
+                => kinds.Select(kind => kind.GetSerializer(serializer, type)).Where(s => s != null).FirstOrDefault();
+
             public bool IsOfKind(Type type)
                 => kinds.Any(k => k.IsOfKind(type));
         }
@@ -59,11 +63,10 @@ namespace Biz.Morsink.Rest.Schema
             /// Gets a serializer for a certain type.
             /// </summary>
             /// <typeparam name="C">The serialization context type.</typeparam>
-            /// <param name="serializer"
-            /// <param name="creator">The TypeDescriptorCreator instance that is processing the request.</param>
+            /// <param name="serializer">The parent serializer.</param>
             /// <param name="type">The type to create a serializer for.</param>
             /// <returns></returns>
-            Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type)
+            Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type)
                 where C : SerializationContext<C>;
         }
         /// <summary>

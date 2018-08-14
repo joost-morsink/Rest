@@ -56,7 +56,7 @@ namespace Biz.Morsink.Rest.Schema
             return ti.IsAbstract && GetNestedTypes(ti).Any(nt => nt.BaseType == type);
         }
 
-        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
             ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
             : null;
@@ -67,14 +67,14 @@ namespace Biz.Morsink.Rest.Schema
 
             protected override Func<C, SItem, T> MakeDeserializer()
             {
-                throw new NotImplementedException();
+                throw new NotSupportedException();
             }
 
             protected override Func<C, T, SItem> MakeSerializer()
             {
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var input = Ex.Parameter(typeof(T), "input");
-                var options = GetOptionsForType(typeof(T)).Select((ot, idx) => (Ex.Parameter(ot, $"opt{idx}"), RecordDescriptorKind.Instance.GetSerializer(Parent, Parent.TypeDescriptorCreator, ot))).ToArray();
+                var options = GetOptionsForType(typeof(T)).Select((ot, idx) => (Ex.Parameter(ot, $"opt{idx}"), RecordDescriptorKind.Instance.GetSerializer(Parent, ot))).ToArray();
                 var end = Ex.Label(typeof(SItem), "end");
                 var block = Ex.Block(options.Select(o => o.Item1),
                     Ex.Block(options.Select(opt => Ex.Block(

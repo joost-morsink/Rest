@@ -58,7 +58,7 @@ namespace Biz.Morsink.Rest.Schema
                 && type.GetGenerics2(typeof(IDictionary<,>)).Item1 == null
                 && type.GetGenerics2(typeof(IReadOnlyDictionary<,>)).Item1 == null;
 
-        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, TypeDescriptorCreator creator, Type type) where C : SerializationContext<C>
+        public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
                 ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
                 : null;

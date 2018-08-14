@@ -17,6 +17,7 @@ namespace Biz.Morsink.Rest.Schema
         internal UnionRepresentation() { }
         public abstract IReadOnlyList<Type> GetTypes();
         public abstract object GetItem();
+        public abstract Type GetItemType();
 
         public static RepresentationCreator FromOptions(params Type[] types)
             => new RepresentationCreator(types);
@@ -70,6 +71,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public T Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(T);
         }
         public sealed class Option2 : UnionRepresentation<T, U>
         {
@@ -79,6 +81,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public U Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(U);
         }
     }
     public abstract class UnionRepresentation<T, U, V> : UnionRepresentation
@@ -97,6 +100,8 @@ namespace Biz.Morsink.Rest.Schema
             }
             public T Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(T);
+
         }
         public sealed class Option2 : UnionRepresentation<T, U, V>
         {
@@ -106,6 +111,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public U Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(U);
         }
         public sealed class Option3 : UnionRepresentation<T, U, V>
         {
@@ -115,6 +121,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public V Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(V);
         }
     }
     public abstract class UnionRepresentation<T, U, V, W> : UnionRepresentation
@@ -133,6 +140,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public T Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(T);
         }
         public sealed class Option2 : UnionRepresentation<T, U, V, W>
         {
@@ -142,6 +150,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public U Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(U);
         }
         public sealed class Option3 : UnionRepresentation<T, U, V, W>
         {
@@ -151,6 +160,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public V Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(V);
         }
         public sealed class Option4 : UnionRepresentation<T, U, V, W>
         {
@@ -160,6 +170,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public W Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(W);
         }
     }
     public abstract class UnionRepresentation<T, U, V, W, X> : UnionRepresentation
@@ -178,6 +189,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public T Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(T);
         }
         public sealed class Option2 : UnionRepresentation<T, U, V, W, X>
         {
@@ -187,6 +199,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public U Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(U);
         }
         public sealed class Option3 : UnionRepresentation<T, U, V, W, X>
         {
@@ -196,6 +209,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public V Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(V);
         }
         public sealed class Option4 : UnionRepresentation<T, U, V, W, X>
         {
@@ -205,6 +219,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public W Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(W);
         }
         public sealed class Option5 : UnionRepresentation<T, U, V, W, X>
         {
@@ -214,6 +229,7 @@ namespace Biz.Morsink.Rest.Schema
             }
             public X Item { get; }
             public override object GetItem() => Item;
+            public override Type GetItemType() => typeof(X);
         }
     }
 }

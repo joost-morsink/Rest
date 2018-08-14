@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.Serialization
                 public override SItem Serialize(C context, T item)
                     => new SValue(item);
                 public override T Deserialize(C context, SItem item)
-                    => item is SValue v && Parent.converter.Convert(v.Value).TryTo(out T t)
+                    => item is SValue v && Parent.Converter.Convert(v.Value).TryTo(out T t)
                         ? t
                         : throw new RestSerializationException($"Cannot deserialize the item into {typeof(T)}");
             }
