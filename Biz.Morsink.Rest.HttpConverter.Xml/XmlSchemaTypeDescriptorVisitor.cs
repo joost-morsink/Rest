@@ -15,13 +15,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     public class XmlSchemaTypeDescriptorVisitor : TypeDescriptorVisitor<XElement>
     {
         private readonly Dictionary<string, XElement> types;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
-        public XmlSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator)
+        public XmlSchemaTypeDescriptorVisitor(ITypeDescriptorCreator typeDescriptorCreator)
         {
             types = new Dictionary<string, XElement>();
             this.typeDescriptorCreator = typeDescriptorCreator;

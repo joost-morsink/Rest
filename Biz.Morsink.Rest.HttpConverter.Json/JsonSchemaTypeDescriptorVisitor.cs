@@ -13,14 +13,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         private Dictionary<string, string> done;
         private Dictionary<string, string> todo;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
         private readonly IEnumerable<IJsonSchemaTranslator> translators;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator to resolve 'references'.</param>
-        public JsonSchemaTypeDescriptorVisitor(TypeDescriptorCreator typeDescriptorCreator, IEnumerable<IJsonSchemaTranslator> translators)
+        public JsonSchemaTypeDescriptorVisitor(ITypeDescriptorCreator typeDescriptorCreator, IEnumerable<IJsonSchemaTranslator> translators)
         {
             this.typeDescriptorCreator = typeDescriptorCreator;
             this.translators = translators;

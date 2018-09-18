@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A dictionary type implements IDictionary&lt;string, T&gt; from some T.
         /// This method returns null if the context does not represent a dictionary tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var valueType = GetValueType(context.Type);
             if (valueType == null)

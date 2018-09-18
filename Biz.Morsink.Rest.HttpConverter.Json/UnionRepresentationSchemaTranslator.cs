@@ -13,9 +13,9 @@ namespace Biz.Morsink.Rest.HttpConverter
     public class UnionRepresentationSchemaTranslator : IJsonSchemaTranslator
     {
         private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
-        public UnionRepresentationSchemaTranslator(IServiceProvider serviceProvider, TypeDescriptorCreator typeDescriptorCreator)
+        public UnionRepresentationSchemaTranslator(IServiceProvider serviceProvider, ITypeDescriptorCreator typeDescriptorCreator)
         {
             this.translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() =>
                 serviceProvider.GetServices<IJsonSchemaTranslator>().Where(tr => tr != this));
@@ -43,7 +43,7 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             private readonly (Type, TypeDescriptor)[] optionTypes;
 
-            public Converter(Type type, TypeDescriptorCreator creator)
+            public Converter(Type type, ITypeDescriptorCreator creator)
             {
                 optionTypes = UnionRepresentation.GetTypeParameters(type)?.Select(t => (t, creator.GetDescriptor(t))).ToArray();
 

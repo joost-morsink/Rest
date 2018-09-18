@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A record type is a type with either a parameterless constructor and a bunch of properties with getters and setters, or a type with a single constructor and for each constructor parameter a readonly property.
         /// This method returns null if the context does not represent a record tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var ti = context.Type.GetTypeInfo();
 

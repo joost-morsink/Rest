@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A collection type implements IEnumerable, and ideally IEnumerable&lt;T&gt; for some T.
         /// This method returns null if the context does not represent a collection tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var elementType = GetElementType(context.Type);
             if (elementType == null)

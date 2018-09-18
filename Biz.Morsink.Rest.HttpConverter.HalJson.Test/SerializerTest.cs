@@ -107,7 +107,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             var typereps = new ITypeRepresentation[] {
                 new IdentityRepresentation(identityProvider, new TestRestPrefixContainerAccessor(identityProvider), new TestRestOptions(), null)
             };
-            var tdc = new TypeDescriptorCreator(typereps);
+            var tdc = new StandardTypeDescriptorCreator(typereps);
             serializer = new HalSerializer(tdc, converter, identityProvider, typereps);
             context = new Func<HalContext>(() => HalContext.Create(identityProvider));
         }

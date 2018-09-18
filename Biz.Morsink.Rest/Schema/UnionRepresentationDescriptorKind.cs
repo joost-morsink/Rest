@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest.Schema
     public class UnionRepresentationDescriptorKind : TypeDescriptorCreator.IKind
     {
         public static UnionRepresentationDescriptorKind Instance { get; } = new UnionRepresentationDescriptorKind();
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             if (!IsOfKind(context.Type))
                 return null;

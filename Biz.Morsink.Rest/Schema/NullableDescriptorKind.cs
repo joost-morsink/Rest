@@ -21,7 +21,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A nullable type is Nullable&lt;T&gt; for some T.
         /// This method returns null if the context does not represent a nullable tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var inner = GetInner(context.Type);
             if (inner == null)

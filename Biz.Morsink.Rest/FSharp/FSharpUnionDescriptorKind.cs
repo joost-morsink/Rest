@@ -32,7 +32,7 @@ namespace Biz.Morsink.Rest.FSharp
         /// An F# union type is a well defined concept within the F# programming language.
         /// This method returns null if the context does not represent an F# union tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             if (!IsOfKind(context.Type))
                 return null;

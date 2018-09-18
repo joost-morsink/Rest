@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.Schema
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
         }
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var repr = representations.Where(r => r.IsRepresentable(context.Type)).Select(r => r.GetRepresentationType(context.Type)).FirstOrDefault();
             if (repr == null)

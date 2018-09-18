@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A union type is an abstract class containing nested 'case' classes that derive from the abstract class.
         /// This method returns null if the context does not represent a union tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             if (!IsOfKind(context.Type))
                 return null;

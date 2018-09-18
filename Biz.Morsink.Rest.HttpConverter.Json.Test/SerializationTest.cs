@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         {
             var services = new ServiceCollection();
 
-            services.AddSingleton<TypeDescriptorCreator>();
+            services.AddSingleton<ITypeDescriptorCreator, StandardTypeDescriptorCreator>();
             services.AddSingleton<IOptions<JsonHttpConverterOptions>, TestOptions>();
             services.AddSingleton<IOptions<RestAspNetCoreOptions>, TestRestOptions>();
             services.AddSingleton<IRestRequestScopeAccessor, TestRestRequestScopeAccessor>();

@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.Test
     [TestClass]
     public class SerializationTest
     {
-        private TypeDescriptorCreator typeDescriptorCreator;
+        private ITypeDescriptorCreator typeDescriptorCreator;
         private Serializer<SerializationContext> serializer;
 
         private SerializationContext NewContext()
@@ -22,7 +22,7 @@ namespace Biz.Morsink.Rest.Test
         [TestInitialize]
         public void Init()
         {
-            typeDescriptorCreator = new TypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance });
+            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance });
             serializer = new Serializer<SerializationContext>(typeDescriptorCreator);
         }
         [TestMethod]

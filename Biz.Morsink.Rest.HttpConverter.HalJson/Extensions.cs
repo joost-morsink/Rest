@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         {
             serviceCollection.AddSingleton<IHttpRestConverter, HalJsonHttpConverter>();
             serviceCollection.AddSingleton(sp => new HalSerializer(
-                sp.GetRequiredService<TypeDescriptorCreator>(),
+                sp.GetRequiredService<ITypeDescriptorCreator>(),
                 DataConverter.Default,
                 sp.GetRequiredService<IRestIdentityProvider>(),
                 sp.GetServices<ITypeRepresentation>()));

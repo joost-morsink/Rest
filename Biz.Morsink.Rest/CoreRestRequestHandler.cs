@@ -88,7 +88,7 @@ namespace Biz.Morsink.Rest
         private readonly IServiceProvider serviceLocator;
         private readonly IEnumerable<IRestExceptionListener> exceptionListeners;
         private readonly IDataConverter converter;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
         private readonly ILinkProvider<T>[] linkProviders;
         private readonly IDynamicLinkProvider<T>[] dynamicLinkProviders;
         private readonly IAuthorizationProvider authorizationProvider;
@@ -104,7 +104,7 @@ namespace Biz.Morsink.Rest
             authorizationProvider = GetService<IAuthorizationProvider>();
             user = GetService<IUser>();
             this.converter = converter ?? CoreRestRequestHandler.DefaultDataConverter;
-            typeDescriptorCreator = GetService<TypeDescriptorCreator>();
+            typeDescriptorCreator = GetService<ITypeDescriptorCreator>();
         }
         public async ValueTask<RestResponse> HandleTypedRequest(RestRequest request)
         {

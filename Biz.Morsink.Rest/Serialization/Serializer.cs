@@ -12,10 +12,10 @@ namespace Biz.Morsink.Rest.Serialization
         where C : SerializationContext<C>
     {
         private readonly ConcurrentDictionary<Type, IForType> serializers;
-        public TypeDescriptorCreator TypeDescriptorCreator { get; }
+        public ITypeDescriptorCreator TypeDescriptorCreator { get; }
         public IDataConverter Converter { get; }
 
-        public Serializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
+        public Serializer(ITypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             TypeDescriptorCreator = typeDescriptorCreator;
