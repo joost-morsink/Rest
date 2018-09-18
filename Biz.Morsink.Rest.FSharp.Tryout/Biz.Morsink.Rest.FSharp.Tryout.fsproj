@@ -11,5 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Biz.Morsink.Rest\Biz.Morsink.Rest.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="[4.3.4, 5)" />
+  </ItemGroup>
 
 </Project>
