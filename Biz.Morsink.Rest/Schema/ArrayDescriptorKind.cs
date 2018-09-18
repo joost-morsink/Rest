@@ -112,7 +112,11 @@ namespace Biz.Morsink.Rest.Schema
                 var idx = Ex.Parameter(typeof(int), "idx");
                 var block = Ex.Block(new[] { arr, idx, result },
                     Ex.Assign(arr, Ex.Convert(item, typeof(SArray))),
-                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(Ex.Property(arr, nameof(SArray.Content)), "Count"))),
+                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(
+                        Ex.Convert(
+                            Ex.Property(arr, nameof(SArray.Content)),
+                            typeof(IReadOnlyCollection<SItem>)),
+                        "Count"))),
                     Ex.Assign(idx, Ex.Constant(0)),
                     Ex.Property(arr, nameof(SArray.Content)).Foreach(el =>
                         Ex.Assign(Ex.ArrayAccess(result, Ex.PostIncrementAssign(idx)),
@@ -132,7 +136,11 @@ namespace Biz.Morsink.Rest.Schema
                 var idx = Ex.Parameter(typeof(int), "idx");
                 var block = Ex.Block(new[] { arr, idx, result },
                     Ex.Assign(arr, Ex.Convert(item, typeof(SArray))),
-                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(Ex.Property(arr, nameof(SArray.Content)), "Count"))),
+                    Ex.Assign(result, Ex.NewArrayBounds(eType, Ex.Property(
+                        Ex.Convert(
+                            Ex.Property(arr, nameof(SArray.Content)),
+                            typeof(IReadOnlyCollection<SItem>)),
+                        "Count"))),
                     Ex.Assign(idx, Ex.Constant(0)),
                     Ex.Property(arr, nameof(SArray.Content)).Foreach(el =>
                         Ex.Assign(Ex.ArrayAccess(result, Ex.PostIncrementAssign(idx)),

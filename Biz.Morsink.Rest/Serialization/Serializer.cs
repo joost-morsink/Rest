@@ -47,7 +47,10 @@ namespace Biz.Morsink.Rest.Serialization
             serializers[typeof(T)] = new Typed<T>.Simple(this);
         }
         private IForType GetSerializer(Type t)
-            => serializers.GetOrAdd(t, ty => TypeDescriptorCreator.CreateSerializer(this, ty));
+            => serializers.GetOrAdd(t, ty => CreateSerializer(ty));
+
+        protected virtual IForType CreateSerializer(Type ty)
+            => TypeDescriptorCreator.CreateSerializer(this, ty);
 
         private Typed<T> GetSerializer<T>()
             => (Typed<T>)GetSerializer(typeof(T));

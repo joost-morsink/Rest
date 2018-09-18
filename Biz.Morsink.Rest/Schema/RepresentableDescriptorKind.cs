@@ -33,7 +33,7 @@ namespace Biz.Morsink.Rest.Schema
             if (typeRep == null)
                 return null;
 
-            throw new NotImplementedException();
+            return (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer, typeRep);
         }
         private class SerializerImpl<C, T> : Serializer<C>.Typed<T>
             where C : SerializationContext<C>

@@ -69,6 +69,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             serviceCollection.AddJsonSchemaTranslator<IdentityJsonSchemaTranslator>();
             serviceCollection.AddJsonSchemaTranslator<UnionRepresentationSchemaTranslator>();
 
+            serviceCollection.AddSingleton<JsonRestSerializer>();
 
             serviceCollection.AddTransient<ITypeRepresentation, OrReferenceRepresentation>();
             serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
