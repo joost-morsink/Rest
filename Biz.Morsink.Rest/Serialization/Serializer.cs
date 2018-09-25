@@ -40,6 +40,8 @@ namespace Biz.Morsink.Rest.Serialization
             AddSimple<decimal>();
             AddSimple<float>();
             AddSimple<double>();
+
+            serializers[typeof(object)] = new Object(this);
         }
 
         private void AddSimple<T>()

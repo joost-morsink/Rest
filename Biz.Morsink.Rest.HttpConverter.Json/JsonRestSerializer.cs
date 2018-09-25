@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter
     {
         private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
         private readonly IRestIdentityProvider identityProvider;
-        private readonly IdentityRepresentation representation;
+        private readonly IdentityRepresentation identityRepresentation;
 
         public JsonRestSerializer(
             ITypeDescriptorCreator typeDescriptorCreator,
@@ -28,11 +28,16 @@ namespace Biz.Morsink.Rest.HttpConverter
             IRestPrefixContainerAccessor prefixContainerAccessor,
             IOptions<RestAspNetCoreOptions> options,
             ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor,
-            IDataConverter converter = null) : base(typeDescriptorCreator, converter)
+            IDataConverter converter = null)
+            : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator,
+                new ITypeRepresentation[]
+                {
+                    new TypeDescriptorJsonRepresentation(typeDescriptorCreator)
+                }), converter)
         {
             this.jsonOptions = jsonOptions;
             this.identityProvider = identityProvider;
-            representation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
+            identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
         }
         protected override IForType CreateSerializer(Type ty)
         {
@@ -45,7 +50,7 @@ namespace Biz.Morsink.Rest.HttpConverter
 
         private IForType CreateIdentitySerializer(IForType ser, Type ty)
             => (IForType)Activator.CreateInstance(typeof(IdentityType<>).MakeGenericType(ty), this, ser);
-        
+
         private class IdentityType<T> : Typed<T>
         {
             private readonly Typed<T> inner;
@@ -63,8 +68,8 @@ namespace Biz.Morsink.Rest.HttpConverter
                     var href = obj.Properties.FirstOrDefault(p => p.Name.Equals("href", StringComparison.InvariantCultureIgnoreCase));
                     if (href != null)
                     {
-                        var rep = Parent.Deserialize(context, Parent.representation.GetRepresentationType(typeof(T)), item);
-                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.representation).GetRepresentable(rep));
+                        var rep = Parent.Deserialize(context, Parent.identityRepresentation.GetRepresentationType(typeof(T)), item);
+                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.identityRepresentation).GetRepresentable(rep));
                     }
                 }
                 // fall through:
@@ -105,9 +110,9 @@ namespace Biz.Morsink.Rest.HttpConverter
         public void WriteJson(JsonWriter writer, SObject item, JsonSerializer serializer)
         {
             writer.WriteStartObject();
-            foreach(var prop in item.Properties)
+            foreach (var prop in item.Properties)
             {
-                writer.WritePropertyName(prop.Name.CasedToCamelCase());
+                writer.WritePropertyName(Casing(prop.Name));
                 WriteJson(writer, prop.Token, serializer);
             }
             writer.WriteEndObject();
@@ -122,6 +127,14 @@ namespace Biz.Morsink.Rest.HttpConverter
             foreach (var val in item.Content)
                 WriteJson(writer, val, serializer);
             writer.WriteEndArray();
+        }
+        private string Casing(string str)
+        {
+            // If all characters are upper case, leave it as is.
+            if (str.All(char.IsUpper))
+                return str;
+            else // otherwise apply camel casing
+                return str.CasedToCamelCase();
         }
     }
 }

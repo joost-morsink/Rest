@@ -414,8 +414,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
             // Get the controller
             resp = await Get(client, link.Address);
-            var json = await GetJson(resp);
             Assert.IsTrue(resp.IsSuccessStatusCode);
+            var json = await GetJson(resp);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();

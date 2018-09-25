@@ -57,6 +57,9 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<IRestPrefixContainerAccessor, RestPrefixContainerAccessor>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
 
+            serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, RestCapabilitiesRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, ExpandoObjectRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();

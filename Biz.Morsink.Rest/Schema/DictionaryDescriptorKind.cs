@@ -35,9 +35,9 @@ namespace Biz.Morsink.Rest.Schema
         }
         private static Type GetValueType(Type type)
         {
-            var gendict = type.GetTypeInfo().ImplementedInterfaces
+            var gendict = type.GetTypeInfo().ImplementedInterfaces.Prepend(type)
                 .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
-                   && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                   && (i.GetGenericTypeDefinition() == typeof(IDictionary<,>) || i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)))
                 .Select(i => i.GetGenericArguments())
                 .FirstOrDefault();
             if (gendict != null && gendict[0] == typeof(string))
@@ -79,14 +79,13 @@ namespace Biz.Morsink.Rest.Schema
                 var prop = Ex.Parameter(typeof(SProperty), "prop");
                 var keyLambda = Ex.Lambda(Ex.Property(prop, nameof(SProperty.Name)), prop);
                 var valLambda = Ex.Lambda(
-                    Ex.Convert(
-                        Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { valueType },
-                            ctx, Ex.Property(prop, nameof(SProperty.Token))),
-                        typeof(object)), prop);
+                    Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { valueType },
+                        ctx, Ex.Property(prop, nameof(SProperty.Token))),
+                    prop);
                 var block = Ex.Block(new[] { obj },
                     Ex.Assign(obj, Ex.Convert(input, typeof(SObject))),
-                    Ex.Call(typeof(Enumerable), nameof(Enumerable.ToDictionary), new[] { typeof(string), valueType },
-                        input, keyLambda, valLambda));
+                    Ex.Call(typeof(Enumerable), nameof(Enumerable.ToDictionary), new[] { typeof(SProperty), typeof(string), valueType },
+                        Ex.Property(obj, nameof(SObject.Properties)), keyLambda, valLambda));
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
                 return lambda.Compile();
             }
@@ -99,14 +98,13 @@ namespace Biz.Morsink.Rest.Schema
                 var prop = Ex.Parameter(typeof(SProperty), "prop");
                 var keyLambda = Ex.Lambda(Ex.Property(prop, nameof(SProperty.Name)), prop);
                 var valLambda = Ex.Lambda(
-                    Ex.Convert(
-                        Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { typeof(string) },
-                            ctx, Ex.Property(prop, nameof(SProperty.Token))),
-                        typeof(object)), prop);
+                    Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { typeof(string) },
+                        ctx, Ex.Property(prop, nameof(SProperty.Token))),
+                    prop);
                 var block = Ex.Block(new[] { obj },
                     Ex.Assign(obj, Ex.Convert(input, typeof(SObject))),
-                    Ex.Call(typeof(Enumerable), nameof(Enumerable.ToDictionary), new[] { typeof(string), typeof(object) },
-                        input, keyLambda, valLambda));
+                    Ex.Call(typeof(Enumerable), nameof(Enumerable.ToDictionary), new[] { typeof(SProperty), typeof(string), typeof(object) },
+                        Ex.Property(obj, nameof(SObject.Properties)), keyLambda, valLambda));
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
                 return lambda.Compile();
             }
@@ -119,7 +117,7 @@ namespace Biz.Morsink.Rest.Schema
                 var idx = Ex.Parameter(typeof(int), "idx");
                 var result = Ex.Parameter(typeof(SProperty[]), "result");
                 var constr = typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem) });
-                var block = Ex.Block(new[] { result },
+                var block = Ex.Block(new[] { result, idx },
                     Ex.Assign(result,
                         Ex.NewArrayBounds(typeof(SProperty),
                             Ex.Property(Ex.Convert(input, typeof(ICollection<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(typeof(string), valueType))), "Count"))),
@@ -130,7 +128,7 @@ namespace Biz.Morsink.Rest.Schema
                                 Ex.Property(kvp, "Key"),
                                 Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { valueType },
                                     ctx, Ex.Property(kvp, "Value"))))),
-                    Ex.New(typeof(SObject).GetConstructor(new[] { typeof(IEnumerable<SItem>) }), result));
+                    Ex.New(typeof(SObject).GetConstructor(new[] { typeof(IEnumerable<SProperty>) }), result));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
             }

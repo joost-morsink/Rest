@@ -97,6 +97,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
                 if (reader.TokenType == JsonToken.Null)
                     return null;
+                if (reader.TokenType == JsonToken.Boolean
+                    || reader.TokenType == JsonToken.Date
+                    || reader.TokenType == JsonToken.Float
+                    || reader.TokenType == JsonToken.Integer
+                    || reader.TokenType == JsonToken.String)
+                    return reader.Value;
                 if (reader.TokenType != JsonToken.StartObject)
                     throw new JsonSerializationException();
                 reader.Read();

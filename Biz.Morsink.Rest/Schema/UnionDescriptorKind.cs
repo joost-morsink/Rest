@@ -21,10 +21,8 @@ namespace Biz.Morsink.Rest.Schema
         private static IEnumerable<Type> GetNestedTypes(Type type)
         {
             var generics = type.GetGenericArguments();
-            if (generics.Length == 0)
-                return type.GetNestedTypes();
-            else
-                return type.GetNestedTypes().Select(nt => nt.MakeGenericType(generics));
+            var nested = generics.Length == 0 ? type.GetNestedTypes() : type.GetNestedTypes().Select(nt => nt.MakeGenericType(generics));
+            return nested.SelectMany(nt => IsOfKind(nt) ? GetNestedTypes(nt) : new[] { nt });
         }
         /// <summary>
         /// Gets a type descriptor for a union type.
@@ -49,12 +47,14 @@ namespace Biz.Morsink.Rest.Schema
             return res;
         }
         public static IEnumerable<Type> GetOptionsForType(Type baseType)
-            => GetNestedTypes(baseType).Where(ty => ty.BaseType == baseType);
-        public bool IsOfKind(Type type)
+            => GetNestedTypes(baseType).Where(ty => baseType.IsAssignableFrom(ty.BaseType));
+        public static bool IsOfKind(Type type)
         {
             var ti = type.GetTypeInfo();
             return ti.IsAbstract && GetNestedTypes(ti).Any(nt => nt.BaseType == type);
         }
+        bool TypeDescriptorCreator.IKind.IsOfKind(Type type)
+            => IsOfKind(type);
 
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
@@ -66,9 +66,7 @@ namespace Biz.Morsink.Rest.Schema
             public SerializerImpl(Serializer<C> parent) : base(parent) { }
 
             protected override Func<C, SItem, T> MakeDeserializer()
-            {
-                throw new NotSupportedException();
-            }
+                => (ctx,item) => throw new NotSupportedException();
 
             protected override Func<C, T, SItem> MakeSerializer()
             {

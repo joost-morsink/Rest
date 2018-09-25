@@ -54,7 +54,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
         public override JObject Visit(TypeDescriptor t)
         {
-            var assoc = t.GetAssociatedType();
+            var assoc = t.AssociatedType;
             if (assoc != null) { 
                 foreach(var translator in translators)
                 {

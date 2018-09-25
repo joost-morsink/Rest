@@ -63,6 +63,7 @@ namespace Biz.Morsink.Rest.Schema
             byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
 
             this.kindPipeline = kindPipeline ?? TypeDescriptorCreator.CreateKindPipeline(new TypeDescriptorCreator.IKind[] {
+                SerializationKind.Instance,
                 new RepresentableDescriptorKind(representations),
                 NullableDescriptorKind.Instance,
                 DictionaryDescriptorKind.Instance,

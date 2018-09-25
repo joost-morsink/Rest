@@ -67,7 +67,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private XElement Serialize(TypeDescriptor item)
         {
-            var type = item.GetAssociatedType();
+            var type = item.AssociatedType;
             if (type == null)
                 return standardSchema();
             else
