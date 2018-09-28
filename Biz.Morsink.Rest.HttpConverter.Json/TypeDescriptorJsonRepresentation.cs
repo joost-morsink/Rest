@@ -1,6 +1,8 @@
 ﻿using Biz.Morsink.Rest.HttpConverter.Json;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Serialization;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +16,16 @@ namespace Biz.Morsink.Rest.HttpConverter
     public class TypeDescriptorJsonRepresentation : SimpleTypeRepresentation<TypeDescriptor, SObject>
     {
         private readonly ITypeDescriptorCreator typeDescriptorCreator;
+        private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
+
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="typeDescriptorCreator">A type descriptor creator, needed for reference serialization.</param>
-        public TypeDescriptorJsonRepresentation(ITypeDescriptorCreator typeDescriptorCreator)
+        public TypeDescriptorJsonRepresentation(ITypeDescriptorCreator typeDescriptorCreator, IOptions<JsonHttpConverterOptions> jsonOptions)
         {
             this.typeDescriptorCreator = typeDescriptorCreator;
+            this.jsonOptions = jsonOptions;
         }
         public override TypeDescriptor GetRepresentable(SObject representation)
         {
@@ -31,17 +36,19 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             if (typeof(TypeDescriptor).IsAssignableFrom(item.AssociatedType))
                 return new SObject(new SProperty("$ref", new SValue(JsonSchema.JSON_SCHEMA_VERSION)));
-            var visitor = new Visitor(typeDescriptorCreator);
+            var visitor = new Visitor(typeDescriptorCreator,jsonOptions.Value.NamingStrategy);
             return visitor.Transform(item);
         }
 
         private class Visitor : TypeDescriptorVisitor<SObject>
         {
             private readonly ITypeDescriptorCreator typeDescriptorCreator;
+            private readonly NamingStrategy naming;
 
-            public Visitor(ITypeDescriptorCreator typeDescriptorCreator)
+            public Visitor(ITypeDescriptorCreator typeDescriptorCreator, NamingStrategy naming)
             {
                 this.typeDescriptorCreator = typeDescriptorCreator;
+                this.naming = naming;
             }
             private Dictionary<string, string> todo;
             private Dictionary<string, string> done;
@@ -122,7 +129,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                     new SProperty("type", new SValue("object")),
                     new SProperty("properties",
                         new SObject(from p in props select new SProperty(p.Name, p.Type))),
-                    new SProperty("required", new SArray(from p in props where p.Required select new SValue(p.Name))));
+                    new SProperty("required", new SArray(from p in props where p.Required select new SValue(naming.GetPropertyName(p.Name,false)))));
 
             protected override SObject VisitReferable(TypeDescriptor.Referable r, SObject expandedDescriptor)
                 => expandedDescriptor;

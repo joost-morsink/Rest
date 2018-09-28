@@ -32,7 +32,7 @@ namespace Biz.Morsink.Rest.HttpConverter
             : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator,
                 new ITypeRepresentation[]
                 {
-                    new TypeDescriptorJsonRepresentation(typeDescriptorCreator)
+                    new TypeDescriptorJsonRepresentation(typeDescriptorCreator, jsonOptions)
                 }), converter)
         {
             this.jsonOptions = jsonOptions;
@@ -130,11 +130,7 @@ namespace Biz.Morsink.Rest.HttpConverter
         }
         private string Casing(string str)
         {
-            // If all characters are upper case, leave it as is.
-            if (str.All(char.IsUpper))
-                return str;
-            else // otherwise apply camel casing
-                return str.CasedToCamelCase();
+            return jsonOptions.Value.NamingStrategy.GetPropertyName(str, false);
         }
     }
 }
