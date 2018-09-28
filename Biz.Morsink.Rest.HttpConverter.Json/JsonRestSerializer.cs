@@ -29,12 +29,11 @@ namespace Biz.Morsink.Rest.HttpConverter
             IOptions<RestAspNetCoreOptions> options,
             ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor,
             IDataConverter converter = null)
-            : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator,
-                new ITypeRepresentation[]
-                {
-                    new TypeDescriptorJsonRepresentation(typeDescriptorCreator, jsonOptions)
-                }), converter)
+            : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator),
+                 converter)
         {
+            var tdc = (DecoratedTypeDescriptorCreator)TypeDescriptorCreator;
+            tdc.Decorate(new TypeDescriptorJsonRepresentation(tdc, jsonOptions));
             this.jsonOptions = jsonOptions;
             this.identityProvider = identityProvider;
             identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
