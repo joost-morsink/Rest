@@ -92,13 +92,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
-            var ser = JsonSerializer.Create(options.Value.SerializerSettings);
             using (var ms = new MemoryStream())
             {
                 var context = Serialization.SerializationContext.Create(IdentityProvider);
                 using (var swri = new StreamWriter(ms))
                 using (var wri = new JsonTextWriter(swri))
-                    restSerializer.WriteJson(wri, value.Value, ser);
+                    restSerializer.WriteJson(wri, value.Value);
                 var body = ms.ToArray();
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }

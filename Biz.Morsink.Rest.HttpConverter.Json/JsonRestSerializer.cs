@@ -13,6 +13,8 @@ using System.Linq;
 using System.Text;
 using SerializationContext = Biz.Morsink.Rest.Serialization.SerializationContext;
 using Biz.Morsink.Rest.Utils;
+using Newtonsoft.Json.Linq;
+
 namespace Biz.Morsink.Rest.HttpConverter
 {
     public class JsonRestSerializer : Serializer<SerializationContext>
@@ -33,22 +35,33 @@ namespace Biz.Morsink.Rest.HttpConverter
                  converter)
         {
             var tdc = (DecoratedTypeDescriptorCreator)TypeDescriptorCreator;
-            tdc.Decorate(new TypeDescriptorJsonRepresentation(tdc, jsonOptions));
+            tdc.Decorate(new ITypeRepresentation[]
+            {
+                new TypeDescriptorJsonRepresentation(tdc, jsonOptions)
+            });
             this.jsonOptions = jsonOptions;
             this.identityProvider = identityProvider;
             identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
         }
         protected override IForType CreateSerializer(Type ty)
         {
+            if (typeof(IRestValue).IsAssignableFrom(ty))
+                return CreateRestValueSerializer(ty);
             var ser = base.CreateSerializer(ty);
             if (typeof(IIdentity).IsAssignableFrom(ty))
                 return CreateIdentitySerializer(ser, ty);
+            else if (typeof(IHasIdentity).IsAssignableFrom(ty))
+                return CreateHasIdentitySerializer(ser, ty);
             else
                 return ser;
         }
 
+        private IForType CreateRestValueSerializer(Type ty)
+            => (IForType)Activator.CreateInstance(typeof(RestValueType<>).MakeGenericType(ty), this);
         private IForType CreateIdentitySerializer(IForType ser, Type ty)
             => (IForType)Activator.CreateInstance(typeof(IdentityType<>).MakeGenericType(ty), this, ser);
+        private IForType CreateHasIdentitySerializer(IForType ser, Type ty)
+            => (IForType)Activator.CreateInstance(typeof(HasIdentityType<>).MakeGenericType(ty), this, ser);
 
         private class IdentityType<T> : Typed<T>
         {
@@ -85,52 +98,94 @@ namespace Biz.Morsink.Rest.HttpConverter
                     return inner.Serialize(context, item);
             }
         }
+        private class RestValueType<T> : Typed<T>
+            where T : IRestValue
+        {
+            public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;
+            public RestValueType(JsonRestSerializer parent) : base(parent)
+            {
+            }
+            public override T Deserialize(SerializationContext context, SItem item)
+            {
+                throw new NotSupportedException();
+            }
+            public override SItem Serialize(SerializationContext context, T item)
+            {
+                var res = Parent.Serialize(context.With(item), item.Value);
+                return res;
+            }
+        }
+        private class HasIdentityType<T> : Typed<T>
+            where T:IHasIdentity
+        {
+            private readonly Typed<T> inner;
+            public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;
+            public HasIdentityType(JsonRestSerializer parent, Typed<T> inner) : base(parent)
+            {
+                this.inner = inner;
+            }
+            public override T Deserialize(SerializationContext context, SItem item)
+            {
+                return inner.Deserialize(context, item);
+            }
+            public override SItem Serialize(SerializationContext context, T item)
+            {
+                if (context.IsInParentChain(item.Id))
+                    return Parent.Serialize(context.WithParent(item.Id), item.Id);
+                else
+                    return inner.Serialize(context.WithParent(item.Id), item);
+            }
+        }
 
-        public void WriteJson(JsonWriter writer, object item, JsonSerializer serializer)
+        public void WriteJson(JsonWriter writer, object item)
         {
             var sitem = Serialize(SerializationContext.Create(identityProvider), item);
-            WriteJson(writer, sitem, serializer);
+            WriteJson(writer, sitem);
         }
-        public void WriteJson(JsonWriter writer, SItem item, JsonSerializer serializer)
+        public void WriteJson(JsonWriter writer, SItem item)
         {
             switch (item)
             {
                 case SObject obj:
-                    WriteJson(writer, obj, serializer);
+                    WriteJson(writer, obj);
                     break;
                 case SValue val:
-                    WriteJson(writer, val, serializer);
+                    WriteJson(writer, val);
                     break;
                 case SArray arr:
-                    WriteJson(writer, arr, serializer);
+                    WriteJson(writer, arr);
                     break;
             }
         }
-        public void WriteJson(JsonWriter writer, SObject item, JsonSerializer serializer)
+        public void WriteJson(JsonWriter writer, SObject item)
         {
             writer.WriteStartObject();
             foreach (var prop in item.Properties)
             {
-                var propName = prop.Format == SFormat.Literal ? prop.Name : Casing(prop.Name);
-                writer.WritePropertyName(propName);
-                WriteJson(writer, prop.Token, serializer);
+                if (!(prop.Token is SValue s) || s.Value != null || jsonOptions.Value.SerializerSettings.NullValueHandling == NullValueHandling.Include)
+                {
+                    var propName = prop.Format == SFormat.Literal ? prop.Name : Casing(prop.Name);
+                    writer.WritePropertyName(propName);
+                    WriteJson(writer, prop.Token);
+                }
             }
             writer.WriteEndObject();
         }
-        public void WriteJson(JsonWriter writer, SValue item, JsonSerializer serializer)
+        public void WriteJson(JsonWriter writer, SValue item)
         {
             writer.WriteValue(item.Value);
         }
-        public void WriteJson(JsonWriter writer, SArray item, JsonSerializer serializer)
+        public void WriteJson(JsonWriter writer, SArray item)
         {
             writer.WriteStartArray();
             foreach (var val in item.Content)
-                WriteJson(writer, val, serializer);
+                WriteJson(writer, val);
             writer.WriteEndArray();
         }
+
         public SItem ReadJson(JsonReader reader)
         {
-            if(reader.TokenType == JsonToken.None)
+            if (reader.TokenType == JsonToken.None)
                 reader.Read();
             return doRead();
 

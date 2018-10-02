@@ -114,5 +114,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 new JsonHttpConverterOptionsProvider(sp, configure ?? (opts => opts)).GetOptions());
             return builder;
         }
+
     }
 }

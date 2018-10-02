@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Biz.Morsink.Identity.PathProvider;
 using Biz.Morsink.Rest.Serialization;
 using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
@@ -46,10 +47,11 @@ namespace Biz.Morsink.Rest.Schema
                     var props = (td as TypeDescriptor.Record)?.Properties;
                     if (props != null)
                     {
-                        var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key));
+                        var propDict = props.ToDictionary(p => p.Key, p => p.Value, CaseInsensitiveEqualityComparer.Instance);
+                        var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key), CaseInsensitiveEqualityComparer.Instance);
                         foreach (var prop in sobj.Properties)
                         {
-                            if (props.TryGetValue(prop.Name, out var desc))
+                            if (propDict.TryGetValue(prop.Name, out var desc))
                             {
                                 if (req.Count > 0 && desc.Required)
                                     req.Remove(desc.Name);
@@ -83,7 +85,7 @@ namespace Biz.Morsink.Rest.Schema
                 var tds = UnionRepresentation.GetTypeParameters(typeof(T)).Select(t => (type:t,desc:Parent.TypeDescriptorCreator.GetDescriptor(t))).ToArray();
                 var builder = UnionRepresentation.FromOptions(tds.Select(t => t.type).ToArray());
                 var score = typeof(SerializerImpl<C, T>).GetMethod(nameof(Score), BindingFlags.Static | BindingFlags.NonPublic);
-                var input = Ex.Parameter(typeof(T), "input");
+                var input = Ex.Parameter(typeof(SItem), "input");
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var best = Ex.Parameter(typeof(Type), "best");
 
@@ -92,9 +94,11 @@ namespace Biz.Morsink.Rest.Schema
                         Ex.Call(typeof(SerializerImpl<C, T>).GetMethod(nameof(Best), BindingFlags.Static | BindingFlags.NonPublic),
                             Ex.Constant(tds),
                             input)),
-                    Ex.Call(Ex.Constant(builder), nameof(UnionRepresentation.RepresentationCreator.Create), Type.EmptyTypes,
-                        Ex.Call(Ex.Constant(Parent), DESERIALIZE, Type.EmptyTypes,
-                            ctx, best, input)));
+                    Ex.Convert(
+                        Ex.Call(Ex.Constant(builder), nameof(UnionRepresentation.RepresentationCreator.Create), Type.EmptyTypes,
+                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, Type.EmptyTypes,
+                                ctx, best, input)), 
+                        typeof(T)));
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
                 return lambda.Compile();
             }
