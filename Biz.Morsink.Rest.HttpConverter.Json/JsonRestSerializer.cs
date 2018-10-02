@@ -111,7 +111,8 @@ namespace Biz.Morsink.Rest.HttpConverter
             writer.WriteStartObject();
             foreach (var prop in item.Properties)
             {
-                writer.WritePropertyName(Casing(prop.Name));
+                var propName = prop.Format == SFormat.Literal ? prop.Name : Casing(prop.Name);
+                writer.WritePropertyName(propName);
                 WriteJson(writer, prop.Token, serializer);
             }
             writer.WriteEndObject();
@@ -126,6 +127,60 @@ namespace Biz.Morsink.Rest.HttpConverter
             foreach (var val in item.Content)
                 WriteJson(writer, val, serializer);
             writer.WriteEndArray();
+        }
+        public SItem ReadJson(JsonReader reader)
+        {
+            if(reader.TokenType == JsonToken.None)
+                reader.Read();
+            return doRead();
+
+            SItem doRead()
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonToken.StartObject:
+                        var props = new List<SProperty>();
+                        reader.Read();
+                        while (reader.TokenType == JsonToken.PropertyName)
+                        {
+                            var prop = reader.Value.ToString();
+                            reader.Read();
+                            var val = doRead();
+                            props.Add(new SProperty(prop, val));
+                        }
+                        if (reader.TokenType != JsonToken.EndObject)
+                            throw new JsonSerializationException("No EndObject token.");
+                        reader.Read();
+                        return new SObject(props);
+                    case JsonToken.StartArray:
+                        var vals = new List<SItem>();
+                        reader.Read();
+                        while (reader.TokenType != JsonToken.EndArray)
+                        {
+                            var val = doRead();
+                            vals.Add(val);
+                            reader.Read();
+                        }
+                        return new SArray(vals);
+                    case JsonToken.Null:
+                        reader.Read();
+                        return SValue.Null;
+                    default:
+                        if (reader.Value == null)
+                            throw new JsonSerializationException("Unknown token");
+                        var value = reader.Value;
+                        reader.Read();
+                        return new SValue(value);
+                }
+            }
+        }
+        public object ReadJson(JsonReader reader, Type type)
+        {
+            return Deserialize(Serialization.SerializationContext.Create(identityProvider), type, ReadJson(reader));
+        }
+        public T ReadJson<T>(JsonReader reader)
+        {
+            return Deserialize<T>(Serialization.SerializationContext.Create(identityProvider), ReadJson(reader));
         }
         private string Casing(string str)
         {

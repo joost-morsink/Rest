@@ -196,15 +196,27 @@ namespace Biz.Morsink.Rest.Schema
                 var props = Ex.Parameter(typeof(List<SProperty>), "props");
                 var block = Ex.Block(new[] { props },
                     Ex.Assign(props, Ex.New(typeof(List<SProperty>))),
-                    Ex.Block(GetReadableProperties(typeof(T)).Select(prop =>
-                        Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
-                            Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem) }),
-                                Ex.Constant(prop.Name),
-                                Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
-                                    ctx, Ex.Property(input, prop)))))),
+                    Ex.Block(GetReadableProperties(typeof(T)).Select(prop => handleProp(prop))),
                     Ex.New(typeof(SObject).GetConstructor(new[] { typeof(IEnumerable<SProperty>) }), props));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
+                Ex handleProp(PropertyInfo prop)
+                {
+                    var attr = prop.GetCustomAttribute<SFormatAttribute>();
+                    if (attr != null)
+                        return Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
+                            Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem), typeof(SFormat) }),
+                                Ex.Constant(prop.Name),
+                                Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
+                                    ctx, Ex.Property(input, prop)),
+                                Ex.Constant(attr.Property)));
+                    else
+                        return Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
+                                Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem) }),
+                                    Ex.Constant(prop.Name),
+                                    Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
+                                        ctx, Ex.Property(input, prop))));
+                }
             }
         }
     }

@@ -11,8 +11,14 @@ namespace Biz.Morsink.Rest.Serialization
         {
             Value = value;
         }
-
+        public SValue(object value, SFormat format)
+        {
+            Value = value;
+            Format = format;
+        }
         public object Value { get; }
+        public SFormat Format { get; }
+
         public override int GetHashCode()
             => Value == null ? 0 : Value.GetHashCode();
         public override bool Equals(SItem other)

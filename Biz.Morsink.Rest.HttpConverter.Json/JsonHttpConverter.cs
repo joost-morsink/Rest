@@ -70,8 +70,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 try
                 {
-                    return restRequestScopeAccessor.Scope.With(SerializationContext.Create(IdentityProvider))
-                        .Run(() => ser.Deserialize(jtr, t));
+                    return restSerializer.ReadJson(jtr, t);
                 }
                 catch (Exception e)
                 {
