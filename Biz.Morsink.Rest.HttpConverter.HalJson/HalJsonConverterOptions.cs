@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Biz.Morsink.Rest.HttpConverter.HalJson
 {
@@ -11,6 +12,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// Serializer settings for the Newtonsoft.Json library.
         /// </summary>
         public JsonSerializerSettings SerializerSettings { get; set; } = new JsonSerializerSettings();
-
+        public NamingStrategy NamingStrategy { get; set; } = new CamelCaseNamingStrategy();
     }
 }

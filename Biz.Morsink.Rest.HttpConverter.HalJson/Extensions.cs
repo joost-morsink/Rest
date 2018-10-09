@@ -35,12 +35,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         public static IServiceCollection AddHalJsonHttpConverter(this IServiceCollection serviceCollection, Func<IHalJsonHttpConverterBuilder, IHalJsonHttpConverterBuilder> builder = null)
         {
             serviceCollection.AddSingleton<IHttpRestConverter, HalJsonHttpConverter>();
-            serviceCollection.AddSingleton(sp => new HalSerializer(
-                sp.GetRequiredService<ITypeDescriptorCreator>(),
-                DataConverter.Default,
-                sp.GetRequiredService<IRestIdentityProvider>(),
-                sp.GetServices<ITypeRepresentation>()));
-
+            serviceCollection.AddSingleton<HalJsonRestSerializer>();
             builder?.Invoke(new RestHalJsonHttpConverterBuilder(serviceCollection));
 
             return serviceCollection;

@@ -101,21 +101,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var body = ms.ToArray();
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
-
-            //var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-
-            //using (var ms = new MemoryStream())
-            //{
-            //    var context = SerializationContext.Create(IdentityProvider);
-            //    restRequestScopeAccessor.Scope.With(context).Run(() =>
-            //    {
-            //        using (var swri = new StreamWriter(ms))
-            //        using (var wri = new JsonTextWriter(swri))
-            //            ser.Serialize(wri, value);
-            //    });
-            //    var body = ms.ToArray();
-            //    await bodyStream.WriteAsync(body, 0, body.Length);
-            //}
         }
 
         public override bool SupportsCuries => true;

@@ -37,7 +37,11 @@ namespace Biz.Morsink.Rest.Schema
             representations.AddRange(typeRepresentations);
             return this;
         }
-
+        public DecoratedTypeDescriptorCreator Decorate(Func<DecoratedTypeDescriptorCreator, IEnumerable<ITypeRepresentation>> typeRepresentation)
+        {
+            representations.AddRange(typeRepresentation(this));
+            return this;
+        }
         public Serializer<C>.IForType CreateSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
         {
             var specificSerializer = representableDescriptorKind.Value.GetSerializer(serializer, type);

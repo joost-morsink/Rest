@@ -2,7 +2,6 @@
 using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.AspNetCore.Utils;
-using Biz.Morsink.Rest.HttpConverter.Json;
 using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Serialization;
 using Microsoft.Extensions.Options;
@@ -12,32 +11,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SerializationContext = Biz.Morsink.Rest.Serialization.SerializationContext;
-using Biz.Morsink.Rest.Utils;
-using Newtonsoft.Json.Linq;
 
-namespace Biz.Morsink.Rest.HttpConverter.Json
+namespace Biz.Morsink.Rest.HttpConverter.HalJson
 {
-    public class JsonRestSerializer : Serializer<SerializationContext>
+    public class HalJsonRestSerializer : Serializer<SerializationContext>
     {
-        private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
+        private readonly IOptions<HalJsonConverterOptions> halOptions;
         private readonly IRestIdentityProvider identityProvider;
         private readonly IdentityRepresentation identityRepresentation;
 
-        public JsonRestSerializer(
+        public HalJsonRestSerializer(
             ITypeDescriptorCreator typeDescriptorCreator,
-            IOptions<JsonHttpConverterOptions> jsonOptions,
+            IOptions<HalJsonConverterOptions> halOptions,
             IRestIdentityProvider identityProvider,
             IRestPrefixContainerAccessor prefixContainerAccessor,
             IOptions<RestAspNetCoreOptions> options,
             ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor,
             IDataConverter converter = null)
             : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator)
-                  .Decorate(tdc => new ITypeRepresentation[] {
-                        new TypeDescriptorJsonRepresentation(tdc, jsonOptions)
-                  }),
-                 converter)
+                  .Decorate(tdc => new ITypeRepresentation[]
+                  {
+
+                  }), converter)
         {
-            this.jsonOptions = jsonOptions;
+            this.halOptions = halOptions;
             this.identityProvider = identityProvider;
             identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
         }
@@ -65,8 +62,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             private readonly Typed<T> inner;
 
-            public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;
-            public IdentityType(JsonRestSerializer parent, Typed<T> inner) : base(parent)
+            public new HalJsonRestSerializer Parent => (HalJsonRestSerializer)base.Parent;
+            public IdentityType(HalJsonRestSerializer parent, Typed<T> inner) : base(parent)
             {
                 this.inner = inner;
             }
@@ -88,19 +85,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             public override SItem Serialize(SerializationContext context, T item)
             {
-                if (Parent.jsonOptions.Value.EmbedEmbeddings
-                    && item is IIdentity id
-                    && context.TryGetEmbedding(id, out var embedding))
-                    return Parent.Serialize(context.Without(id), embedding);
-                else
-                    return inner.Serialize(context, item);
+                return inner.Serialize(context, item);
             }
         }
         private class RestValueType<T> : Typed<T>
             where T : IRestValue
         {
-            public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;
-            public RestValueType(JsonRestSerializer parent) : base(parent)
+            public new HalJsonRestSerializer Parent => (HalJsonRestSerializer)base.Parent;
+            public RestValueType(HalJsonRestSerializer parent) : base(parent)
             {
             }
             public override T Deserialize(SerializationContext context, SItem item)
@@ -109,16 +101,42 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             }
             public override SItem Serialize(SerializationContext context, T item)
             {
-                var res = Parent.Serialize(context.With(item), item.Value);
+
+                var res = (SObject)Parent.Serialize(context.With(item), item.Value);
+                var ctxWithItem = context.With(item);
+                res = new SObject(res.Properties
+                    .Concat(new[] {
+                        new SProperty("_links", serializeLinks()),
+                        new SProperty("_embedded", new SArray(
+                            item.Embeddings.Select(serializeEmbedding)))
+                        }));
                 return res;
+                SItem serializeEmbedding(object o)
+                {
+                    var ctx = o is IHasIdentity hid
+                        ? ctxWithItem.Without(hid.Id)
+                        : ctxWithItem;
+                    return Parent.Serialize(ctx, o);
+                }
+                SObject serializeLinks()
+                {
+                    var props = from l in item.Links
+                                group l by l.RelType into g
+                                let num = g.Count()
+                                select num == 1
+                                    ? new SProperty(g.First().RelType, Parent.Serialize(context, g.First().Target))
+                                    : new SProperty(g.First().RelType, 
+                                        new SArray(g.Select(x => Parent.Serialize(context, x.Target))));
+                    return new SObject(props);
+                }
             }
         }
         private class HasIdentityType<T> : Typed<T>
             where T : IHasIdentity
         {
             private readonly Typed<T> inner;
-            public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;
-            public HasIdentityType(JsonRestSerializer parent, Typed<T> inner) : base(parent)
+            public new HalJsonRestSerializer Parent => (HalJsonRestSerializer)base.Parent;
+            public HasIdentityType(HalJsonRestSerializer parent, Typed<T> inner) : base(parent)
             {
                 this.inner = inner;
             }
@@ -128,13 +146,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             }
             public override SItem Serialize(SerializationContext context, T item)
             {
-                if (context.IsInParentChain(item.Id))
+                if (context.IsInParentChain(item.Id) || context.TryGetEmbedding(item.Id, out var _))
                     return Parent.Serialize(context.WithParent(item.Id), item.Id);
                 else
                     return inner.Serialize(context.WithParent(item.Id), item);
             }
         }
-
         public void WriteJson(JsonWriter writer, object item)
         {
             var sitem = Serialize(SerializationContext.Create(identityProvider), item);
@@ -160,7 +177,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             writer.WriteStartObject();
             foreach (var prop in item.Properties)
             {
-                if (!(prop.Token is SValue s) || s.Value != null || jsonOptions.Value.SerializerSettings.NullValueHandling == NullValueHandling.Include)
+                if (!(prop.Token is SValue s) || s.Value != null || halOptions.Value.SerializerSettings.NullValueHandling == NullValueHandling.Include)
                 {
                     var propName = prop.Format == SFormat.Literal ? prop.Name : Casing(prop.Name);
                     writer.WritePropertyName(propName);
@@ -237,7 +254,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
         private string Casing(string str)
         {
-            return jsonOptions.Value.NamingStrategy.GetPropertyName(str, false);
+            return halOptions.Value.NamingStrategy.GetPropertyName(str, false);
         }
     }
 }
