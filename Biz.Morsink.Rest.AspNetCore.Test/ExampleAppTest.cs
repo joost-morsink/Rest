@@ -521,6 +521,17 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
         }
         [TestMethod]
+        public async Task Http_VersionPut()
+        {
+            var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "1"));
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+            var json = await GetJson(resp);
+            Assert.IsNotNull(json["id"]);
+            json["birthday"] = "2018-10-09T07:29:00Z";
+            var resp2 = await Put(client, "/person/1", json, DefaultHeaders.Add("Version", "2"));
+            Assert.IsTrue(resp2.IsSuccessStatusCode);
+        }
+        [TestMethod]
         public async Task Http_VersionUnhappy()
         {
             var resp = await Get(client, "/person/1", DefaultHeaders.Add("Version", "3"));

@@ -17,7 +17,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// </summary>
         /// <param name="rep">The 'representation' instance of type UnionRepresentation.</param>
         /// <returns>A 'representable' instance of type OrReference&lt;T&gt;.</returns>
-        public object GetRepresentable(object rep)
+        public object GetRepresentable(object rep, Type specific)
         {
             var u = (UnionRepresentation)rep;
             var item = u.GetItem();

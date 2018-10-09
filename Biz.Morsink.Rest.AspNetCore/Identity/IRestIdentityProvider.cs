@@ -34,6 +34,22 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>An identity value for the specified path.</returns>
         IIdentity Parse(string path, bool nullOnFailure = false, RestPrefixContainer prefixes = null, VersionMatcher versionMatcher = default);
         /// <summary>
+        /// Parses a rest path when type information is already known.
+        /// </summary>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="specific">The entity type.</param>
+        /// <param name="prefixes">A container of curie prefixes.</param>
+        /// <returns>An identity value for the specified path.</returns>
+        IIdentity Parse(string path, Type specific, RestPrefixContainer prefixes = null);
+        /// <summary>
+        /// Parses a rest path when type information is already known.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="prefixes">A container of curie prefixes.</param>
+        /// <returns>An identity value for the specified path.</returns>
+        IIdentity<T> Parse<T>(string path,  RestPrefixContainer prefixes = null);
+        /// <summary>
         /// Converts an identity value to a general IIdentity&lt;object&gt; value
         /// </summary>
         /// <param name="id">The identity value to convert.</param>

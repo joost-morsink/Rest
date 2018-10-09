@@ -37,7 +37,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 public override T Deserialize(HalContext context, JToken token)
                 {
                     var repr = Parent.Deserialize(representation.GetRepresentationType(typeof(T)), context, token);
-                    return (T)representation.GetRepresentable(repr);
+                    return (T)representation.GetRepresentable(repr,typeof(T));
                 }
             }
         }
