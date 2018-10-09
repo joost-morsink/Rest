@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest.Serialization
             //=> new SerializationContext(IdentityProvider, this, embeddings ?? Embeddings, parentChain ?? ParentChain);
 
         /// <summary>
-        /// Adds a Rest Value to the lexical scope of the Hal (de-)serialization process.
+        /// Adds a Rest Value to the lexical scope of the (de-)serialization process.
         /// </summary>
         /// <param name="value">The Rest Value to add.</param>
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.Serialization
             return New(embeddings: e);
         }
         /// <summary>
-        /// Adds a Rest Value to the lexical scope of the Hal (de-)serialization process.
+        /// Adds a Rest Value to the lexical scope of the (de-)serialization process.
         /// </summary>
         /// <typeparam name="T">The type of the Rest Value's underlying value.</typeparam>
         /// <param name="value">The Rest Value to add.</param>

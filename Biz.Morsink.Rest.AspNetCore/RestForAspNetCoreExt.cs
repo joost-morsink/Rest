@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             {   // Prime the schema cache:
                 var repositories = app.ApplicationServices.GetServices<IRestRepository>();
-                var typeDescriptorCreator = app.ApplicationServices.GetRequiredService<TypeDescriptorCreator>();
+                var typeDescriptorCreator = app.ApplicationServices.GetRequiredService<ITypeDescriptorCreator>();
                 foreach (var type in repositories.SelectMany(repo => repo.SchemaTypes).Distinct())
                     typeDescriptorCreator.GetDescriptor(type);
                 typeDescriptorCreator.GetDescriptor(typeof(TypeDescriptor));
@@ -49,7 +49,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         public static IServiceCollection AddRest(this IServiceCollection serviceCollection, Action<IRestServicesBuilder> builder = null)
         {
             serviceCollection.AddSingleton<CoreRestRequestHandler>();
-            serviceCollection.AddSingleton<TypeDescriptorCreator>();
+            serviceCollection.AddSingleton<ITypeDescriptorCreator, StandardTypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
             serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             serviceCollection.AddSingleton<IRestRequestScopeAccessor, AspNetCoreRestRequestScopeAccessor>();
@@ -57,6 +57,9 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<IRestPrefixContainerAccessor, RestPrefixContainerAccessor>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
 
+            serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, RestCapabilitiesRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, ExpandoObjectRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();

@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class JsonSchemaProvider : IJsonSchemaProvider
     {
         private readonly Lazy<IEnumerable<IJsonSchemaTranslator>> translators;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
         /// <summary>
         /// Constructor.
@@ -23,7 +23,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonSchemaProvider(IServiceProvider serviceProvider)
         {
             translators = new Lazy<IEnumerable<IJsonSchemaTranslator>>(() => serviceProvider.GetServices<IJsonSchemaTranslator>());
-            typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
+            typeDescriptorCreator = serviceProvider.GetService<ITypeDescriptorCreator>();
         }
         /// <summary>
         /// This method should return the corresponding JsonSchema object for some TypeDescriptor.

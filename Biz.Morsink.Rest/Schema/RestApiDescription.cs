@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.Schema
         /// </summary>
         /// <param name="repositories">All Rest repositories.</param>
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator to aid in generating metadata.</param>
-        public RestApiDescription(IEnumerable<IRestRepository> repositories, TypeDescriptorCreator typeDescriptorCreator)
+        public RestApiDescription(IEnumerable<IRestRepository> repositories, ITypeDescriptorCreator typeDescriptorCreator)
         {
             EntityTypes = repositories.SelectMany(r => r.GetCapabilities()).ToLookup(c => c.EntityType);
             TypeDescriptors = repositories.SelectMany(r => r.GetCapabilities())

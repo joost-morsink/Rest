@@ -1,5 +1,4 @@
 ﻿using Biz.Morsink.Rest.Schema;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +19,7 @@ namespace Biz.Morsink.Rest
         /// Populates the dictionary based on the capabilities of a specified IRestRepository interface.
         /// </summary>
         /// <param name="repo">The repository to provide options for.</param>
-        public RestCapabilities(IRestRepository repo, TypeDescriptorCreator typeDescriptorCreator)
+        public RestCapabilities(IRestRepository repo, ITypeDescriptorCreator typeDescriptorCreator)
         {
             foreach (var capGroup in repo.GetCapabilities().GroupBy(c => c.Name))
             {
@@ -32,5 +31,4 @@ namespace Biz.Morsink.Rest
             }
         }
     }
-   
 }

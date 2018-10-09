@@ -25,17 +25,19 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public const string MEDIA_TYPE = "application/json";
         private readonly IOptions<JsonHttpConverterOptions> options;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
+        private readonly JsonRestSerializer restSerializer;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions, JsonRestSerializer restSerializer)
             : base(provider, restRequestScopeAccessor, restOptions)
         {
             this.options = options;
             this.restRequestScopeAccessor = restRequestScopeAccessor;
+            this.restSerializer = restSerializer;
         }
         /// <summary>
         /// Determines if the converter applies to the given HttpContext.
@@ -68,8 +70,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 try
                 {
-                    return restRequestScopeAccessor.Scope.With(SerializationContext.Create(IdentityProvider))
-                        .Run(() => ser.Deserialize(jtr, t));
+                    return restSerializer.ReadJson(jtr, t);
                 }
                 catch (Exception e)
                 {
@@ -91,20 +92,30 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         }
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
-            var ser = JsonSerializer.Create(options.Value.SerializerSettings);
-
             using (var ms = new MemoryStream())
             {
-                var context = SerializationContext.Create(IdentityProvider);
-                restRequestScopeAccessor.Scope.With(context).Run(() =>
-                {
-                    using (var swri = new StreamWriter(ms))
-                    using (var wri = new JsonTextWriter(swri))
-                        ser.Serialize(wri, value);
-                });
+                var context = Serialization.SerializationContext.Create(IdentityProvider);
+                using (var swri = new StreamWriter(ms))
+                using (var wri = new JsonTextWriter(swri))
+                    restSerializer.WriteJson(wri, value.Value);
                 var body = ms.ToArray();
                 await bodyStream.WriteAsync(body, 0, body.Length);
             }
+
+            //var ser = JsonSerializer.Create(options.Value.SerializerSettings);
+
+            //using (var ms = new MemoryStream())
+            //{
+            //    var context = SerializationContext.Create(IdentityProvider);
+            //    restRequestScopeAccessor.Scope.With(context).Run(() =>
+            //    {
+            //        using (var swri = new StreamWriter(ms))
+            //        using (var wri = new JsonTextWriter(swri))
+            //            ser.Serialize(wri, value);
+            //    });
+            //    var body = ms.ToArray();
+            //    await bodyStream.WriteAsync(body, 0, body.Length);
+            //}
         }
 
         public override bool SupportsCuries => true;

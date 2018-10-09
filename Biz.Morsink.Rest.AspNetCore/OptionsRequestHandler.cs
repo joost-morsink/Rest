@@ -14,9 +14,9 @@ namespace Biz.Morsink.Rest.AspNetCore
     {
         private readonly RestRequestHandlerDelegate next;
         private readonly IServiceProvider locator;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
-        public OptionsRequestHandler(RestRequestHandlerDelegate next, IServiceProvider locator, TypeDescriptorCreator typeDescriptorCreator)
+        public OptionsRequestHandler(RestRequestHandlerDelegate next, IServiceProvider locator, ITypeDescriptorCreator typeDescriptorCreator)
         {
             this.next = next;
             this.locator = locator;

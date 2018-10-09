@@ -69,6 +69,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             serviceCollection.AddJsonSchemaTranslator<IdentityJsonSchemaTranslator>();
             serviceCollection.AddJsonSchemaTranslator<UnionRepresentationSchemaTranslator>();
 
+            serviceCollection.AddSingleton<JsonRestSerializer>();
 
             serviceCollection.AddTransient<ITypeRepresentation, OrReferenceRepresentation>();
             serviceCollection.AddSingleton<IJsonSchemaProvider, JsonSchemaProvider>();
@@ -113,5 +114,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 new JsonHttpConverterOptionsProvider(sp, configure ?? (opts => opts)).GetOptions());
             return builder;
         }
+
     }
 }

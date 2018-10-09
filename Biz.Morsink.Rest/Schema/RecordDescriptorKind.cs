@@ -28,7 +28,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A record type is a type with either a parameterless constructor and a bunch of properties with getters and setters, or a type with a single constructor and for each constructor parameter a readonly property.
         /// This method returns null if the context does not represent a record tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var ti = context.Type.GetTypeInfo();
 
@@ -43,9 +43,8 @@ namespace Biz.Morsink.Rest.Schema
             }
             else
             {
-                var props = GetReadonlyProperties(ti, context.Cutoff).ToArray();
-                if (!props.All(pi => pi.CanRead && !pi.CanWrite))
-                    return null;
+                var props = GetReadableProperties(ti).ToArray();
+
                 var properties = GetConstructorProperties(ti)
                     .Select(g => g.Select(p => new PropertyDescriptor<TypeDescriptor>(
                         p.Item1.Name,
@@ -59,11 +58,11 @@ namespace Biz.Morsink.Rest.Schema
 
         public static IEnumerable<IGrouping<ConstructorInfo, (PropertyInfo, ParameterInfo)>> GetConstructorProperties(Type type)
         {
-            var props = GetReadonlyProperties(type).ToArray();
+            var props = GetReadableProperties(type).ToArray();
             return from ci in type.GetTypeInfo().DeclaredConstructors
                    let ps = ci.GetParameters()
-                   where !ci.IsStatic && ps.Length > 0 && ps.Length >= props.Length
-                       && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Count() == props.Length
+                   where !ci.IsStatic && ps.Length > 0
+                       && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Any()
                    from p in ps.Join(props, p => p.Name, p => p.Name,
                        (par, prop) => (par, prop, ci),
                        CaseInsensitiveEqualityComparer.Instance)
@@ -130,7 +129,7 @@ namespace Biz.Morsink.Rest.Schema
             public SerializerImpl(Serializer<C> parent) : base(parent) { }
             protected override Func<C, SItem, T> MakeDeserializer()
             {
-                if (IsOfKindMutable(typeof(T)))
+                if (HasParameterlessConstructor(typeof(T)))
                     return MakeMutableDeserializer();
                 else if (IsOfKindImmutable(typeof(T)))
                     return MakeImmutableDeserializer();
@@ -146,11 +145,16 @@ namespace Biz.Morsink.Rest.Schema
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var input = Ex.Parameter(typeof(SItem), "item");
                 var obj = Ex.Parameter(typeof(SObject), "obj");
+                var other = Ex.Parameter(typeof(List<SProperty>), "other");
+                var wprops = GetWriteableProperties(typeof(T));
+                var res = Ex.Parameter(typeof(T), "res");
                 var parameters = props.Select(t => Ex.Parameter(t.Item2.ParameterType, $"p{t.Item1.Name}")).ToArray();
-                var block = Ex.Block(parameters.Prepend(obj),
+                var block = Ex.Block(parameters.Concat(new[] { obj, other, res }),
                     Ex.Assign(obj, Ex.Convert(input, typeof(SObject))),
+                    Ex.Assign(other, Ex.New(typeof(List<SProperty>))),
                     Ex.Property(obj, nameof(SObject.Properties)).Foreach(prop =>
                         Ex.Switch(Ex.Call(Ex.Property(prop, nameof(SProperty.Name)), nameof(string.ToLower), Type.EmptyTypes),
+                            Ex.Call(other, nameof(List<SProperty>.Add), Type.EmptyTypes, prop),
                             props.Select((p, idx) =>
                                 Ex.SwitchCase(
                                     Ex.Block(
@@ -159,7 +163,19 @@ namespace Biz.Morsink.Rest.Schema
                                                 ctx, Ex.Property(prop, nameof(SProperty.Token)))),
                                         Ex.Default(typeof(void))),
                                     Ex.Constant(p.Item1.Name.ToLower()))).ToArray())),
-                    Ex.New(ci, parameters));
+                    Ex.Assign(res,Ex.New(ci, parameters)),
+                    Ex.IfThen(Ex.GreaterThan(Ex.Property(other, nameof(List<SProperty>.Count)), Ex.Constant(0)),
+                        other.Foreach(prop =>
+                            Ex.Switch(Ex.Call(Ex.Property(prop, nameof(SProperty.Name)), nameof(string.ToLower), Type.EmptyTypes),
+                            wprops.Select(p =>
+                                Ex.SwitchCase(
+                                    Ex.Block(
+                                        Ex.Assign(Ex.Property(res, p),
+                                            Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { p.PropertyType },
+                                                ctx, Ex.Property(prop, nameof(SProperty.Token)))),
+                                        Ex.Default(typeof(void))),
+                                    Ex.Constant(p.Name.ToLower()))).ToArray()))),
+                    res);
                 var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
                 return lambda.Compile();
             }
@@ -196,15 +212,27 @@ namespace Biz.Morsink.Rest.Schema
                 var props = Ex.Parameter(typeof(List<SProperty>), "props");
                 var block = Ex.Block(new[] { props },
                     Ex.Assign(props, Ex.New(typeof(List<SProperty>))),
-                    Ex.Block(GetReadableProperties(typeof(T)).Select(prop =>
-                        Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
-                            Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem) }),
-                                Ex.Constant(prop.Name),
-                                Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
-                                    ctx, Ex.Property(input, prop)))))),
+                    Ex.Block(GetReadableProperties(typeof(T)).Select(prop => handleProp(prop))),
                     Ex.New(typeof(SObject).GetConstructor(new[] { typeof(IEnumerable<SProperty>) }), props));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
+                Ex handleProp(PropertyInfo prop)
+                {
+                    var attr = prop.GetCustomAttribute<SFormatAttribute>();
+                    if (attr != null)
+                        return Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
+                            Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem), typeof(SFormat) }),
+                                Ex.Constant(prop.Name),
+                                Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
+                                    ctx, Ex.Property(input, prop)),
+                                Ex.Constant(attr.Property)));
+                    else
+                        return Ex.Call(props, nameof(List<SProperty>.Add), Type.EmptyTypes,
+                                Ex.New(typeof(SProperty).GetConstructor(new[] { typeof(string), typeof(SItem) }),
+                                    Ex.Constant(prop.Name),
+                                    Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
+                                        ctx, Ex.Property(input, prop))));
+                }
             }
         }
     }

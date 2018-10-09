@@ -48,7 +48,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A semantic struct type is a value type with a constructor with a single parameter and a single property of the same type.
         /// This method returns null if the context does not represent a record tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var t = GetUnderlyingType(context.Type);
             return t == null ? null : creator.GetDescriptor(context.WithType(t).WithCutoff(null));

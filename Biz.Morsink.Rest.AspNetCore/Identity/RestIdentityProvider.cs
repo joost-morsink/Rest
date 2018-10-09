@@ -397,6 +397,43 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return nullOnFailure ? null : new Identity<object, string>(this, path);
         }
+        /// <summary>
+        /// Parses a rest path when type information is already known.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="prefixes">A container of curie prefixes.</param>
+        /// <returns>An identity value for the specified path.</returns>
+        public virtual IIdentity<T> Parse<T>(string path, RestPrefixContainer prefixes = null)
+        {
+            var matches = Match(path, prefixes).Where(m => m.IsSuccessful && m.ForType == typeof(T));
+            if (!matches.Any())
+                return null;
+            var match = matches.First();
+            if (match.Path.Arity == 1)
+                return (IIdentity<T>)Create(match.ForType, match.Match[0]);
+            else
+                return (IIdentity<T>)Create(match.ForType, match.Match.ToArray());
+        }
+        /// <summary>
+        /// Parses a rest path when type information is already known.
+        /// </summary>
+        /// <param name="path">The path to parse.</param>
+        /// <param name="specific">The entity type.</param>
+        /// <param name="prefixes">A container of curie prefixes.</param>
+        /// <returns>An identity value for the specified path.</returns>
+        public virtual IIdentity Parse(string path, Type specific, RestPrefixContainer prefixes = null)
+        {
+            var matches = Match(path, prefixes).Where(m => m.IsSuccessful && m.ForType == specific);
+            if (!matches.Any())
+                return null;
+            var match = matches.First();
+            if (match.Path.Arity == 1)
+                return Create(match.ForType, match.Match[0]);
+            else
+                return Create(match.ForType, match.Match.ToArray());
+
+        }
 
         /// <summary>
         /// Converts any identity value for a known type into a general identity value with a pathstring as underlying value.

@@ -23,9 +23,9 @@ namespace Biz.Morsink.Rest
             CachePrivate = false,
             Validity = TimeSpan.FromDays(1.0)
         };
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
-        public SchemaRepository(TypeDescriptorCreator typeDescriptorCreator) {
+        public SchemaRepository(ITypeDescriptorCreator typeDescriptorCreator) {
             this.typeDescriptorCreator = typeDescriptorCreator;
         }
         /// <summary>

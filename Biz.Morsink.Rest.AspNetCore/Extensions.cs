@@ -827,6 +827,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 .AddPathMapping<RestJobResult>(jobRepositoryPath + "/*" + jobResultPathSuffix)
                 ;
             builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobRepresentation>();
+            builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobControllerRepresentation>();
             builder.ServiceCollection.AddTransient<ITypeRepresentation, RestJobResultRepresentation>();
             builder.OnEndConfiguration(sc =>
             {

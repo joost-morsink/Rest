@@ -26,7 +26,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 return name;
         }
         private readonly ConcurrentDictionary<Type, IForType> serializers;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
         private readonly IDataConverter converter;
         private readonly ITypeRepresentation[] representations;
         private readonly IXmlSchemaTranslator[] schemaTranslators;
@@ -37,7 +37,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator instance.</param>
         /// <param name="converter">An IDataConverter instance.</param>
         /// <param name="representations">A collection of ITypeRepresentation instances.</param>
-        public XmlSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<IXmlSchemaTranslator> schemaTranslators, IEnumerable<ITypeRepresentation> representations)
+        public XmlSerializer(ITypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IEnumerable<IXmlSchemaTranslator> schemaTranslators, IEnumerable<ITypeRepresentation> representations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             this.typeDescriptorCreator = typeDescriptorCreator;

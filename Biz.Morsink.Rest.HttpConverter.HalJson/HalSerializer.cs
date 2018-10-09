@@ -22,7 +22,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         private readonly IDataConverter converter;
         private readonly ITypeRepresentation[] representations;
         private readonly IRestIdentityProvider identityProvider;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
         /// <summary>
         /// Constructor.
@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="converter">A DataConverter instance for simple data conversions.</param>
         /// <param name="identityProvider">A Rest identity provider for Identity Link translations.</param>
         /// <param name="typeRepresentations">A collection of type representations.</param>
-        public HalSerializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IRestIdentityProvider identityProvider, IEnumerable<ITypeRepresentation> typeRepresentations)
+        public HalSerializer(ITypeDescriptorCreator typeDescriptorCreator, IDataConverter converter, IRestIdentityProvider identityProvider, IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             this.converter = converter;

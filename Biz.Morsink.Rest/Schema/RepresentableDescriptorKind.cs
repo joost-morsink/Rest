@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.Schema
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
         }
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var repr = representations.Where(r => r.IsRepresentable(context.Type)).Select(r => r.GetRepresentationType(context.Type)).FirstOrDefault();
             if (repr == null)
@@ -33,7 +33,7 @@ namespace Biz.Morsink.Rest.Schema
             if (typeRep == null)
                 return null;
 
-            throw new NotImplementedException();
+            return (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer, typeRep);
         }
         private class SerializerImpl<C, T> : Serializer<C>.Typed<T>
             where C : SerializationContext<C>
@@ -50,7 +50,7 @@ namespace Biz.Morsink.Rest.Schema
             public override T Deserialize(C context, SItem item)
             {
                 var repr = Parent.Deserialize(context, representationType, item);
-                return (T)representation.GetRepresentable(repr);
+                return (T)representation.GetRepresentable(repr, typeof(T));
             }
             public override SItem Serialize(C context, T item)
             {

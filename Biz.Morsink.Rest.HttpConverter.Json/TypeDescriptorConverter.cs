@@ -59,7 +59,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var typeDescriptor = (TypeDescriptor)value;
-            var type = typeDescriptor.GetAssociatedType();
+            var type = typeDescriptor.AssociatedType;
             if (type != null)
                 schemaProvider.GetSchema(type).Schema.WriteTo(writer, serializer.Converters.ToArray());
             else
@@ -70,7 +70,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
         private JToken ConstructFromParts(TypeDescriptor typeDescriptor)
         {
-            var type = typeDescriptor.GetAssociatedType();
+            var type = typeDescriptor.AssociatedType;
             if (type != null)
             {
                 var res = schemaProvider.GetSchema(type).Schema;

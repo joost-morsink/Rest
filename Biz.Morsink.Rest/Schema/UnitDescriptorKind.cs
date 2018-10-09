@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.Schema
         /// A unit type has a parameterless constructor and no instance properties.
         /// This method returns null if the context does not represent a unit tyoe.
         /// </summary>
-        public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
+        public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             var ti = context.Type.GetTypeInfo();
             var parameterlessConstructors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0);

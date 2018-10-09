@@ -19,7 +19,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class RestValueConverter : JsonConverter, IJsonSchemaTranslator
     {
         private readonly IJsonSchemaProvider schemaProvider;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
         private readonly IRestIdentityProvider identityProvider;
         private readonly IOptions<JsonHttpConverterOptions> options;
@@ -30,7 +30,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="typeDescriptorCreator">A Type descriptor creator.</param>
         /// <param name="schemaProvider">A Json schema provider.</param>
         /// <param name="options">Options for the Json Http converter component.</param>
-        public RestValueConverter(TypeDescriptorCreator typeDescriptorCreator, IJsonSchemaProvider schemaProvider, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider identityProvider, IOptions<JsonHttpConverterOptions> options)
+        public RestValueConverter(ITypeDescriptorCreator typeDescriptorCreator, IJsonSchemaProvider schemaProvider, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider identityProvider, IOptions<JsonHttpConverterOptions> options)
         {
             this.schemaProvider = schemaProvider;
             this.typeDescriptorCreator = typeDescriptorCreator;

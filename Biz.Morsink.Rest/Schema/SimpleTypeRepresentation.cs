@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest.Schema
         public virtual Type GetRepresentationType(Type type)
             => typeof(T).IsAssignableFrom(type) ? typeof(R) : null;
 
-        object ITypeRepresentation.GetRepresentable(object rep)
+        object ITypeRepresentation.GetRepresentable(object rep, Type specific)
             => rep is R r ? GetRepresentable(r) : default;
 
         object ITypeRepresentation.GetRepresentation(object obj)

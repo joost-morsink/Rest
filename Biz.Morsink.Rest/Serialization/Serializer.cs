@@ -12,10 +12,10 @@ namespace Biz.Morsink.Rest.Serialization
         where C : SerializationContext<C>
     {
         private readonly ConcurrentDictionary<Type, IForType> serializers;
-        public TypeDescriptorCreator TypeDescriptorCreator { get; }
+        public ITypeDescriptorCreator TypeDescriptorCreator { get; }
         public IDataConverter Converter { get; }
 
-        public Serializer(TypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
+        public Serializer(ITypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
             TypeDescriptorCreator = typeDescriptorCreator;
@@ -40,6 +40,8 @@ namespace Biz.Morsink.Rest.Serialization
             AddSimple<decimal>();
             AddSimple<float>();
             AddSimple<double>();
+
+            serializers[typeof(object)] = new Object(this);
         }
 
         private void AddSimple<T>()
@@ -47,7 +49,10 @@ namespace Biz.Morsink.Rest.Serialization
             serializers[typeof(T)] = new Typed<T>.Simple(this);
         }
         private IForType GetSerializer(Type t)
-            => serializers.GetOrAdd(t, ty => TypeDescriptorCreator.CreateSerializer(this, ty));
+            => serializers.GetOrAdd(t, ty => CreateSerializer(ty));
+
+        protected virtual IForType CreateSerializer(Type ty)
+            => TypeDescriptorCreator.CreateSerializer(this, ty);
 
         private Typed<T> GetSerializer<T>()
             => (Typed<T>)GetSerializer(typeof(T));
