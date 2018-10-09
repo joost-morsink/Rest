@@ -47,7 +47,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             if (obj.GetType().GetGenericTypeDefinition() == typeof(OrReference<>.ReferenceImpl))
                 return UnionRepresentation.FromOptions(typeof(Reference), gen).Create(obj.GetType().GetProperty(nameof(OrReference<object>.ReferenceImpl.Reference)).GetValue(obj));
             else
-                return UnionRepresentation.FromOptions(typeof(Dictionary<string, string>), gen).Create(obj.GetType().GetProperty(nameof(OrReference<object>.ItemImpl.Item)).GetValue(obj));
+                return UnionRepresentation.FromOptions(typeof(Reference), gen).Create(obj.GetType().GetProperty(nameof(OrReference<object>.ItemImpl.Item)).GetValue(obj));
         }
 
         public Type GetRepresentationType(Type type)

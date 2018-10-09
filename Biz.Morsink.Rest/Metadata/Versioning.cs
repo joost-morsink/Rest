@@ -19,7 +19,15 @@ namespace Biz.Morsink.Rest.Metadata
         {
             versions = new Lazy<VersionInRange>(getter);
         }
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="current">The current version.</param>
+        /// <param name="supported">A list of supported versions.</param>
+        public Versioning(Version current, IEnumerable<Version> supported)
+            : this(() => new VersionInRange(current, supported))
+        {
+        }
         /// <summary>
         /// Contains the current requested and/or responded version.
         /// </summary>

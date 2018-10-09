@@ -530,6 +530,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.AreEqual(2, suppVers.Count());
             Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
         }
+        [TestMethod]
+        public async Task Http_OpenapiHappy()
+        {
+            var resp = await Get(client, "/openapi");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
+        }
         private class Identity
         {
             public string Href { get; set; }
