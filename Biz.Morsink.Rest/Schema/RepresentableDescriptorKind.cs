@@ -50,7 +50,7 @@ namespace Biz.Morsink.Rest.Schema
             public override T Deserialize(C context, SItem item)
             {
                 var repr = Parent.Deserialize(context, representationType, item);
-                return (T)representation.GetRepresentable(repr);
+                return (T)representation.GetRepresentable(repr, typeof(T));
             }
             public override SItem Serialize(C context, T item)
             {

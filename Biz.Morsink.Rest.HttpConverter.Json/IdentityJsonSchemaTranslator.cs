@@ -85,7 +85,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                 if (rdr.HasProperty(1, "href"))
                 {
                     var rep = serializer.Deserialize(rdr, parent.representation.GetRepresentationType(identityType));
-                    return rep == null ? null : identityRepresentation.GetRepresentable(rep);
+                    return rep == null ? null : identityRepresentation.GetRepresentable(rep, objectType);
                 }
                 else
                 {

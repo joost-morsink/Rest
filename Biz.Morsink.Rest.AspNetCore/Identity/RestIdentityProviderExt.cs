@@ -5,14 +5,6 @@ namespace Biz.Morsink.Rest.AspNetCore
     public static class RestIdentityProviderExt
     {
         /// <summary>
-        /// Parses a path string into an IIdentity&lt;T&gt; value.
-        /// </summary>
-        /// <typeparam name="T">The resource type.</typeparam>
-        /// <param name="path">The path to parse.</param>
-        /// <returns>An IIdentity&lt;T&gt; value if the parse and match were successful.</returns>
-        public static IIdentity<T> Parse<T>(this IRestIdentityProvider provider, string path)
-            => provider.Parse(path, true) as IIdentity<T>;
-        /// <summary>
         /// Tries to translate a general IIdentity&lt;object&gt; into a more specific type.
         /// </summary>
         /// <param name="objectId">The input identity value.</param>
@@ -27,7 +19,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="objectId">The input identity value.</param>
         /// <returns>An identity value, null if the match is unsuccessful.</returns>
         public static IIdentity<T> Parse<T>(this IRestIdentityProvider provider, IIdentity<object> objectId)
-            => provider.Parse(objectId, true) as IIdentity<T>;
+            => provider.Parse<T>(provider.Translate(objectId).Value.ToString());
         /// <summary>
         /// Converts any identity value for a known type into a pathstring.
         /// </summary>

@@ -35,7 +35,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
                 public override T Deserialize(XElement e)
                 {
                     var repr = Parent.Deserialize(e, representation.GetRepresentationType(typeof(T)));
-                    return (T)representation.GetRepresentable(repr);
+                    return (T)representation.GetRepresentable(repr,typeof(T));
                 }
             }
         }

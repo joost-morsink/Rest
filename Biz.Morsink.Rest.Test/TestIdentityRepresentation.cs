@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest.Test
     {
         public static ITypeRepresentation Instance { get; } = new TestIdentityRepresentation();
 
-        public object GetRepresentable(object rep)
+        public object GetRepresentable(object rep, Type specific)
             => rep is Representation repr
             ? FreeIdentity<object>.Create(repr.Href)
             : null;

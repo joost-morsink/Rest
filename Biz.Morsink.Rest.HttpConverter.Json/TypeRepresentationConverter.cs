@@ -27,7 +27,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             if (representation == null)
                 return null; // Message has property explicitly set to null, so don't default to existingValue
             else
-                return typeRep.GetRepresentable(representation) ?? existingValue;
+                return typeRep.GetRepresentable(representation, objectType) ?? existingValue;
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

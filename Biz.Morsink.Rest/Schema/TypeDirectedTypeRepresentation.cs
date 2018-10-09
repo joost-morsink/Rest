@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
 {
-    public abstract class SimpleTypeRepresentation<T, R> : ITypeRepresentation
+    public abstract class TypeDirectedTypeRepresentation<T, R> : ITypeRepresentation
     {
         public abstract R GetRepresentation(T item);
-        public abstract T GetRepresentable(R representation);
+        public abstract T GetRepresentable(R representation, Type specific);
 
         public virtual Type GetRepresentableType(Type type)
             => type == typeof(R) ? typeof(T) : null;
@@ -15,7 +15,7 @@ namespace Biz.Morsink.Rest.Schema
             => typeof(T).IsAssignableFrom(type) ? typeof(R) : null;
 
         object ITypeRepresentation.GetRepresentable(object rep, Type specific)
-            => rep is R r ? GetRepresentable(r) : default;
+            => rep is R r ? GetRepresentable(r, specific) : default;
 
         object ITypeRepresentation.GetRepresentation(object obj)
             => obj is T t ? GetRepresentation(t) : default;

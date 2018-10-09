@@ -2,6 +2,7 @@
 using Biz.Morsink.Rest.AspNetCore;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
@@ -15,7 +16,7 @@ namespace Biz.Morsink.Rest.AspNetCore
     /// <summary>
     /// Type representation for Identity values.
     /// </summary>
-    public class IdentityRepresentation : SimpleTypeRepresentation<IIdentity, IdentityRepresentation.Representation>
+    public class IdentityRepresentation : TypeDirectedTypeRepresentation<IIdentity, IdentityRepresentation.Representation>
     {
         private readonly IRestIdentityProvider identityProvider;
         private readonly IRestPrefixContainerAccessor prefixContainerAccessor;
@@ -52,7 +53,9 @@ namespace Biz.Morsink.Rest.AspNetCore
             return path == null ? null : new Representation { Href = path };
         }
 
-        public override IIdentity GetRepresentable(Representation representation)
-            => identityProvider.Parse(representation.Href, true, prefixContainerAccessor.RestPrefixContainer);
+        public override IIdentity GetRepresentable(Representation representation, Type specific)
+            => specific == null
+                ? identityProvider.Parse(representation.Href, true, prefixContainerAccessor.RestPrefixContainer)
+                : identityProvider.Parse(representation.Href, specific.GetGeneric(typeof(IIdentity<>)), prefixContainerAccessor.RestPrefixContainer);
     }
 }

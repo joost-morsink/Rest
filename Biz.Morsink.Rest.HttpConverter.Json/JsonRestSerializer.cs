@@ -81,7 +81,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                     if (href != null)
                     {
                         var rep = Parent.Deserialize(context, Parent.identityRepresentation.GetRepresentationType(typeof(T)), item);
-                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.identityRepresentation).GetRepresentable(rep));
+                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.identityRepresentation).GetRepresentable(rep, typeof(T)));
                     }
                 }
                 // fall through:
@@ -116,7 +116,7 @@ namespace Biz.Morsink.Rest.HttpConverter
             }
         }
         private class HasIdentityType<T> : Typed<T>
-            where T:IHasIdentity
+            where T : IHasIdentity
         {
             private readonly Typed<T> inner;
             public new JsonRestSerializer Parent => (JsonRestSerializer)base.Parent;

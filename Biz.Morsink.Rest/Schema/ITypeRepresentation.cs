@@ -43,7 +43,8 @@ namespace Biz.Morsink.Rest.Schema
         /// Gets the representable object of some representation instance.
         /// </summary>
         /// <param name="rep">The representation.</param>
+        /// <param name="specific">An optional (null) type for the desired representable.</param>
         /// <returns>A representable object for the representation instance.</returns>
-        object GetRepresentable(object rep);
+        object GetRepresentable(object rep, Type specific);
     }
 }
