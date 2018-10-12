@@ -22,7 +22,7 @@ namespace Biz.Morsink.Rest.Test
         [TestInitialize]
         public void Init()
         {
-            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance });
+            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance, TupleAsIntersectionRepresentation.Instance });
             serializer = new Serializer<SerializationContext>(typeDescriptorCreator);
         }
         [TestMethod]
@@ -82,5 +82,28 @@ namespace Biz.Morsink.Rest.Test
             var actual = serializer.Serialize(NewContext(), fsp);
             Assert.AreEqual(expected, actual);
         }
+        [TestMethod]
+        public void Serializer_Intersection()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
+            var c = new Car { Brand = "Volvo", Model = "V40" };
+            var expected = new SObject(
+                new SProperty("FirstName", new SValue("Joost")),
+                new SProperty("LastName", new SValue("Morsink")),
+                new SProperty("Age", new SValue(38)),
+                new SProperty("Brand", new SValue("Volvo")),
+                new SProperty("Model", new SValue("V40")));
+            var actual = serializer.Serialize(NewContext(), Tuple.Create(p,c));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<Tuple<Car,Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual("Joost", back.Item2.FirstName);
+            Assert.AreEqual("Morsink", back.Item2.LastName);
+            Assert.AreEqual(38, back.Item2.Age);
+            Assert.AreEqual("Volvo", back.Item1.Brand);
+            Assert.AreEqual("V40", back.Item1.Model);
+
+        }
+    
     }
 }
