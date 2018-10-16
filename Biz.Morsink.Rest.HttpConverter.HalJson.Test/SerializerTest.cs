@@ -247,7 +247,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             CheckDictionary<SortedDictionary<string, string>, string>(sortedDictioary);
         }
         [TestMethod]
-        public void XmlSerializer_ImmutableDictionaries()
+        public void HalSerializer_ImmutableDictionaries()
         {
 
             var immutableDictionary = ImmutableDictionary<string, string>.Empty

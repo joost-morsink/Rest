@@ -7,7 +7,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
 {
     internal static class InternalUtils
     {
-        public static JObject WriteJson(this JsonRestSerializer serializer, object o)
+        public static JToken WriteJson(this JsonRestSerializer serializer, object o)
         {
             var res = new JObject();
             using (var wri = res.CreateWriter())
@@ -15,9 +15,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
                 wri.WritePropertyName("x");
                 serializer.WriteJson(wri, o);
             }
-            return res["x"] as JObject;
+            return res["x"];
         }
-        public static T ReadJson<T>(this JsonRestSerializer serializer, JObject o)
+        public static T ReadJson<T>(this JsonRestSerializer serializer, JToken o)
         {
             using (var rdr = o.CreateReader())
                 return serializer.ReadJson<T>(rdr);

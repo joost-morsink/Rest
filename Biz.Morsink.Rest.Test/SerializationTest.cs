@@ -220,7 +220,7 @@ namespace Biz.Morsink.Rest.Test
                 .Add("A", 1)
                 .Add("B", "abc")
                 .Add("C", null);
-            
+
             var actual = serializer.Serialize(NewContext(), x);
             var expected = new SObject(
                 new SProperty("A", new SValue(1)),
@@ -230,6 +230,26 @@ namespace Biz.Morsink.Rest.Test
             var back = serializer.Deserialize<ImmutableDictionary<string, object>>(NewContext(), actual);
             Assert.AreEqual(3, back.Count);
             Assert.IsTrue(new[] { "A", "B", "C" }.All(back.ContainsKey));
+        }
+        public struct EmailAddress
+        {
+            public EmailAddress(string address)
+            {
+                Address = address;
+            }
+
+            public string Address { get; }
+        }
+        [TestMethod]
+        public void Serializer_SemStr()
+        {
+            const string address = "info@example.com";
+            var addr = new EmailAddress(address);
+            var actual = serializer.Serialize(NewContext(), address);
+            var expected = new SValue(address);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<EmailAddress>(NewContext(), actual);
+            Assert.AreEqual(address, back.Address);
         }
     }
 }

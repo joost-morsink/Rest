@@ -21,7 +21,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <summary>
         /// Gets or sets the JsonSerializerSettings for the JsonHttpConverter.
         /// </summary>
-        public JsonSerializerSettings SerializerSettings { get; set; } = new JsonSerializerSettings();
+        public JsonSerializerSettings SerializerSettings { get; set; } = new JsonSerializerSettings() { ContractResolver = new JsonContractResolver() };
 
         /// <summary>
         /// Gets or sets the NamingStrategy for the JsonHttpConverter.

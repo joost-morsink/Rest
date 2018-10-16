@@ -53,7 +53,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_Normal()
         {
             var o = new A { B = 1, C = 2, D = "abc" };
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(3, json.Properties().Count());
@@ -68,7 +68,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_NormalImm()
         {
             var o = new ImmA(1, 2, "abc");
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(3, json.Properties().Count());
@@ -83,7 +83,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_NormalMixed()
         {
             var o = new MixedA(1, 2) { D = "abc" };
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(3, json.Properties().Count());
@@ -98,7 +98,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingStruct()
         {
             var o = new A { B = 1, D = "abc" };
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -112,7 +112,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingStructImm()
         {
             var o = new ImmA(1, null, "abc");
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -126,7 +126,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingStructMixed()
         {
             var o = new MixedA(1, null) { D = "abc" };
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -140,7 +140,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingClass()
         {
             var o = new A { B = 1, C = 2 };
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -154,7 +154,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingClassImm()
         {
             var o = new ImmA(1, 2, null);
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -168,7 +168,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
         public void JsonSerialize_MissingClassMixed()
         {
             var o = new MixedA(1, 2);
-            var json = serializer.WriteJson(o);
+            var json = serializer.WriteJson(o) as JObject;
             var text = json?.ToString();
             Assert.IsNotNull(json);
             Assert.AreEqual(2, json.Properties().Count());
@@ -244,7 +244,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
                 ChamberOfCommerceNo = "12345678",
                 CountryOfEstablishment = FreeIdentity<Country>.Create("NL")
             };
-            var json = serializer.WriteJson(new UPO.Option1(joost));
+            var json = serializer.WriteJson(new UPO.Option1(joost)) as JObject;
             Assert.IsNotNull(json);
             Assert.AreEqual(5, json.Properties().Count());
             Assert.AreEqual("Joost", json.Value<string>("firstName"));
@@ -259,7 +259,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             else
                 Assert.Fail("Wrong option/type.");
 
-            json = serializer.WriteJson(new UPO.Option2(morsinkSoftware));
+            json = serializer.WriteJson(new UPO.Option2(morsinkSoftware)) as JObject;
             Assert.IsNotNull(json);
             Assert.AreEqual(4, json.Properties().Count());
             Assert.AreEqual("Morsink Software", json.Value<string>("legalName"));
@@ -273,6 +273,33 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             }
             else
                 Assert.Fail("Wrong option/type.");
+
+        }
+        [TestMethod]
+        public void JsonSerializer_Primitives()
+        {
+            var json = serializer.WriteJson(42);
+            Assert.IsNotNull(json);
+            if (json is JValue val)
+                Assert.AreEqual(42, val.Value);
+            else
+                Assert.Fail();
+
+            json = serializer.WriteJson("abc");
+            Assert.IsNotNull(json);
+            if (json is JValue val2)
+                Assert.AreEqual("abc", val2.Value);
+            else
+                Assert.Fail();
+
+            json = serializer.WriteJson(new DateTime(2018, 10, 16, 11, 06, 0, DateTimeKind.Utc));
+            Assert.IsNotNull(json);
+            if (json is JValue val3)
+                Assert.AreEqual("2018-10-16T11:06:00.000Z", val3.Value);
+            else
+                Assert.Fail();
+
+
 
         }
         // Would like to have this work, but does not work in original Json.Net either...

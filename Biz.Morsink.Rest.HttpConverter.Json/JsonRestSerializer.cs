@@ -25,6 +25,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
         private readonly IRestIdentityProvider identityProvider;
         private readonly IdentityRepresentation identityRepresentation;
+        private readonly JsonSerializer jsonSerializer;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -52,6 +53,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             this.jsonOptions = jsonOptions;
             this.identityProvider = identityProvider;
             identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
+            jsonSerializer = JsonSerializer.Create(jsonOptions.Value.SerializerSettings);
         }
         protected override IForType CreateSerializer(Type ty)
         {
@@ -203,7 +205,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="item">An SValue object to serialize.</param>
         public void WriteJson(JsonWriter writer, SValue item)
         {
-            writer.WriteValue(item.Value);
+            jsonSerializer.Serialize(writer, item.Value);
         }
         /// <summary>
         /// Serialize an SArray to a JsonWriter.
