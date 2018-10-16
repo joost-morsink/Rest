@@ -6,11 +6,17 @@ using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A TypeDescriptorKind for type that have a type representation.
+    /// </summary>
     public class RepresentableDescriptorKind : TypeDescriptorCreator.IKind
     {
 
         private readonly IEnumerable<ITypeRepresentation> representations;
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="representations">A collection of type representations to use for this kind.</param>
         public RepresentableDescriptorKind(IEnumerable<ITypeRepresentation> representations)
         {
             this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();

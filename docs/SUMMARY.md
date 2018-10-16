@@ -7,6 +7,7 @@
 * [HTTP Converters](httpConv.md)
   * [Xml](xml.md)
   * [Hal](hal.md)
+  * [Serialization](serialize.md)
 * [Capabilities](capabilities.md)
 * [Values](values.md)
   * [Embeddings](embed.md)

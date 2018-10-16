@@ -6,8 +6,14 @@ using System.Text;
 using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A Type representation for tuples as intersections.
+    /// </summary>
     public class TupleAsIntersectionRepresentation : ITypeRepresentation
     {
+        /// <summary>
+        /// A singleton property for TupleAsIntersectionRepresentation.
+        /// </summary>
         public static TupleAsIntersectionRepresentation Instance { get; } = new TupleAsIntersectionRepresentation();
 
         private ConcurrentDictionary<Type, Func<object, object[]>> getValueDict = new ConcurrentDictionary<Type, Func<object, object[]>>();
@@ -38,6 +44,11 @@ namespace Biz.Morsink.Rest.Schema
             return lambda.Compile();
         }
 
+        /// <summary>
+        /// Checks whether the specified type is a Tuple type.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the specified type is a Tuple type, false otherwise.</returns>
         public static bool IsTuple(Type type)
             => type.Namespace == "System" && type.Name.StartsWith("Tuple`");
 

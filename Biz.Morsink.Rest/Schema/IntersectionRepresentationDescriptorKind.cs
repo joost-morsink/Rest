@@ -7,9 +7,20 @@ using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A descriptor kind for the IntersectionRepresentation classes.
+    /// </summary>
     public class IntersectionRepresentationDescriptorKind : TypeDescriptorCreator.IKind
     {
+        /// <summary>
+        /// A singleton instance for the kind.
+        /// </summary>
         public static IntersectionRepresentationDescriptorKind Instance { get; } = new IntersectionRepresentationDescriptorKind();
+        /// <summary>
+        /// Determines if a type is of the IntersectionRepresentation kind.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the type is assignable to IntersectionRepresentation, false otherwise.</returns>
         public static bool IsOfKind(Type type)
             => typeof(IntersectionRepresentation).IsAssignableFrom(type);
 

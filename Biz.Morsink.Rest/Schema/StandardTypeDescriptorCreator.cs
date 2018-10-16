@@ -8,7 +8,8 @@ using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
-    public class StandardTypeDescriptorCreator : ITypeDescriptorCreator { 
+    public class StandardTypeDescriptorCreator : ITypeDescriptorCreator
+    {
         private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
         private ConcurrentDictionary<string, TypeDescriptor> byString;
 
@@ -124,14 +125,6 @@ namespace Biz.Morsink.Rest.Schema
         /// <returns></returns>
         public TypeDescriptor GetDescriptorByName(string name)
             => byString.TryGetValue(name, out var res) ? res : null;
-        /// <summary>
-        /// Gets the 'name' for a Type.
-        /// The name is used as a key to lookup TypeDescriptors.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <returns>The name for a type.</returns>
-        public string GetTypeName(Type type)
-            => type.ToString().Replace('+', '.');
 
         public Serializer<C>.IForType CreateSerializer<C>(Serializer<C> serializer, Type t)
             where C : SerializationContext<C>
@@ -141,5 +134,13 @@ namespace Biz.Morsink.Rest.Schema
                 throw new InvalidOperationException("Cannot create serializer for type.");
             return specificSerializer;
         }
+        /// <summary>
+        /// Gets the 'name' for a Type.
+        /// The name is used as a key to lookup TypeDescriptors.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>The name for a type.</returns>
+        public string GetTypeName(Type type)
+            => TypeDescriptorCreator.GetTypeName(type);
     }
 }

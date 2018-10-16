@@ -14,12 +14,25 @@ using SerializationContext = Biz.Morsink.Rest.Serialization.SerializationContext
 
 namespace Biz.Morsink.Rest.HttpConverter.HalJson
 {
+    /// <summary>
+    /// A serializer for the HAL Json media type.
+    /// </summary>
     public class HalJsonRestSerializer : Serializer<SerializationContext>
     {
         private readonly IOptions<HalJsonConverterOptions> halOptions;
         private readonly IRestIdentityProvider identityProvider;
         private readonly IdentityRepresentation identityRepresentation;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A type descriptor creator.</param>
+        /// <param name="halOptions">Options for the HAL Json media type.</param>
+        /// <param name="identityProvider">A Rest identity provider.</param>
+        /// <param name="prefixContainerAccessor">A prefix container accessor.</param>
+        /// <param name="options">Generic Rest Asp.Net options.</param>
+        /// <param name="currentHttpRestConverterAccessor">A accessor for the current http converter.</param>
+        /// <param name="converter">An optional data converter.</param>
         public HalJsonRestSerializer(
             ITypeDescriptorCreator typeDescriptorCreator,
             IOptions<HalJsonConverterOptions> halOptions,
@@ -152,11 +165,21 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     return inner.Serialize(context.WithParent(item.Id), item);
             }
         }
+        /// <summary>
+        /// Convert the object to intermediate format and serialize to a JsonWriter.
+        /// </summary>
+        /// <param name="writer">A JsonWriter</param>
+        /// <param name="item">The object to serialize.</param>
         public void WriteJson(JsonWriter writer, object item)
         {
             var sitem = Serialize(SerializationContext.Create(identityProvider), item);
             WriteJson(writer, sitem);
         }
+        /// <summary>
+        /// Serialize an SItem to a JsonWriter.
+        /// </summary>
+        /// <param name="writer">The JsonWriter.</param>
+        /// <param name="item">An SItem object to serialize.</param>
         public void WriteJson(JsonWriter writer, SItem item)
         {
             switch (item)
@@ -172,6 +195,11 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                     break;
             }
         }
+        /// <summary>
+        /// Serialize an SObject to a JsonWriter.
+        /// </summary>
+        /// <param name="writer">The JsonWriter.</param>
+        /// <param name="item">An SObject object to serialize.</param>
         public void WriteJson(JsonWriter writer, SObject item)
         {
             writer.WriteStartObject();
@@ -186,10 +214,20 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             }
             writer.WriteEndObject();
         }
+        /// <summary>
+        /// Serialize an SValue to a JsonWriter.
+        /// </summary>
+        /// <param name="writer">The JsonWriter.</param>
+        /// <param name="item">An SValue object to serialize.</param>
         public void WriteJson(JsonWriter writer, SValue item)
         {
             writer.WriteValue(item.Value);
         }
+        /// <summary>
+        /// Serialize an SArray to a JsonWriter.
+        /// </summary>
+        /// <param name="writer">The JsonWriter.</param>
+        /// <param name="item">An SArray object to serialize.</param>
         public void WriteJson(JsonWriter writer, SArray item)
         {
             writer.WriteStartArray();
@@ -198,6 +236,11 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             writer.WriteEndArray();
         }
 
+        /// <summary>
+        /// Deserialize an SItem from a JsonReader.
+        /// </summary>
+        /// <param name="reader">The JsonReader.</param>
+        /// <returns>An SItem representing the content of the reader.</returns>
         public SItem ReadJson(JsonReader reader)
         {
             if (reader.TokenType == JsonToken.None)
@@ -244,10 +287,22 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 }
             }
         }
+        /// <summary>
+        /// Deserialize an object from a JsonReader.
+        /// </summary>
+        /// <param name="reader">The JsonReader.</param>
+        /// <param name="type">The type of object to read.</param>
+        /// <returns>An object representing the content of the reader.</returns>    
         public object ReadJson(JsonReader reader, Type type)
         {
             return Deserialize(Serialization.SerializationContext.Create(identityProvider), type, ReadJson(reader));
         }
+        /// <summary>
+        /// Deserialize an object from a JsonReader.
+        /// </summary>
+        /// <typeparam name="T">The type of object to read.</typeparam>
+        /// <param name="reader">The JsonReader.</param>
+        /// <returns>An object representing the content of the reader.</returns>    
         public T ReadJson<T>(JsonReader reader)
         {
             return Deserialize<T>(Serialization.SerializationContext.Create(identityProvider), ReadJson(reader));

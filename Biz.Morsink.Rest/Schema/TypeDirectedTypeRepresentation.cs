@@ -4,9 +4,25 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// An abstract base class for type representations that need direction when converted back to a representable.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="R"></typeparam>
     public abstract class TypeDirectedTypeRepresentation<T, R> : ITypeRepresentation
     {
+        /// <summary>
+        /// Gets a representation for the specified object.
+        /// </summary>
+        /// <param name="item">The object to represent.</param>
+        /// <returns>A representation for the specified object.</returns>
         public abstract R GetRepresentation(T item);
+        /// <summary>
+        /// Gets a representable that is represented by the specified representation.
+        /// </summary>
+        /// <param name="representation">The representation.</param>
+        /// <param name="specific">The type direction for getting a representable.</param>
+        /// <returns>An object that can be represented by the representation, of the specified type.</returns>
         public abstract T GetRepresentable(R representation, Type specific);
 
         public virtual Type GetRepresentableType(Type type)

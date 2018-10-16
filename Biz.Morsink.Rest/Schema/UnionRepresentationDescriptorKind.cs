@@ -8,9 +8,16 @@ using Biz.Morsink.Rest.Serialization;
 using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A TypeDescriptor kind for the UnionRepresentation class.
+    /// </summary>
     public class UnionRepresentationDescriptorKind : TypeDescriptorCreator.IKind
     {
+        /// <summary>
+        /// A singleton property for UnionRepresentationDescriptorKind.
+        /// </summary>
         public static UnionRepresentationDescriptorKind Instance { get; } = new UnionRepresentationDescriptorKind();
+
         public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, TypeDescriptorCreator.Context context)
         {
             if (!IsOfKind(context.Type))
@@ -21,6 +28,11 @@ namespace Biz.Morsink.Rest.Schema
 
         bool TypeDescriptorCreator.IKind.IsOfKind(Type type) => IsOfKind(type);
 
+        /// <summary>
+        /// Checks whether the type is of the UnionRepresentation kind.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the type is assignable to UnionRepresentation, false otherwise.</returns>
         public static bool IsOfKind(Type type)
             => typeof(UnionRepresentation).IsAssignableFrom(type);
 

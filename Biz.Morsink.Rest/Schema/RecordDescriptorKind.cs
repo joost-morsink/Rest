@@ -34,7 +34,7 @@ namespace Biz.Morsink.Rest.Schema
 
             if (HasParameterlessConstructor(context.Type))
             {
-                var props = GetWriteableProperties(ti)
+                var props = GetWritableProperties(ti)
                     .Select(x => new PropertyDescriptor<TypeDescriptor>(x.Name, creator.GetReferableDescriptor(context.WithType(x.PropertyType).WithCutoff(null)), x.GetCustomAttributes<RequiredAttribute>().Any()));
 
                 return props.Any()
@@ -56,6 +56,11 @@ namespace Biz.Morsink.Rest.Schema
             }
         }
 
+        /// <summary>
+        /// Gets all constructors with corresponding property parameter pairings.
+        /// </summary>
+        /// <param name="type">The declaring type for the constructors.</param>
+        /// <returns>A collection of constructors with property parameter pairings.</returns>
         public static IEnumerable<IGrouping<ConstructorInfo, (PropertyInfo, ParameterInfo)>> GetConstructorProperties(Type type)
         {
             var props = GetReadableProperties(type).ToArray();
@@ -68,6 +73,12 @@ namespace Biz.Morsink.Rest.Schema
                        CaseInsensitiveEqualityComparer.Instance)
                    group (p.prop, p.par) by p.ci;
         }
+        /// <summary>
+        /// Gets the readonly properties for a type, optionally with a cutoff base type.
+        /// </summary>
+        /// <param name="type">The declaring type.</param>
+        /// <param name="cutoff">An optional cutoff type where BaseType traversal should stop.</param>
+        /// <returns>A collection of properties.</returns>
         public static IEnumerable<PropertyInfo> GetReadonlyProperties(Type type, Type cutoff = null)
             => type.GetTypeInfo()
                 .Iterate(x => x.BaseType?.GetTypeInfo())
@@ -77,8 +88,12 @@ namespace Biz.Morsink.Rest.Schema
                 .GroupBy(x => x.Name)
                 .Select(x => x.First());
 
-
-        public static IEnumerable<PropertyInfo> GetWriteableProperties(Type ti)
+        /// <summary>
+        /// Gets the writable properies for a type.
+        /// </summary>
+        /// <param name="ti">The declaring type of the writable properties.</param>
+        /// <returns>A collection of writable properties.</returns>
+        public static IEnumerable<PropertyInfo> GetWritableProperties(Type ti)
         {
             return ti.GetTypeInfo().Iterate(x => x.BaseType?.GetTypeInfo())
                    .TakeWhile(x => x != null)
@@ -87,6 +102,11 @@ namespace Biz.Morsink.Rest.Schema
                    .GroupBy(x => x.Name)
                    .Select(x => x.First());
         }
+        /// <summary>
+        /// Gets the readable properies for a type.
+        /// </summary>
+        /// <param name="ti">The declaring type of the readable properties.</param>
+        /// <returns>A collection of readable properties.</returns>
         public static IEnumerable<PropertyInfo> GetReadableProperties(Type ti)
         {
             return ti.GetTypeInfo().Iterate(x => x.BaseType?.GetTypeInfo())
@@ -97,6 +117,11 @@ namespace Biz.Morsink.Rest.Schema
                    .Select(x => x.First());
         }
 
+        /// <summary>
+        /// Checks whether the specified type has a parameterless constructor.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static bool HasParameterlessConstructor(Type type)
             => type.GetTypeInfo().DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any();
         /// <summary>
@@ -111,12 +136,20 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return IsOfKindImmutable(type);
         }
-
+        /// <summary>
+        /// Checks whether the specified type is of the immutable record kind.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the specified type is of the immutable record kind, false otherwise.</returns>
         public static bool IsOfKindImmutable(Type type)
             => GetConstructorProperties(type).Any();
-
+        /// <summary>
+        /// Checks whether the specified type is of the mutable record kind.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the specified type is of the mutable record kind, false otherwise.</returns>
         public static bool IsOfKindMutable(Type type)
-            => GetWriteableProperties(type).Any();
+            => GetWritableProperties(type).Any();
 
 
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
@@ -146,7 +179,7 @@ namespace Biz.Morsink.Rest.Schema
                 var input = Ex.Parameter(typeof(SItem), "item");
                 var obj = Ex.Parameter(typeof(SObject), "obj");
                 var other = Ex.Parameter(typeof(List<SProperty>), "other");
-                var wprops = GetWriteableProperties(typeof(T));
+                var wprops = GetWritableProperties(typeof(T));
                 var res = Ex.Parameter(typeof(T), "res");
                 var parameters = props.Select(t => Ex.Parameter(t.Item2.ParameterType, $"p{t.Item1.Name}")).ToArray();
                 var block = Ex.Block(parameters.Concat(new[] { obj, other, res }),
@@ -182,7 +215,7 @@ namespace Biz.Morsink.Rest.Schema
 
             private Func<C, SItem, T> MakeMutableDeserializer()
             {
-                var props = GetWriteableProperties(typeof(T));
+                var props = GetWritableProperties(typeof(T));
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var input = Ex.Parameter(typeof(SItem), "input");
                 var obj = Ex.Parameter(typeof(SObject), "obj");

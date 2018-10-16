@@ -9,8 +9,15 @@ namespace Biz.Morsink.Rest.Serialization
     {
         partial class Typed<T>
         {
+            /// <summary>
+            /// This serializer simply wraps the value in an SValue.
+            /// </summary>
             public class Simple : Typed<T>
             {
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="parent">The parent serializer.</param>
                 public Simple(Serializer<C> parent) : base(parent) {
                 }
                 public override SItem Serialize(C context, T item)

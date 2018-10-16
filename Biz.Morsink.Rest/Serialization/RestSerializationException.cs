@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace Biz.Morsink.Rest.Serialization
 {
+    /// <summary>
+    /// A generic exception for RestSerialization.
+    /// </summary>
     [Serializable]
     public class RestSerializationException : Exception
     {

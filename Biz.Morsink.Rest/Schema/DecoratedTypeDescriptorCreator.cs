@@ -6,6 +6,9 @@ using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
+    /// <summary>
+    /// A TypeDescriptorCreator that decorates another TypeDescriptorCreator with extra type representations.
+    /// </summary>
     public class DecoratedTypeDescriptorCreator : ITypeDescriptorCreator
     {
         private readonly ITypeDescriptorCreator inner;
@@ -14,6 +17,10 @@ namespace Biz.Morsink.Rest.Schema
         private readonly ConcurrentDictionary<Type, TypeDescriptor> byType;
         private readonly ConcurrentDictionary<string, TypeDescriptor> byName;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="inner">The TypeDescriptorCreator to decorate.</param>
         public DecoratedTypeDescriptorCreator(ITypeDescriptorCreator inner)
         {
             representations = new List<ITypeRepresentation>();
@@ -27,16 +34,31 @@ namespace Biz.Morsink.Rest.Schema
             byType = new ConcurrentDictionary<Type, TypeDescriptor>();
             byName = new ConcurrentDictionary<string, TypeDescriptor>();
         }
+        /// <summary>
+        /// Add a type representation.
+        /// </summary>
+        /// <param name="typeRepresentation">The type representation to add.</param>
+        /// <returns>This.</returns>
         public DecoratedTypeDescriptorCreator Decorate(ITypeRepresentation typeRepresentation)
         {
             representations.Add(typeRepresentation);
             return this;
         }
+        /// <summary>
+        /// Adds a range of type representations.
+        /// </summary>
+        /// <param name="typeRepresentations">The type representations to add.</param>
+        /// <returns>This.</returns>
         public DecoratedTypeDescriptorCreator Decorate(IEnumerable<ITypeRepresentation> typeRepresentations)
         {
             representations.AddRange(typeRepresentations);
             return this;
         }
+        /// <summary>
+        /// Adds a range of type representations.
+        /// </summary>
+        /// <param name="typeRepresentation">A function generating the type representaions to add.</param>
+        /// <returns>This.</returns>
         public DecoratedTypeDescriptorCreator Decorate(Func<DecoratedTypeDescriptorCreator, IEnumerable<ITypeRepresentation>> typeRepresentation)
         {
             representations.AddRange(typeRepresentation(this));
@@ -73,6 +95,6 @@ namespace Biz.Morsink.Rest.Schema
         }
 
         public string GetTypeName(Type type)
-            => type.ToString().Replace('+', '.');
+            => inner.GetTypeName(type);
     }
 }

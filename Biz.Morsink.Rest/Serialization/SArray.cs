@@ -5,15 +5,29 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Serialization
 {
+    /// <summary>
+    /// An array of itens.
+    /// </summary>
     public class SArray : SItem
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="content">Items to be contained in the array.</param>
         public SArray(IEnumerable<SItem> content)
         {
             Content = content as SItem[] ?? content.ToArray();
         }
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="content">Items to be contained in the array.</param>
         public SArray(params SItem[] content) : this((IEnumerable<SItem>)content)
         { }
 
+        /// <summary>
+        /// A list of items contained in this array.
+        /// </summary>
         public IReadOnlyList<SItem> Content { get; }
 
         public override int GetHashCode()

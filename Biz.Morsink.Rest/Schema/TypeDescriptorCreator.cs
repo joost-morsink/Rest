@@ -161,5 +161,13 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return false;
         }
+        /// <summary>
+        /// Gets the 'name' for a Type.
+        /// The name is used as a key to lookup TypeDescriptors.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>The name for a type.</returns>
+        public static string GetTypeName(Type type)
+            => type.ToString().Replace('+', '.');
     }
 }
