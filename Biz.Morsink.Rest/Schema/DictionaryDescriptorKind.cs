@@ -60,7 +60,7 @@ namespace Biz.Morsink.Rest.Schema
         /// Checks if the type is either exactly an IDictionary&lt;string, T&gt; or Dictionary&lt;string, T&gt;.
         /// </summary>
         public static bool IsDictionary(Type type)
-            => type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(Dictionary<,>) || type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            => type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(Dictionary<,>) || type.GetGenericTypeDefinition() == typeof(IDictionary<,>) || type.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>))
                 && type.GetGenericArguments()[0] == typeof(string);
 
         private static bool HasParameterlessConstructor(Type type)

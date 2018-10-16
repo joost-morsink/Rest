@@ -231,6 +231,26 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual(3, back.Count);
             Assert.IsTrue(new[] { "A", "B", "C" }.All(back.ContainsKey));
         }
+        [TestMethod]
+        public void Serializer_ReadonlyDict()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                ["A"] = "abc",
+                ["B"] = "def",
+                ["C"] = "ghi"
+            };
+            var actual = serializer.Serialize<IReadOnlyDictionary<string, string>>(NewContext(), dict);
+            var expected = new SObject(
+                new SProperty("A", new SValue("abc")),
+                new SProperty("B", new SValue("def")),
+                new SProperty("C", new SValue("ghi")));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<IReadOnlyDictionary<string, string>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual(3, back.Count);
+            Assert.IsTrue(dict.Keys.All(back.ContainsKey));
+        }
         public struct EmailAddress
         {
             public EmailAddress(string address)
