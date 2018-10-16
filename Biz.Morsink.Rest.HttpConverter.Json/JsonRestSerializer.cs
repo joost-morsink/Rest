@@ -24,7 +24,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         private readonly IOptions<JsonHttpConverterOptions> jsonOptions;
         private readonly IRestIdentityProvider identityProvider;
-        private readonly IdentityRepresentation identityRepresentation;
         private readonly JsonSerializer jsonSerializer;
         /// <summary>
         /// Constructor.
@@ -32,17 +31,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="typeDescriptorCreator">A type descriptor creator.</param>
         /// <param name="jsonOptions">Options for the Json media type.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
-        /// <param name="prefixContainerAccessor">A prefix container accessor.</param>
-        /// <param name="options">Generic Rest Asp.Net options.</param>
-        /// <param name="currentHttpRestConverterAccessor">A accessor for the current http converter.</param>
         /// <param name="converter">An optional data converter.</param>
         public JsonRestSerializer(
             ITypeDescriptorCreator typeDescriptorCreator,
             IOptions<JsonHttpConverterOptions> jsonOptions,
             IRestIdentityProvider identityProvider,
-            IRestPrefixContainerAccessor prefixContainerAccessor,
-            IOptions<RestAspNetCoreOptions> options,
-            ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor,
             IDataConverter converter = null)
             : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator)
                   .Decorate(tdc => new ITypeRepresentation[] {
@@ -52,7 +45,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             this.jsonOptions = jsonOptions;
             this.identityProvider = identityProvider;
-            identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
             jsonSerializer = JsonSerializer.Create(jsonOptions.Value.SerializerSettings);
         }
         protected override IForType CreateSerializer(Type ty)
@@ -87,16 +79,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
 
             public override T Deserialize(SerializationContext context, SItem item)
             {
-                if (item is SObject obj)
-                {
-                    var href = obj.Properties.FirstOrDefault(p => p.Name.Equals("href", StringComparison.InvariantCultureIgnoreCase));
-                    if (href != null)
-                    {
-                        var rep = Parent.Deserialize(context, Parent.identityRepresentation.GetRepresentationType(typeof(T)), item);
-                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.identityRepresentation).GetRepresentable(rep, typeof(T)));
-                    }
-                }
-                // fall through:
                 return inner.Deserialize(context, item);
             }
 

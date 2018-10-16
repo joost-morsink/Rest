@@ -21,7 +21,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
     {
         private readonly IOptions<HalJsonConverterOptions> halOptions;
         private readonly IRestIdentityProvider identityProvider;
-        private readonly IdentityRepresentation identityRepresentation;
         private readonly JsonSerializer jsonSerializer;
 
         /// <summary>
@@ -30,17 +29,11 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="typeDescriptorCreator">A type descriptor creator.</param>
         /// <param name="halOptions">Options for the HAL Json media type.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
-        /// <param name="prefixContainerAccessor">A prefix container accessor.</param>
-        /// <param name="options">Generic Rest Asp.Net options.</param>
-        /// <param name="currentHttpRestConverterAccessor">A accessor for the current http converter.</param>
         /// <param name="converter">An optional data converter.</param>
         public HalJsonRestSerializer(
             ITypeDescriptorCreator typeDescriptorCreator,
             IOptions<HalJsonConverterOptions> halOptions,
             IRestIdentityProvider identityProvider,
-            IRestPrefixContainerAccessor prefixContainerAccessor,
-            IOptions<RestAspNetCoreOptions> options,
-            ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor,
             IDataConverter converter = null)
             : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator)
                   .Decorate(tdc => new ITypeRepresentation[]
@@ -50,7 +43,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         {
             this.halOptions = halOptions;
             this.identityProvider = identityProvider;
-            identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
             jsonSerializer = JsonSerializer.Create(halOptions.Value.SerializerSettings);
         }
         protected override IForType CreateSerializer(Type ty)
@@ -85,16 +77,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
 
             public override T Deserialize(SerializationContext context, SItem item)
             {
-                if (item is SObject obj)
-                {
-                    var href = obj.Properties.FirstOrDefault(p => p.Name.Equals("href", StringComparison.InvariantCultureIgnoreCase));
-                    if (href != null)
-                    {
-                        var rep = Parent.Deserialize(context, Parent.identityRepresentation.GetRepresentationType(typeof(T)), item);
-                        return (T)(rep == null ? null : ((ITypeRepresentation)Parent.identityRepresentation).GetRepresentable(rep, typeof(T)));
-                    }
-                }
-                // fall through:
                 return inner.Deserialize(context, item);
             }
 
