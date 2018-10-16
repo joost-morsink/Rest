@@ -271,5 +271,65 @@ namespace Biz.Morsink.Rest.Test
             var back = serializer.Deserialize<EmailAddress>(NewContext(), actual);
             Assert.AreEqual(address, back.Address);
         }
+        [TestMethod]
+        public void Serializer_ImmList()
+        {
+            var x = ImmutableList<int>.Empty.Add(1).Add(2).Add(3);
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SArray(new SValue(1), new SValue(2), new SValue(3));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableList<int>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count);
+            Assert.AreEqual(1, back[0]);
+            Assert.AreEqual(2, back[1]);
+            Assert.AreEqual(3, back[2]);
+        }
+        [TestMethod]
+        public void Serializer_ImmArray()
+        {
+            var x = ImmutableArray<int>.Empty.Add(1).Add(2).Add(3);
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SArray(new SValue(1), new SValue(2), new SValue(3));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableArray<int>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Length);
+            Assert.AreEqual(1, back[0]);
+            Assert.AreEqual(2, back[1]);
+            Assert.AreEqual(3, back[2]);
+        }
+        [TestMethod]
+        public void Serializer_ImmStack()
+        {
+            var x = ImmutableStack<int>.Empty.Push(1).Push(2).Push(3);
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SArray(new SValue(3), new SValue(2), new SValue(1));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableStack<int>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count());
+            Assert.AreEqual(6, back.Sum());
+            Assert.AreEqual(x.Peek(), back.Peek());
+        }
+        [TestMethod]
+        public void Serializer_ImmQueue()
+        {
+            var x = ImmutableQueue<int>.Empty.Enqueue(1).Enqueue(2).Enqueue(3);
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SArray(new SValue(1), new SValue(2), new SValue(3));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableQueue<int>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count());
+            Assert.AreEqual(6, back.Sum());
+        }
+        [TestMethod]
+        public void Serializer_ImmHashSet()
+        {
+            var x = ImmutableHashSet<int>.Empty.Add(1).Add(2).Add(3);
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SArray(new SValue(1), new SValue(2), new SValue(3));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableHashSet<int>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count);
+            Assert.IsTrue(new[] { 1, 2, 3 }.All(back.Contains));
+        }
     }
 }
