@@ -24,7 +24,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             {
                 var opts = new JsonHttpConverterOptions();
                 opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-                opts.SerializerSettings.ContractResolver = serviceProvider.GetRequiredService<IContractResolver>();
                 return configure == null ? opts : configure(opts);
             });
         }

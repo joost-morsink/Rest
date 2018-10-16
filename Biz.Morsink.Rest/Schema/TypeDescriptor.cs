@@ -42,18 +42,17 @@ namespace Biz.Morsink.Rest.Schema
         public TypeDescriptor(string name, Type associatedType = null)
         {
             Name = name;
-            this.associatedType = associatedType;
+            AssociatedType = associatedType;
         }
-        private readonly Type associatedType;
-        /// <summary>
-        /// Gets the name of the TypeDescriptor.
-        /// </summary>
-        public string Name { get; }
         /// <summary>
         /// Gets the associated type of the TypeDescriptor.
         /// This value might be null!
         /// </summary>
-        public Type GetAssociatedType() => associatedType;
+        public Type AssociatedType { get; }
+        /// <summary>
+        /// Gets the name of the TypeDescriptor.
+        /// </summary>
+        public string Name { get; }
 
         /// <summary>
         /// This class represents any value.
@@ -178,7 +177,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             public Array(TypeDescriptor elementType)
                 : base(string.Concat(nameof(Array), "<", elementType.Name, ">"),
-                      elementType.GetAssociatedType() == null ? null : typeof(IEnumerable<>).MakeGenericType(elementType.GetAssociatedType()))
+                      elementType.AssociatedType== null ? null : typeof(IEnumerable<>).MakeGenericType(elementType.AssociatedType))
             {
                 ElementType = elementType;
             }
@@ -245,7 +244,7 @@ namespace Biz.Morsink.Rest.Schema
             /// <param name="name">he name for the type descriptor.T</param>
             /// <param name="valueType">A type descriptor for the values in the dictionary.</param>
             public Dictionary(string name, TypeDescriptor valueType)
-                : base(name, valueType?.GetAssociatedType() == null ? null : (typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType?.GetAssociatedType())))
+                : base(name, valueType?.AssociatedType == null ? null : (typeof(IDictionary<,>).MakeGenericType(typeof(string), valueType?.AssociatedType)))
             {
                 ValueType = valueType;
             }
@@ -290,7 +289,7 @@ namespace Biz.Morsink.Rest.Schema
             /// </summary>
             /// <param name="baseType">The base type of the value.</param>
             /// <param name="innerValue">The actual value.</param>
-            public Value(TypeDescriptor baseType, object innerValue) : base(string.Concat(baseType.Name, "=", innerValue.ToString()), baseType.GetAssociatedType())
+            public Value(TypeDescriptor baseType, object innerValue) : base(string.Concat(baseType.Name, "=", innerValue.ToString()), baseType.AssociatedType)
             {
                 BaseType = baseType;
                 InnerValue = innerValue;
@@ -425,7 +424,7 @@ namespace Biz.Morsink.Rest.Schema
             /// <param name="expandedDescriptor"></param>
             /// <returns>A new referable TypeDescriptor.</returns>
             public static Referable Create(string refname, TypeDescriptor expandedDescriptor)
-                => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor), expandedDescriptor?.GetAssociatedType());
+                => new Referable(refname, new Lazy<TypeDescriptor>(() => expandedDescriptor), expandedDescriptor?.AssociatedType);
 
             private readonly Lazy<TypeDescriptor> expandedDescriptor;
             /// <summary>

@@ -45,7 +45,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml.Test
             var typereps = Enumerable.Empty<ITypeRepresentation>();
             var transs = Enumerable.Empty<IXmlSchemaTranslator>();
             var converter = DataConverter.Default;
-            var tdc = new TypeDescriptorCreator(typereps);
+            var tdc = new StandardTypeDescriptorCreator(typereps);
             serializer = new XmlSerializer(tdc, converter, transs, typereps);
         }
         [TestMethod]

@@ -125,7 +125,7 @@ Of course it is possible to define a few ways of doing it.
 ## Canonical type transformation
 Types are generally transformed to `TypeDescriptor`s by a generic algorithm, called the canonical type transformation. 
 In cases where the canonical type transformation is not adequate, an override mechanism called 'Representations' can be used (see below).
-A `TypeDescriptorCreator` instance can be used to construct `TypeDescriptor`s for .Net types.
+A `ITypeDescriptorCreator` instance can be used to construct `TypeDescriptor`s for .Net types.
 
 ### Primitives
 All primitive types have a canonical type descriptors, shown in the table below:
@@ -157,6 +157,7 @@ Precision constraints might be added in a future version.
 If a registration of a certain type is not yet present, the creator must create a descriptor, and it does so by checking whether types fit a particular form.
 These forms are called kinds, which are organized in a kind pipeline.
 This pipeline tries the registered kinds in sequence, until it can find a kind that is able to create a type descriptor for the type.
+Kinds are not only able to construct `TypeDescriptor` instances for types that are of its _kind_, but can also construct basic [serializers](serialize.md) for serializing and deserializing these types to and from the intermediate format.
 
 A kind implements the `TypeDescriptorCreator.IKind` interface, and the pipeline the `TypeDescriptorCreator.IKindPipeline` interface.
 Both interfaces have essentially the same signature.

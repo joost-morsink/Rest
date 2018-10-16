@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Biz.Morsink.Rest.Utils;
-using Biz.Morsink.Rest.FSharp;
+using Biz.Morsink.Rest.Serialization;
 
 namespace Biz.Morsink.Rest.Schema
 {
@@ -22,13 +21,17 @@ namespace Biz.Morsink.Rest.Schema
                 this.kinds = kinds.ToArray();
             }
 
-            public TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context)
+            public TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, Context context)
             {
                 TypeDescriptor result = null;
                 for (int i = 0; i < kinds.Length && result == null; i++)
                     result = kinds[i].GetDescriptor(creator, context);
                 return result;
             }
+
+            public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
+                => kinds.AsEnumerable().Select(kind => kind.GetSerializer(serializer, type)).Where(s => s != null).FirstOrDefault();
+
             public bool IsOfKind(Type type)
                 => kinds.Any(k => k.IsOfKind(type));
         }
@@ -47,13 +50,22 @@ namespace Biz.Morsink.Rest.Schema
             /// If the context matches this kind it should return a TypeDescriptor for the context. 
             /// If the context does not match, this method should return null.
             /// </returns>
-            TypeDescriptor GetDescriptor(TypeDescriptorCreator creator, Context context);
+            TypeDescriptor GetDescriptor(ITypeDescriptorCreator creator, Context context);
             /// <summary>
             /// Checks if some type is of this kind.
             /// </summary>
             /// <param name="type">The type to check.</param>
             /// <returns>True if the specified type is of this kind.</returns>
             bool IsOfKind(Type type);
+            /// <summary>
+            /// Gets a serializer for a certain type.
+            /// </summary>
+            /// <typeparam name="C">The serialization context type.</typeparam>
+            /// <param name="serializer">The parent serializer.</param>
+            /// <param name="type">The type to create a serializer for.</param>
+            /// <returns></returns>
+            Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type)
+                where C : SerializationContext<C>;
         }
         /// <summary>
         /// The interface for a kind pipeline.
@@ -135,79 +147,7 @@ namespace Biz.Morsink.Rest.Schema
             public Context PopEnclosing()
                 => new Context(Type, Cutoff, Enclosing.Pop());
         }
-        private ConcurrentDictionary<Type, TypeDescriptor> descriptors;
-        private ConcurrentDictionary<string, TypeDescriptor> byString;
-        private readonly IKindPipeline kindPipeline;
-        private readonly IEnumerable<ITypeRepresentation> representations;
-        /// <summary>
-        /// Gets a collection of all the registered types.
-        /// </summary>
-        public ICollection<Type> RegisteredTypes => descriptors.Keys;
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="representations">A collection of type representations.</param>
-        /// <param name="kindPipeline">
-        /// A pipeline of different creator kinds. The default pipeline is:
-        /// <list type="number">
-        /// <item>NullableDescriptorKind</item>
-        /// <item>DictionaryDescriptorKind</item>
-        /// <item>ArrayDescriptorKind</item>
-        /// <item>FSharpUnionDescriptorKind</item>
-        /// <item>UnionDescriptorKind</item>
-        /// <item>RecordDescriptorKind</item>
-        /// <item>UnitDescriptorKind</item>
-        /// </list>
-        /// </param>
-        public TypeDescriptorCreator(IEnumerable<ITypeRepresentation> representations = null, IKindPipeline kindPipeline = null)
-        {
-            this.representations = representations ?? Enumerable.Empty<ITypeRepresentation>();
-            var d = new ConcurrentDictionary<Type, TypeDescriptor>();
-
-            d[typeof(string)] = TypeDescriptor.Primitive.String.Instance;
-            d[typeof(long)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(int)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(short)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(sbyte)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(ulong)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(uint)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(ushort)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-            d[typeof(byte)] = TypeDescriptor.Primitive.Numeric.Integral.Instance;
-
-            d[typeof(decimal)] = TypeDescriptor.Primitive.Numeric.Float.Instance;
-            d[typeof(float)] = TypeDescriptor.Primitive.Numeric.Float.Instance;
-            d[typeof(double)] = TypeDescriptor.Primitive.Numeric.Float.Instance;
-
-            d[typeof(bool)] = TypeDescriptor.Primitive.Boolean.Instance;
-
-            d[typeof(DateTime)] = TypeDescriptor.Primitive.DateTime.Instance;
-
-            d[typeof(object)] = TypeDescriptor.Any.Instance;
-
-            descriptors = d;
-            byString = new ConcurrentDictionary<string, TypeDescriptor>(descriptors.Select(e => new KeyValuePair<string, TypeDescriptor>(e.Key.ToString(), e.Value)));
-
-            this.kindPipeline = kindPipeline ?? CreateKindPipeline(new IKind[] {
-                NullableDescriptorKind.Instance,
-                DictionaryDescriptorKind.Instance,
-                ArrayDescriptorKind.Instance,
-                SemanticStructKind.Instance,
-                FSharpUnionDescriptorKind.Instance,
-                UnionRepresentationDescriptorKind.Instance,
-                UnionDescriptorKind.Instance,
-                RecordDescriptorKind.Instance,
-                UnitDescriptorKind.Instance,
-            });
-        }
-
-        /// <summary>
-        /// Gets a TypeDescriptor for this type.
-        /// </summary>
-        /// <param name="type">The type to get a TypeDescriptor for.</param>
-        /// <returns>A TypeDescriptor for the type.</returns>
-        public TypeDescriptor GetDescriptor(Type type)
-            => type == null ? null : GetDescriptor(new Context(type));
-        private static bool IsPrimitiveTypeDescriptor(TypeDescriptor desc)
+        internal static bool IsPrimitiveTypeDescriptor(TypeDescriptor desc)
         {
             if (desc is TypeDescriptor.Primitive || desc is TypeDescriptor.Null || desc is TypeDescriptor.Referable
                 || desc is TypeDescriptor.Reference || desc is TypeDescriptor.Value)
@@ -222,51 +162,12 @@ namespace Biz.Morsink.Rest.Schema
                 return false;
         }
         /// <summary>
-        /// Creates a TypeDescriptor and makes it 'Referable' if it is not a primitive descriptor.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public TypeDescriptor GetReferableDescriptor(Context context)
-        {
-            var desc = GetDescriptor(context);
-            if (IsPrimitiveTypeDescriptor(desc))
-                return desc;
-            else
-                return TypeDescriptor.Referable.Create(GetTypeName(context.Type), desc);
-        }
-        /// <summary>
-        /// Get a TypeDescriptor for a given context.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <returns>A TypeDescriptor.</returns>
-        public TypeDescriptor GetDescriptor(Context context)
-        {
-            if (context.Enclosing.Contains(context.Type))
-                return new TypeDescriptor.Reference(GetTypeName(context.Type));
-            return descriptors.GetOrAdd(context.Type, ty =>
-            {
-                ty = representations.Where(rep => rep.IsRepresentable(ty)).Select(rep => rep.GetRepresentationType(ty)).FirstOrDefault() ?? ty;
-                var ctx = context.WithType(ty).PushEnclosing(context.Type);
-                var desc = kindPipeline.GetDescriptor(this, ctx);
-                byString.AddOrUpdate(GetTypeName(context.Type), desc, (_, __) => desc);
-                return desc;
-            });
-        }
-        /// <summary>
-        /// Gets a TypeDescriptor with a specified name.
-        /// </summary>
-        /// <param name="name">The name of the TypeDescriptor.</param>
-        /// <returns></returns>
-        public TypeDescriptor GetDescriptorByName(string name)
-            => byString.TryGetValue(name, out var res) ? res : null;
-        /// <summary>
         /// Gets the 'name' for a Type.
         /// The name is used as a key to lookup TypeDescriptors.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>The name for a type.</returns>
-        public string GetTypeName(Type type)
+        public static string GetTypeName(Type type)
             => type.ToString().Replace('+', '.');
-
     }
 }

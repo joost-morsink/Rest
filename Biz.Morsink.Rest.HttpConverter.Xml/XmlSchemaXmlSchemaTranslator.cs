@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
     {
         private XmlSerializer serializer;
         private readonly Lazy<IEnumerable<IXmlSchemaTranslator>> translators;
-        private readonly TypeDescriptorCreator typeDescriptorCreator;
+        private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
         /// <summary>
         /// Constructor.
@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         public XmlSchemaXmlSchemaTranslator(IServiceProvider serviceProvider)
         {
             this.translators = new Lazy<IEnumerable<IXmlSchemaTranslator>>(() => serviceProvider.GetService<IEnumerable<IXmlSchemaTranslator>>());
-            this.typeDescriptorCreator = serviceProvider.GetService<TypeDescriptorCreator>();
+            this.typeDescriptorCreator = serviceProvider.GetService<ITypeDescriptorCreator>();
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
 
         private XElement Serialize(TypeDescriptor item)
         {
-            var type = item.GetAssociatedType();
+            var type = item.AssociatedType;
             if (type == null)
                 return standardSchema();
             else

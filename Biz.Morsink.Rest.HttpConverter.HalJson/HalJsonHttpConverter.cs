@@ -21,7 +21,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// </summary>
         public const string MEDIA_TYPE = "application/hal+json";
 
-        private readonly HalSerializer serializer;
+        private readonly HalJsonRestSerializer serializer;
         private readonly IOptions<HalJsonConverterOptions> options;
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="serializer">The HalSerializer instance to use.</param>
         /// <param name="restOptions">Options for the Rest for ASP.Net core general component.</param>
-        public HalJsonHttpConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, HalSerializer serializer, IOptions<HalJsonConverterOptions> options)
+        public HalJsonHttpConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, HalJsonRestSerializer serializer, IOptions<HalJsonConverterOptions> options)
             : base(identityProvider, scopeAccessor, restOptions)
         {
             this.serializer = serializer;
@@ -68,7 +68,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 try
                 {
-                    return ser.Deserialize(jtr, t);
+                    return serializer.ReadJson(jtr, t);
                 }
                 catch (Exception e)
                 {
@@ -105,11 +105,15 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <returns>A Task.</returns>
         protected override async Task WriteValue(Stream bodyStream, RestResponse response, IRestResult result, IRestValue value)
         {
-            var json = serializer.Serialize(value.GetType(), HalContext.Create(IdentityProvider), value);
-
-            using (var swri = new StreamWriter(bodyStream))
-            using (var wri = new JsonTextWriter(swri))
-                await json.WriteToAsync(wri);
+            using (var ms = new MemoryStream())
+            {
+                var context = Serialization.SerializationContext.Create(IdentityProvider);
+                using (var swri = new StreamWriter(ms))
+                using (var wri = new JsonTextWriter(swri))
+                    serializer.WriteJson(wri, value);
+                var body = ms.ToArray();
+                await bodyStream.WriteAsync(body, 0, body.Length);
+            }
         }
         /// <summary>
         /// Hal Json does not support Curies for links.

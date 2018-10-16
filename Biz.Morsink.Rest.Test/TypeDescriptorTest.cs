@@ -1,8 +1,8 @@
-﻿using Biz.Morsink.Rest.Schema;
+﻿using Biz.Morsink.Identity;
+using Biz.Morsink.Rest.Schema;
 using Biz.Morsink.Rest.Test.Helpers;
 using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ using System.Text;
 namespace Biz.Morsink.Rest.Test
 {
     [TestClass]
-    public class TypeDescriptorTest
+    public partial class TypeDescriptorTest
     {
         private static readonly TypeDescriptor personDescriptor = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.Person", new[]
             {
@@ -21,7 +21,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_Happy()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(Person));
             var expected = personDescriptor;
             Assert.AreEqual(expected, schema);
@@ -29,7 +29,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_HappyConstructor()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(PersonC));
             var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.Test.Helpers.PersonC", new[]
             {
@@ -42,7 +42,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_List()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(List<Person>));
             var expected = new TypeDescriptor.Array(new TypeDescriptor.Reference($"{typeof(Person).Namespace}.{typeof(Person).Name}"));
             Assert.AreEqual(expected, schema);
@@ -50,7 +50,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_Dictionary()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(Dictionary<string, Person>));
             var expected = new TypeDescriptor.Dictionary("", personDescriptor);
             Assert.AreEqual(expected, schema);
@@ -61,7 +61,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_FSharpUnion()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(FSharp.Tryout.Union));
             Assert.IsNotNull(schema);
             Assert.IsInstanceOfType(schema, typeof(TypeDescriptor.Union));
@@ -94,7 +94,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_FSharpSingleCaseUnion()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(FSharp.Tryout.TaggedString));
             Assert.IsNotNull(schema);
             Assert.IsInstanceOfType(schema, typeof(TypeDescriptor.Primitive.String));
@@ -102,7 +102,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_FSharpRecord()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var schema = tdc.GetDescriptor(typeof(FSharp.Tryout.Record));
             var expected = new TypeDescriptor.Record("Biz.Morsink.Rest.FSharp.Tryout.Record", new[]
             {
@@ -116,7 +116,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_FSharpOption()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var stringOption = tdc.GetDescriptor(typeof(FSharpOption<string>));
             var u = stringOption as TypeDescriptor.Union;
             Assert.IsNotNull(u);
@@ -127,7 +127,7 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_FSharpList()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var stringList = tdc.GetDescriptor(typeof(Microsoft.FSharp.Collections.FSharpList<string>));
             var a = stringList as TypeDescriptor.Array;
             Assert.IsNotNull(a);
@@ -136,10 +136,24 @@ namespace Biz.Morsink.Rest.Test
         [TestMethod]
         public void TypeDescriptor_SemanticStruct()
         {
-            var tdc = new TypeDescriptorCreator();
+            var tdc = new StandardTypeDescriptorCreator();
             var email = tdc.GetDescriptor(typeof(EmailAddress));
             Assert.IsNotNull(email);
             Assert.IsInstanceOfType(email, typeof(TypeDescriptor.Primitive.String));
+        }
+        [TestMethod]
+        public void TypeDescriptor_Representation()
+        {
+            var tdc = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance });
+            var identity = tdc.GetDescriptor(typeof(IIdentity));
+            Assert.IsNotNull(identity);
+            var rec = identity as TypeDescriptor.Record;
+            Assert.IsNotNull(rec);
+            Assert.AreEqual(1, rec.Properties.Count);
+            var prop = rec.Properties.First().Value;
+            Assert.AreEqual("Href", prop.Name);
+            Assert.IsTrue(prop.Required);
+            Assert.IsInstanceOfType(prop.Type, typeof(TypeDescriptor.Primitive.String));
         }
         public struct EmailAddress
         {

@@ -90,7 +90,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         /// <param name="repo">The repository to get the capabilities from.</param>
         /// <param name="typeDescriptorCreator">A TypeDescriptorCreator for the actual creation of TypeDescriptors.</param>
         /// <returns></returns>
-        public static RestCapabilities MakeCapabilities(IRestIdentityProvider idProvider, IRestRepository repo, TypeDescriptorCreator typeDescriptorCreator)
+        public static RestCapabilities MakeCapabilities(IRestIdentityProvider idProvider, IRestRepository repo, ITypeDescriptorCreator typeDescriptorCreator)
         {
             var res = new RestCapabilities();
             if (repo == null)

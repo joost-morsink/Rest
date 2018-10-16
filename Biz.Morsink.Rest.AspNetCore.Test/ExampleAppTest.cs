@@ -414,8 +414,8 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
 
             // Get the controller
             resp = await Get(client, link.Address);
-            var json = await GetJson(resp);
             Assert.IsTrue(resp.IsSuccessStatusCode);
+            var json = await GetJson(resp);
             Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
             Assert.IsTrue(resp.Headers.TryGetValues("Link", out var links));
             var finishLink = links.Select(ParseLink).Where(l => l != null && l.Reltype == "finish").FirstOrDefault();
@@ -540,6 +540,12 @@ namespace Biz.Morsink.Rest.AspNetCore.Test
             Assert.IsTrue(resp.Headers.TryGetValues("Supported-Versions", out var suppVers));
             Assert.AreEqual(2, suppVers.Count());
             Assert.IsTrue(suppVers.Any(v => v.StartsWith("1.")) && suppVers.Any(v => v.StartsWith("2.")));
+        }
+        [TestMethod]
+        public async Task Http_OpenapiHappy()
+        {
+            var resp = await Get(client, "/openapi");
+            Assert.IsTrue(resp.IsSuccessStatusCode);
         }
         private class Identity
         {

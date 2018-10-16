@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             private readonly RestApiDescription apiDescription;
             private readonly IEnumerable<IRestPathMapping> mappings;
             private readonly ILookup<string, IRestPathMapping> mapLookup;
-            private readonly TypeDescriptorCreator typeDescriptorCreator;
+            private readonly ITypeDescriptorCreator typeDescriptorCreator;
             private readonly IRestIdentityProvider idProvider;
 
             /// <summary>
@@ -41,7 +41,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             /// <param name="mappings">All rest path mappings.</param>
             /// <param name="typeDescriptorCreator">A TypeDescriptorCreator.</param>
             /// <param name="idProvider">A Rest Identity Provider.</param>
-            public Creator(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, TypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
+            public Creator(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
             {
                 this.apiDescription = apiDescription;
                 this.mappings = mappings;
@@ -272,7 +272,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// <param name="typeDescriptorCreator">The TypeDescriptorCreator.</param>
         /// <param name="idProvider">The Rest Identity Provider.</param>
         /// <returns></returns>
-        public static Document Create(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, TypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
+        public static Document Create(RestApiDescription apiDescription, IEnumerable<IRestPathMapping> mappings, ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider idProvider)
         {
             var c = new Creator(apiDescription, mappings, typeDescriptorCreator, idProvider);
             return c.Create();

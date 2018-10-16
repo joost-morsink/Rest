@@ -34,7 +34,7 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         [RestDocumentation("This Get operation should return an OpenAPI Specification version 3.0. It should be the one you're looking at right now.")]
         public Document Get(IIdentity<Document> id)
         {
-            var typeDescriptorCreator = serviceProvider.GetRequiredService<TypeDescriptorCreator>();
+            var typeDescriptorCreator = serviceProvider.GetRequiredService<ITypeDescriptorCreator>();
             var apidesc = new RestApiDescription(serviceProvider.GetServices<IRestRepository>(),typeDescriptorCreator );
             return Document.Create(apidesc, serviceProvider.GetServices<IRestPathMapping>(), typeDescriptorCreator, serviceProvider.GetRequiredService<IRestIdentityProvider>());
         }
