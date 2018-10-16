@@ -254,8 +254,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                         {
                             var val = doRead();
                             vals.Add(val);
-                            reader.Read();
                         }
+                        reader.Read();
                         return new SArray(vals);
                     case JsonToken.Null:
                         reader.Read();

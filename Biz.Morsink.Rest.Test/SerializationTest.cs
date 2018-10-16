@@ -7,6 +7,8 @@ using Microsoft.FSharp.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.Test
@@ -173,6 +175,61 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual("Volvo", backC.Item.Brand);
             Assert.AreEqual("V40", backC.Item.Model);
         }
-
+        [TestMethod]
+        public void Serializer_Dict()
+        {
+            var x = new Dictionary<string, object>
+            {
+                ["A"] = 1,
+                ["B"] = "abc",
+                ["C"] = null
+            };
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SObject(
+                new SProperty("A", new SValue(1)),
+                new SProperty("B", new SValue("abc")),
+                new SProperty("C", SValue.Null));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<Dictionary<string, object>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count);
+            Assert.IsTrue(new[] { "A", "B", "C" }.All(back.ContainsKey));
+        }
+        [TestMethod]
+        public void Serializer_SortedDict()
+        {
+            var x = new SortedDictionary<string, object>
+            {
+                ["A"] = 1,
+                ["B"] = "abc",
+                ["C"] = null
+            };
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SObject(
+                new SProperty("A", new SValue(1)),
+                new SProperty("B", new SValue("abc")),
+                new SProperty("C", SValue.Null));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<SortedDictionary<string, object>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count);
+            Assert.IsTrue(new[] { "A", "B", "C" }.All(back.ContainsKey));
+        }
+        [TestMethod]
+        public void Serializer_ImmDict()
+        {
+            var x = ImmutableDictionary<string, object>.Empty
+                .Add("A", 1)
+                .Add("B", "abc")
+                .Add("C", null);
+            
+            var actual = serializer.Serialize(NewContext(), x);
+            var expected = new SObject(
+                new SProperty("A", new SValue(1)),
+                new SProperty("B", new SValue("abc")),
+                new SProperty("C", SValue.Null));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<ImmutableDictionary<string, object>>(NewContext(), actual);
+            Assert.AreEqual(3, back.Count);
+            Assert.IsTrue(new[] { "A", "B", "C" }.All(back.ContainsKey));
+        }
     }
 }

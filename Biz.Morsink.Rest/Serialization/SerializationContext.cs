@@ -25,7 +25,6 @@ namespace Biz.Morsink.Rest.Serialization
             ParentChain = parentChain ?? ImmutableStack<IIdentity>.Empty;
         }
         protected abstract C New(ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null);
-            //=> new SerializationContext(IdentityProvider, this, embeddings ?? Embeddings, parentChain ?? ParentChain);
 
         /// <summary>
         /// Adds a Rest Value to the lexical scope of the (de-)serialization process.

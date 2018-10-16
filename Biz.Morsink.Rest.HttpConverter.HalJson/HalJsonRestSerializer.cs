@@ -22,6 +22,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         private readonly IOptions<HalJsonConverterOptions> halOptions;
         private readonly IRestIdentityProvider identityProvider;
         private readonly IdentityRepresentation identityRepresentation;
+        private readonly JsonSerializer jsonSerializer;
 
         /// <summary>
         /// Constructor.
@@ -50,6 +51,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             this.halOptions = halOptions;
             this.identityProvider = identityProvider;
             identityRepresentation = new IdentityRepresentation(identityProvider, prefixContainerAccessor, options, currentHttpRestConverterAccessor);
+            jsonSerializer = JsonSerializer.Create(halOptions.Value.SerializerSettings);
         }
         protected override IForType CreateSerializer(Type ty)
         {
@@ -221,7 +223,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="item">An SValue object to serialize.</param>
         public void WriteJson(JsonWriter writer, SValue item)
         {
-            writer.WriteValue(item.Value);
+            jsonSerializer.Serialize(writer, item.Value);
         }
         /// <summary>
         /// Serialize an SArray to a JsonWriter.
@@ -272,8 +274,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         {
                             var val = doRead();
                             vals.Add(val);
-                            reader.Read();
                         }
+                        reader.Read();
                         return new SArray(vals);
                     case JsonToken.Null:
                         reader.Read();
