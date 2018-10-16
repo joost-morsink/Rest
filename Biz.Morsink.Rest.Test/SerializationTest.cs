@@ -11,6 +11,8 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Test
 {
+    using UPC = UnionRepresentation<Helpers.Person, Car>;
+
     [TestClass]
     public class SerializationTest
     {
@@ -67,6 +69,39 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual(38, back.Age);
         }
         [TestMethod]
+        public void Serializer_RecordMixed()
+        {
+            var p = new PersonM("Joost", "Morsink") { Age = 39 };
+            var expected = new SObject(
+                new SProperty("FirstName", new SValue("Joost")),
+                new SProperty("LastName", new SValue("Morsink")),
+                new SProperty("Age", new SValue(39)));
+            var actual = serializer.Serialize(NewContext(), p);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<PersonM>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual("Joost", back.FirstName);
+            Assert.AreEqual("Morsink", back.LastName);
+            Assert.AreEqual(39, back.Age);
+        }
+        [TestMethod]
+        public void Serializer_MissingProp()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", Age = 39 };
+            var expected = new SObject(
+                new SProperty("FirstName", new SValue("Joost")),
+                new SProperty("LastName", SValue.Null),
+                new SProperty("Age", new SValue(39)));
+            var actual = serializer.Serialize(NewContext(), p);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<Helpers.Person>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual("Joost", back.FirstName);
+            Assert.IsNull(back.LastName);
+            Assert.AreEqual(39, back.Age);
+
+        }
+        [TestMethod]
         public void Serializer_FsRecord()
         {
             var fsp = new FSharp.Tryout.Person("Joost", "Morsink", FSharpList<Address>.Cons(Address.NewHomeAddress(new AddressData("Teststreet", 123, "Utrecht")), FSharpList<Address>.Empty));
@@ -93,9 +128,9 @@ namespace Biz.Morsink.Rest.Test
                 new SProperty("Age", new SValue(38)),
                 new SProperty("Brand", new SValue("Volvo")),
                 new SProperty("Model", new SValue("V40")));
-            var actual = serializer.Serialize(NewContext(), Tuple.Create(p,c));
+            var actual = serializer.Serialize(NewContext(), Tuple.Create(p, c));
             Assert.AreEqual(expected, actual);
-            var back = serializer.Deserialize<Tuple<Car,Helpers.Person>>(NewContext(), actual);
+            var back = serializer.Deserialize<Tuple<Car, Helpers.Person>>(NewContext(), actual);
             Assert.IsNotNull(back);
             Assert.AreEqual("Joost", back.Item2.FirstName);
             Assert.AreEqual("Morsink", back.Item2.LastName);
@@ -104,6 +139,40 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual("V40", back.Item1.Model);
 
         }
-    
+        [TestMethod]
+        public void Serializer_Union()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 39 };
+            var c = new Helpers.Car { Brand = "Volvo", Model = "V40" };
+            var expected = new SObject(
+               new SProperty("FirstName", new SValue("Joost")),
+               new SProperty("LastName", new SValue("Morsink")),
+               new SProperty("Age", new SValue(39)));
+            var actual = serializer.Serialize(NewContext(), new UPC.Option1(p));
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<UPC>(NewContext(), actual);
+            if (!(back is UPC.Option1 backP))
+            {
+                Assert.Fail("Not a person"); return;
+            }
+            Assert.IsNotNull(backP.Item);
+            Assert.AreEqual("Joost", backP.Item.FirstName);
+            Assert.AreEqual("Morsink", backP.Item.LastName);
+            Assert.AreEqual(39, backP.Item.Age);
+
+            expected = new SObject(
+                new SProperty("Brand", new SValue("Volvo")),
+                new SProperty("Model", new SValue("V40")));
+            actual = serializer.Serialize(NewContext(), new UPC.Option2(c));
+            back = serializer.Deserialize<UPC>(NewContext(), actual);
+            if (!(back is UPC.Option2 backC))
+            {
+                Assert.Fail("Not a car"); return;
+            }
+            Assert.IsNotNull(backC.Item);
+            Assert.AreEqual("Volvo", backC.Item.Brand);
+            Assert.AreEqual("V40", backC.Item.Model);
+        }
+
     }
 }

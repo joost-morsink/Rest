@@ -28,4 +28,15 @@ namespace Biz.Morsink.Rest.Test.Helpers
         public string LastName { get; }
         public int? Age { get; }
     }
+    public   class PersonM
+    {
+        public PersonM(string firstName, string lastName)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+        }
+        public string FirstName { get; }
+        public string LastName { get; }
+        public int Age { get; set; }
+    }                
 }
