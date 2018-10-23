@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,25 +11,26 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
     /// </summary>
     public class DefaultHtmlGenerator : AbstractGeneralHtmlGenerator
     {
-        private readonly IEnumerable<ITypeRepresentation> typeRepresentations;
+        private readonly HtmlRestSerializer htmlRestSerializer;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="generatorProvider">A provider for specific Html generators.</param>
-        public DefaultHtmlGenerator(ISpecificHtmlGeneratorProvider generatorProvider, IEnumerable<ITypeRepresentation> typeRepresentations) : base(generatorProvider)
+        public DefaultHtmlGenerator(ISpecificHtmlGeneratorProvider generatorProvider,HtmlRestSerializer htmlRestSerializer) : base(generatorProvider)
         {
-            this.typeRepresentations = typeRepresentations;
+            this.htmlRestSerializer = htmlRestSerializer;
         }
         /// <summary>
-        /// Uses the TableGenerator&lt;T&gt; class for generic generation of tables for data items.
+        /// Uses the HtmlRestSerializer class for generic generation of tables for data items.
         /// </summary>
         /// <param name="restValue">A Rest value.</param>
         /// <returns>An Html representation of the specified Rest value.</returns>
         protected override string DefaultHandleValue(IRestValue restValue)
         {
-            var gen = (ISpecificHtmlGenerator)Activator.CreateInstance(typeof(TableGenerator<>).MakeGenericType(restValue.ValueType), typeRepresentations);
-            return gen.GenerateHtml(restValue);
+            var item = htmlRestSerializer.Serialize(restValue);
+            return htmlRestSerializer.ToHtmlPage(item);
+            
         }
     }
 }

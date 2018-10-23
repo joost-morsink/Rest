@@ -17,7 +17,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
     public class HtmlHttpConverter : AbstractHttpRestConverter
     {
         private readonly IGeneralHtmlGenerator generator;
-        private readonly IRestRequestScopeAccessor scopeAccessor;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -25,7 +24,6 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
             : base(provider, scopeAccessor, restOptions)
         {
             this.generator = generator;
-            this.scopeAccessor = scopeAccessor;
         }
         public override decimal AppliesToRequestScore(HttpContext context)
             => ScoreContentTypeAndAcceptHeaders(context.Request, "text/html");
@@ -61,9 +59,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
             => WriteHtml(bodyStream, GenerateHtml(result));
 
         private string GenerateHtml(IRestResult result)
-            => scopeAccessor.Scope
-                .With(SerializationContext.Create(IdentityProvider))
-                .Run(() => generator.GenerateHtml(result));
+            => generator.GenerateHtml(result);
 
         public override VersionMatcher DefaultVersionMatcher => VersionMatcher.Newest;
     }

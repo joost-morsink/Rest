@@ -26,6 +26,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         public static IServiceCollection AddHtmlHttpConverter(this IServiceCollection services)
         {
             services.AddSingleton<IHttpRestConverter, HtmlHttpConverter>();
+            services.AddSingleton<HtmlRestSerializer>();
             services.AddScoped<ISpecificHtmlGeneratorProvider, SpecificHtmlGeneratorProvider>();
             services.AddSingleton<IGeneralHtmlGenerator, DefaultHtmlGenerator>();
             return services;
@@ -39,6 +40,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         public static IRestServicesBuilder AddHtmlHttpConverter(this IRestServicesBuilder restServicesBuilder, Func<IHtmlHttpConverterBuilder, IHtmlHttpConverterBuilder> builder = null)
         {
             restServicesBuilder.ServiceCollection.AddSingleton<IHttpRestConverter, HtmlHttpConverter>();
+            restServicesBuilder.ServiceCollection.AddSingleton<HtmlRestSerializer>();
             builder?.Invoke(new HtmlConverterBuilder(restServicesBuilder.ServiceCollection));
             restServicesBuilder.OnEndConfiguration(services =>
             {

@@ -28,4 +28,7 @@ These serializers should also have the most advanced/up-to-date feature sets ava
 
 The Xml converter has not been converted to use the intermediate format.
 Because of the absence of a canonical mapping mentioned earlier, this might never be implemented. 
-Support for some advanced features may therefore be not supported for the Xml format.
+Support for some advanced features may therefore be unsupported for the Xml format.
+
+The Html converter does not support deserialization and is able to use a quite straightforward serialization algorithm.
+It generates tables for objects.
