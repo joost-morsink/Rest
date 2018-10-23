@@ -261,7 +261,16 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <returns>An object representing the content of the reader.</returns>    
         public object ReadJson(JsonReader reader, Type type)
         {
-            return Deserialize(Serialization.SerializationContext.Create(identityProvider), type, ReadJson(reader));
+            var item = ReadJson(reader);
+
+            if (jsonOptions.Value.Validate)
+            {
+                var typeDesc = TypeDescriptorCreator.GetDescriptor(type);
+                var msgs = item.Validate(typeDesc, TypeDescriptorCreator, Converter);
+                if (msgs.Any())
+                    throw new RestFailureException(RestResult.BadRequest<object>(msgs.ToArray()));
+            }
+            return Deserialize(Serialization.SerializationContext.Create(identityProvider), type, item);
         }
         /// <summary>
         /// Deserialize an object from a JsonReader.
@@ -273,6 +282,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         {
             return Deserialize<T>(Serialization.SerializationContext.Create(identityProvider), ReadJson(reader));
         }
+
         private string Casing(string str)
         {
             return jsonOptions.Value.NamingStrategy.GetPropertyName(str, false);

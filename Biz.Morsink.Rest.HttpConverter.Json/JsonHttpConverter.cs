@@ -67,10 +67,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             using (var sr = new StreamReader(ms, Encoding.UTF8))
             using (var jtr = new JsonTextReader(sr))
             {
-                var ser = JsonSerializer.Create(options.Value.SerializerSettings);
                 try
                 {
                     return restSerializer.ReadJson(jtr, t);
+                }
+                catch (RestFailureException)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {

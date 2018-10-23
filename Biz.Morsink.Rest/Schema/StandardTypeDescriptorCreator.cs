@@ -67,6 +67,7 @@ namespace Biz.Morsink.Rest.Schema
                 SerializationKind.Instance,
                 new RepresentableDescriptorKind(representations),
                 NullableDescriptorKind.Instance,
+                EnumDescriptorKind.Instance,
                 DictionaryDescriptorKind.Instance,
                 SemanticStructKind.Instance,
                 FSharpUnionDescriptorKind.Instance,

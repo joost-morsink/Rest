@@ -41,6 +41,10 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         public bool EmbedEmbeddings { get; set; }
         /// <summary>
+        /// Gets or sets a boolean indicating whether posted request bodies should be validated using available schemas.
+        /// </summary>
+        public bool Validate { get; set; }
+        /// <summary>
         /// Applies the default naming strategy to the JsonHttpConverter.
         /// </summary>
         /// <returns>The current instance.</returns>
@@ -94,6 +98,14 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public JsonHttpConverterOptions UseEmbeddings(bool embed = true)
         {
             EmbedEmbeddings = embed;
+            return this;
+        }
+        /// <summary>
+        /// Sets the Validate flag.
+        /// </summary>
+        public JsonHttpConverterOptions ShouldValidate(bool val =true)
+        {
+            Validate = val;
             return this;
         }
     }

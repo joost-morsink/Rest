@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.DataConvert;
+using Biz.Morsink.Identity.PathProvider;
 using Biz.Morsink.Rest.Schema;
 using System;
 using System.Collections.Generic;
@@ -128,7 +129,7 @@ namespace Biz.Morsink.Rest.Serialization
                 case TypeDescriptor.Record rec:
                     if (item is SObject obj2)
                     {
-                        var props = obj2.ToDictionary();
+                        var props = obj2.Properties.ToDictionary(p => p.Name, p => p.Token, CaseInsensitiveEqualityComparer.Instance);
                         foreach (var msg in rec.Properties
                             .SelectMany(p => validateProperty(p.Key, p.Value, props)))
 
@@ -177,7 +178,7 @@ namespace Biz.Morsink.Rest.Serialization
                             yield return msg;
                     break;
                 case TypeDescriptor.Referable refer:
-                    
+
                     td = refer.ExpandedDescriptor ?? typeDescriptorCreator.GetDescriptorByName(refer.RefName);
                     if (td == null)
                         yield return new Message(path, Error.UnknownRef);
@@ -192,7 +193,8 @@ namespace Biz.Morsink.Rest.Serialization
                 {
                     if (propDesc.Required)
                         yield return new Message(AddToPrefix(path, propName), Error.RequiredPropertyMissing);
-                } else
+                }
+                else
                 {
                     foreach (var msg in propValue.Validate(propDesc.Type, typeDescriptorCreator, converter, AddToPrefix(path, propName)))
                         yield return msg;

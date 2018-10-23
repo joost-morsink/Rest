@@ -456,5 +456,6 @@ namespace Biz.Morsink.Rest.Schema
             => !ReferenceEquals(x, y) && (ReferenceEquals(x, null) || !x.Equals(y));
         public override int GetHashCode()
             => base.GetHashCode();
+
     }
 }

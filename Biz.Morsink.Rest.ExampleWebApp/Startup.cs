@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                     .Use<CancelRequestHandler>(sp, TimeSpan.FromSeconds(30.0))
                     )
                 // Configure HttpConverters
-                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport().UseEmbeddings()/*.UseLinkLocation("_links")*/))
+                .AddJsonHttpConverter(jbld => jbld.Configure(opts => opts.ApplyCamelCaseNamingStrategy().UseFSharpSupport().UseEmbeddings().ShouldValidate()/*.UseLinkLocation("_links")*/))
                 .AddXmlHttpConverter()
                 .AddHtmlHttpConverter()
                 .AddHalJsonHttpConverter()
