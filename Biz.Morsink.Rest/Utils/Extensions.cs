@@ -1,5 +1,7 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Jobs;
+using Biz.Morsink.Rest.Schema;
+using Biz.Morsink.Rest.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,7 +28,7 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="principal">The principal requesting access to the link.</param>
         /// <returns>True if access is allowed.</returns>
         public static bool IsAllowedBy(this Link link, IAuthorizationProvider provider, ClaimsPrincipal principal)
-            => provider == null || provider.IsAllowed(principal, link.Target, getCapabilityString(link.Capability));
+            => provider == null || provider.IsAllowed(principal, link.Target, GetCapabilityString(link.Capability));
 
         /// <summary>
         /// Determines if a Link is allowed to be opened by a principal according to an authorization provider.
@@ -36,12 +38,12 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="user">The user requesting access to the link.</param>
         /// <returns>True if access is allowed.</returns>        
         public static bool IsAllowedBy(this Link link, IAuthorizationProvider provider, IUser user)
-            => provider == null || provider.IsAllowed(user?.Principal, link.Target, getCapabilityString(link.Capability));
+            => provider == null || provider.IsAllowed(user?.Principal, link.Target, GetCapabilityString(link.Capability));
 
         public static string GetCapabilityString(this Link link)
             => link.Capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
 
-        private static string getCapabilityString(Type capability)
+        private static string GetCapabilityString(Type capability)
             => capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
 
         /// <summary>
@@ -341,8 +343,7 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A scope item of type T.</returns>
         public static T GetOrAddScopeItem<T>(this IRestRequestScope scope, Func<T> @default)
         {
-            T res;
-            if (scope.TryGetScopeItem<T>(out res))
+            if (scope.TryGetScopeItem<T>(out var res))
                 return res;
             res = @default();
             scope.SetScopeItem(res);
@@ -447,5 +448,7 @@ namespace Biz.Morsink.Rest.Utils
             public void Run(Action act)
                 => Run(() => { act(); return 0; });
         }
+        public static IEnumerable<SValidation.Message> Validate(this ITypeDescriptorCreator typeDescriptorCreator, SItem item, TypeDescriptor desc)
+            => item.Validate(desc, typeDescriptorCreator, DataConvert.DataConverter.Default);
     }
 }

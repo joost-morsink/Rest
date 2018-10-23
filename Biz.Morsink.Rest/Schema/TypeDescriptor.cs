@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+
+#pragma warning disable IDE0041
 
 namespace Biz.Morsink.Rest.Schema
 {
