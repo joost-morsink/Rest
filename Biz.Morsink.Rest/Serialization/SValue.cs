@@ -46,5 +46,7 @@ namespace Biz.Morsink.Rest.Serialization
             => other is SValue val && Equals(val);
         public bool Equals(SValue other)
             => object.Equals(Value, other.Value);
+        protected internal override string ToString(int indent)
+            => $"{Value}";
     }
 }

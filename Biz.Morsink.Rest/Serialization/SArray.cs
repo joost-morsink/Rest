@@ -36,5 +36,8 @@ namespace Biz.Morsink.Rest.Serialization
             => other is SArray arr && Equals(arr);
         public bool Equals(SArray other)
             => Content.Count == other.Content.Count && Content.SequenceEqual(other.Content);
+        protected internal override string ToString(int indent)
+            => $"{NewLine(indent)}[{string.Join(NewLine(indent + 2), Content.Select(c => c.ToString(indent+2)))}{NewLine(indent)}]";
+
     }
 }

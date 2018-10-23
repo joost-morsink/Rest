@@ -22,5 +22,10 @@ namespace Biz.Morsink.Rest.Serialization
             => ReferenceEquals(left, right) || left != null && left.Equals(right);
         public static bool operator !=(SItem left, SItem right)
             => !ReferenceEquals(left, right) && (left == null || !left.Equals(right));
+        internal static string NewLine(int indent)
+            => Environment.NewLine + new string(' ', indent);
+        public override string ToString()
+            => ToString(0);
+        protected internal abstract string ToString(int indent);
     }
 }

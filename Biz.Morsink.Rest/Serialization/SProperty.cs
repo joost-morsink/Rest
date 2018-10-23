@@ -49,5 +49,7 @@ namespace Biz.Morsink.Rest.Serialization
             => obj is SProperty prop && Equals(prop);
         public bool Equals(SProperty other)
             => Name == other.Name && Token.Equals(other.Token);
+        internal string ToString(int indent)
+            => $"{Name} -> {Token.ToString(indent)}";
     }
 }

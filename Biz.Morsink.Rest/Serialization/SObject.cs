@@ -44,5 +44,7 @@ namespace Biz.Morsink.Rest.Serialization
             => other is SObject obj && Equals(obj);
         public bool Equals(SObject other)
             => Properties.OrderBy(p => p.Name).SequenceEqual(other.Properties.OrderBy(p => p.Name));
+        protected internal override string ToString(int indent)
+            => $"{NewLine(indent)}{{{NewLine(indent + 2)}{string.Join(NewLine(indent + 2), Properties.Select(p => p.ToString(indent+2)))}{NewLine(indent)}}}";
     }
 }
