@@ -29,8 +29,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// </summary>
         /// <param name="serializer">An XmlSerializer instance to use for serialization and deserialization.</param>
         /// <param name="identityProvider">A Rest identity provider for mapping urls to and from identity values.</param>
-        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, IOptions<XmlHttpConverterOptions> xmlOptions)
-            : base(identityProvider, scopeAccessor, restOptions)
+        public XmlHttpConverter(XmlSerializer serializer, IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators, IOptions<XmlHttpConverterOptions> xmlOptions)
+            : base(identityProvider, scopeAccessor, restOptions, httpContextManipulators)
         {
             this.serializer = serializer;
             this.scopeAccessor = scopeAccessor;

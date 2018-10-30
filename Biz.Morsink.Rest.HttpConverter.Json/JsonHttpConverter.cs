@@ -14,6 +14,7 @@ using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Utils;
+using System.Collections.Generic;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -32,8 +33,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions, JsonRestSerializer restSerializer)
-            : base(provider, restRequestScopeAccessor, restOptions)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators, JsonRestSerializer restSerializer)
+            : base(provider, restRequestScopeAccessor, restOptions, httpContextManipulators)
         {
             this.options = options;
             this.restRequestScopeAccessor = restRequestScopeAccessor;

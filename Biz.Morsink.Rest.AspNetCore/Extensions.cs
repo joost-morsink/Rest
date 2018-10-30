@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.Problem;
 using Biz.Morsink.Rest.Jobs;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.Extensions.DependencyInjection;
@@ -863,5 +864,56 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddRestOpenApi(path, lifetime);
             return builder;
         }
+
+        /// <summary>
+        /// Adds an IHttpContextManipulator to the service collection.
+        /// </summary>
+        /// <param name="serviceCollection">The service collection.</param>
+        /// <param name="manipulator">A function generating the manipulator instance.</param>
+        /// <param name="lifetime">The lifetime scope.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddRestContextManipulator(this IServiceCollection serviceCollection, Func<IServiceProvider, IHttpContextManipulator> manipulator, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            serviceCollection.Add(new ServiceDescriptor(typeof(IHttpContextManipulator), manipulator, lifetime));
+            return serviceCollection;
+        }
+        /// <summary>
+        /// Adds an IHttpContextManipulator to the builder's service collection.
+        /// </summary>
+        /// <param name="builder">A Rest services builder.</param>
+        /// <param name="manipulator">A function generating the manipulator instance.</param>
+        /// <param name="lifetime">The lifetime scope.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddContextManipulator(this IRestServicesBuilder builder, Func<IServiceProvider, IHttpContextManipulator> manipulator, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            builder.ServiceCollection.AddRestContextManipulator(manipulator, lifetime);
+            return builder;
+        }
+        /// <summary>
+        /// Adds the injectables for the application/problem+json media type.
+        /// </summary>
+        /// <param name="builder">A Rest services builder.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddProblemJson(this IRestServicesBuilder builder)
+        {
+            builder.AddContextManipulator(sp => ProblemContextManipulator.Json(sp.GetServices<ITypeRepresentation>()));
+            if (!builder.ServiceCollection.Any(sd => sd.ServiceType == typeof(ITypeRepresentation) && sd.ImplementationType == typeof(SValidationMessageProblemRepresentation)))
+                builder.ServiceCollection.AddSingleton<ITypeRepresentation, SValidationMessageProblemRepresentation>();
+            return builder;
+        }
+        /// <summary>
+        /// Adds the injectables for the application/problem+xml media type.
+        /// WARNING: The XmlConverter does not support the problem+xml media type yet.
+        /// </summary>
+        /// <param name="builder">A Rest services builder.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddProblemXml(this IRestServicesBuilder builder)
+        {
+            builder.AddContextManipulator(sp => ProblemContextManipulator.Xml(sp.GetServices<ITypeRepresentation>()));
+            if (!builder.ServiceCollection.Any(sd => sd.ServiceType == typeof(ITypeRepresentation) && sd.ImplementationType == typeof(SValidationMessageProblemRepresentation)))
+                builder.ServiceCollection.AddSingleton<ITypeRepresentation, SValidationMessageProblemRepresentation>();
+            return builder;
+        }
+
     }
 }

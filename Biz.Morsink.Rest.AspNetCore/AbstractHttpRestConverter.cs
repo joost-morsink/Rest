@@ -32,6 +32,7 @@ namespace Biz.Morsink.Rest.AspNetCore
 
         private readonly IRestRequestScopeAccessor scopeAccessor;
         private readonly IOptions<RestAspNetCoreOptions> options;
+        private readonly IEnumerable<IHttpContextManipulator> httpContextManipulators;
 
         /// <summary>
         /// Gets a boolean indicating if Curies are supported by this IHttpRestConverter.
@@ -42,11 +43,12 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// Constructor.
         /// </summary>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> options)
+        protected AbstractHttpRestConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> options, IEnumerable<IHttpContextManipulator> httpContextManipulators)
         {
             IdentityProvider = identityProvider;
             this.scopeAccessor = scopeAccessor;
             this.options = options;
+            this.httpContextManipulators = httpContextManipulators;
         }
         /// <summary>
         /// Determines if the converter applies to the given HttpContext for interpretation of the request.
@@ -304,6 +306,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                 context.Response.StatusCode = 202;
                 context.Response.Headers[Location] = IdentityProvider.ToPath(response.UntypedResult.AsPending().Job.Id);
             }
+            foreach (var manipulator in httpContextManipulators)
+                manipulator.ManipulateContext(context, response);
         }
         public virtual VersionMatcher DefaultVersionMatcher => VersionMatcher.Oldest;
     }

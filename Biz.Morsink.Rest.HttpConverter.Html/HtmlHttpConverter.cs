@@ -5,6 +5,7 @@ using Biz.Morsink.Rest.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,8 +21,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         /// <summary>
         /// Constructor.
         /// </summary>
-        public HtmlHttpConverter(IGeneralHtmlGenerator generator, IRestIdentityProvider provider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions)
-            : base(provider, scopeAccessor, restOptions)
+        public HtmlHttpConverter(IGeneralHtmlGenerator generator, IRestIdentityProvider provider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators 
+           )
+            : base(provider, scopeAccessor, restOptions, httpContextManipulators)
         {
             this.generator = generator;
         }

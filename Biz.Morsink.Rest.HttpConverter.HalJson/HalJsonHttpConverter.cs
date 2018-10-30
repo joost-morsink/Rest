@@ -31,8 +31,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="serializer">The HalSerializer instance to use.</param>
         /// <param name="restOptions">Options for the Rest for ASP.Net core general component.</param>
-        public HalJsonHttpConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, HalJsonRestSerializer serializer, IOptions<HalJsonConverterOptions> options)
-            : base(identityProvider, scopeAccessor, restOptions)
+        public HalJsonHttpConverter(IRestIdentityProvider identityProvider, IRestRequestScopeAccessor scopeAccessor, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators, HalJsonRestSerializer serializer, IOptions<HalJsonConverterOptions> options)
+            : base(identityProvider, scopeAccessor, restOptions, httpContextManipulators)
         {
             this.serializer = serializer;
             this.options = options;

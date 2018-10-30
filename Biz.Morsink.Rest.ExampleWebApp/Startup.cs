@@ -51,6 +51,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddAttributedRepository<FsPersonRepository>()
                 .AddPathMapping<FSharp.Tryout.Person>("/fsperson/*")
                 .AddOpenApi()
+                .AddProblemJson()
                 );
             services.Configure<RestAspNetCoreOptions>(opts =>
             {
