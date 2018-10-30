@@ -15,6 +15,7 @@ using Biz.Morsink.Rest.Metadata;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Utils;
 using System.Collections.Generic;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
@@ -24,29 +25,32 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     public class JsonHttpConverter : AbstractHttpRestConverter
     {
         public const string MEDIA_TYPE = "application/json";
+        public const string SUFFIX = "json";
         private readonly IOptions<JsonHttpConverterOptions> options;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
         private readonly JsonRestSerializer restSerializer;
+        private readonly IMediaTypeProvider mediaTypeProvider;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="options">Configuration for the component.</param>
         /// <param name="provider">A Rest IdentityProvider for path parsing and construction.</param>
-        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators, JsonRestSerializer restSerializer)
+        public JsonHttpConverter(IOptions<JsonHttpConverterOptions> options, IRestRequestScopeAccessor restRequestScopeAccessor, IRestIdentityProvider provider, IOptions<RestAspNetCoreOptions> restOptions, IEnumerable<IHttpContextManipulator> httpContextManipulators, JsonRestSerializer restSerializer, IMediaTypeProvider mediaTypeProvider)
             : base(provider, restRequestScopeAccessor, restOptions, httpContextManipulators)
         {
             this.options = options;
             this.restRequestScopeAccessor = restRequestScopeAccessor;
             this.restSerializer = restSerializer;
+            this.mediaTypeProvider = mediaTypeProvider;
         }
         /// <summary>
         /// Determines if the converter applies to the given HttpContext.
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public override decimal AppliesToRequestScore(HttpContext context)
-            => ScoreContentTypeAndAcceptHeaders(context.Request, MEDIA_TYPE);
+        public override NegotiationScore AppliesToRequestScore(HttpContext context)
+            => ScoreContentTypeAndAcceptHeaders(context.Request, MEDIA_TYPE, SUFFIX);
         /// <summary>
         /// Determines if the converter applies to the given context.
         /// </summary>
@@ -54,8 +58,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <param name="request">The Rest request as constructed by the Request converter.</param>
         /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public override decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
-            => ScoreAcceptHeader(context.Request, MEDIA_TYPE);
+        public override NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
+            => ScoreAcceptHeader(context.Request, MEDIA_TYPE, SUFFIX);
         /// <summary>
         /// Json parser.
         /// </summary>

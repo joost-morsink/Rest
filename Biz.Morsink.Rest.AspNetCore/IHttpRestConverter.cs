@@ -17,7 +17,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score indicating how well the converter applies to the context.</returns>
-        decimal AppliesToRequestScore(HttpContext context);
+        NegotiationScore AppliesToRequestScore(HttpContext context);
         /// <summary>
         /// Determines if the converter applies to the given HttpContext for serialization of the response.
         /// </summary>
@@ -25,7 +25,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="request">The Rest request as constructed by the Request converter.</param>
         /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
         /// <returns>A score indicating how well the converter applies to the context.</returns>
-        decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
+        NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
         /// <summary>
         /// A converter is able to manipulate the RestRequest using this method.
         /// </summary>

@@ -134,11 +134,11 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return (null, null);
 
             IHttpRestConverter best = null;
-            decimal bestQ = 0m;
+            NegotiationScore bestQ = default;
             for (int i = 0; i < converters.Length; i++)
             {
                 var q = converters[i].AppliesToRequestScore(context);
-                if (q > bestQ)
+                if (q.Q > bestQ.Q)
                 {
                     bestQ = q;
                     best = converters[i];
@@ -146,6 +146,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             }
             if (best == null)
                 return (null, null);
+
+            context.SetContextItem(bestQ);
 
             var vm = GetVersionMatcher(context) ?? best.DefaultVersionMatcher;
             var matches = identityProvider.Match(request.Path + request.QueryString);
@@ -187,11 +189,11 @@ namespace Biz.Morsink.Rest.AspNetCore
         private IHttpRestConverter GetResponseConverter(HttpContext context, RestRequest request, RestResponse response)
         {
             IHttpRestConverter best = null;
-            decimal bestQ = 0m;
+            NegotiationScore bestQ = default;
             for (int i = 0; i < converters.Length; i++)
             {
                 var q = converters[i].AppliesToResponseScore(context, request, response);
-                if (q > bestQ)
+                if (q.Q > bestQ.Q)
                 {
                     bestQ = q;
                     best = converters[i];

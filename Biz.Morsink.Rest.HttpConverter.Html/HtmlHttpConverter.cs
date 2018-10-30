@@ -27,9 +27,9 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         {
             this.generator = generator;
         }
-        public override decimal AppliesToRequestScore(HttpContext context)
+        public override NegotiationScore AppliesToRequestScore(HttpContext context)
             => ScoreContentTypeAndAcceptHeaders(context.Request, "text/html");
-        public override decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
+        public override NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
             => ScoreAcceptHeader(context.Request, "text/html");
 
         public override object ParseBody(Type t, byte[] body)

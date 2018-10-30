@@ -55,7 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public abstract decimal AppliesToRequestScore(HttpContext context);
+        public abstract NegotiationScore AppliesToRequestScore(HttpContext context);
         /// <summary>
         /// Determines if the converter applies to the given HttpContext for serialization of the response.
         /// </summary>
@@ -63,7 +63,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="request">The Rest request as constructed by the Request converter.</param>
         /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public abstract decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
+        public abstract NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response);
         /// <summary>
         /// A converter is able to manipulate the RestRequest using this method.
         /// </summary>
@@ -194,13 +194,17 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="request">The HttpRequest</param>
         /// <param name="mimeType">A single mimetype the Rest converter accepts.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        protected decimal ScoreAcceptHeader(HttpRequest request, string mimeType)
+        protected NegotiationScore ScoreAcceptHeader(HttpRequest request, string mimeType, string suffix = null)
         {
             if (request.HttpContext.TryGetContextItem<AcceptStructure>(out var acceptStructure))
-                return acceptStructure.Score(mimeType);
+            {
+                var (cas, q) = acceptStructure.Score(mimeType, suffix);
+                return new NegotiationScore(cas?.MimeType, q);
+            }
             else
-                return HasAcceptHeader(request, mimeType) ? 1m : 0m;
+                return HasAcceptHeader(request, mimeType) ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(null, 0m);
         }
+
         /// <summary>
         /// Tries to get the Content-Type header.
         /// </summary>
@@ -221,11 +225,17 @@ namespace Biz.Morsink.Rest.AspNetCore
                 return false;
             }
         }
-        protected decimal ScoreContentTypeAndAcceptHeaders(HttpRequest request, string mimeType)
-            => TryGetContentTypeHeader(request, out var mediaType)
-                ? mediaType == mimeType ? 1m : 0.1m
-                : ScoreAcceptHeader(request, mimeType) * 0.5m;
-         
+        protected NegotiationScore ScoreContentTypeAndAcceptHeaders(HttpRequest request, string mimeType, string suffix = null)
+        {
+            if (TryGetContentTypeHeader(request, out var mediaType))
+                return mediaType == mimeType ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(null, 0.1m);
+            else
+            {
+                var score = ScoreAcceptHeader(request, mimeType, suffix);
+                return score.WithQ(q => q / 2);
+            }
+        }
+
         /// <summary>
         /// Override to apply general HTTP headers (like Content-Type).
         /// </summary>
@@ -277,7 +287,8 @@ namespace Biz.Morsink.Rest.AspNetCore
                             case RestEntityKind.Resource:
                             default:
                                 context.Response.StatusCode = 404; break;
-                        } break;
+                        }
+                        break;
                     case RestFailureReason.Error:
                         context.Response.StatusCode = 500; break;
                     case RestFailureReason.NotExecuted:

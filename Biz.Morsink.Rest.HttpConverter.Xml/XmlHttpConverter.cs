@@ -42,7 +42,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// </summary>
         /// <param name="context">The HttpContext associated with the HTTP Request.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public override decimal AppliesToRequestScore(HttpContext context)
+        public override NegotiationScore AppliesToRequestScore(HttpContext context)
             => ScoreContentTypeAndAcceptHeaders(context.Request, MEDIA_TYPE);
         /// <summary>
         /// Determines if the converter applies to the given context.
@@ -51,7 +51,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Xml
         /// <param name="request">The Rest request as constructed by the Request converter.</param>
         /// <param name="response">The Rest response as returned by the Rest pipeline.</param>
         /// <returns>A score ranging from 0 to 1.</returns>
-        public override decimal AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
+        public override NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
             => ScoreAcceptHeader(context.Request, MEDIA_TYPE);
         /// <summary>
         /// Parses XML bodies if the type is known.

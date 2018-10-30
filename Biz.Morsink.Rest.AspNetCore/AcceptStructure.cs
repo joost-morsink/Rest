@@ -6,7 +6,7 @@ using System.Text;
 namespace Biz.Morsink.Rest.AspNetCore
 {
     /// <summary>
-    /// Helper class for evaluating HTTP Accept headers
+    /// Helper class for evaluating HTTP Accept headers.
     /// </summary>
     public class AcceptStructure
     {
@@ -65,14 +65,18 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// </summary>
             /// <param name="mimeType">The mime type to score.</param>
             /// <returns>A score.</returns>
-            public decimal Score(string mimeType)
+            public decimal Score(string mimeType, string suffix)
             {
                 if (MainWildcard)
                     return Q;
                 else if (SubWildcard)
                     return mimeType.StartsWith(MimeType) ? Q : 0m;
+                else if (mimeType == MimeType)
+                    return Q;
+                else if (suffix != null && MimeType.EndsWith("+" + suffix))
+                    return Q - 0.001m;
                 else
-                    return mimeType == MimeType ? Q : 0m;
+                    return 0m;
             }
         }
         /// <summary>
@@ -87,19 +91,19 @@ namespace Biz.Morsink.Rest.AspNetCore
             Array.Sort(Cases, (x, y) => -x.Q.CompareTo(y.Q));
         }
         /// <summary>
-        /// Scores a mime type agains the Accept header
+        /// Scores a mime type against the Accept header.
         /// </summary>
         /// <param name="mimeType">The mime type to score.</param>
         /// <returns>A score.</returns>
-        public decimal Score(string mimeType)
+        public (Case, decimal) Score(string mimeType, string suffix)
         {
             for (int i = 0; i < Cases.Length; i++)
             {
-                var q = Cases[i].Score(mimeType);
+                var q = Cases[i].Score(mimeType, suffix);
                 if (q > 0m)
-                    return q;
+                    return (Cases[i], q);
             }
-            return 0m;
+            return (null, 0m);
         }
     }
 }
