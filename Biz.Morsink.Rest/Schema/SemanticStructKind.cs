@@ -26,14 +26,26 @@ namespace Biz.Morsink.Rest.Schema
         {
             var ti = type.GetTypeInfo();
             var ctors = ti.DeclaredConstructors.Where(ci => !ci.IsStatic && ci.IsPublic).ToArray();
+            var smeths = ti.DeclaredMethods.Where(m => m.IsStatic && m.IsPublic && m.ReturnType == type && m.GetParameters().Length == 1).ToArray();
+            var props = ti.DeclaredProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic && p.GetMethod.IsPublic).ToArray();
 
-            if (ti.IsValueType && ctors.Length == 1 && ctors[0].GetParameters().Length == 1)
+            if (ti.IsValueType)
             {
-                var param = ctors[0].GetParameters()[0];
-                var props = ti.DeclaredProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic && p.GetMethod.IsPublic).ToArray();
-                if (props.Length == 1 && props[0].CanRead && !props[0].CanWrite && props[0].PropertyType == param.ParameterType)
+                if (ctors.Length == 1 && ctors[0].GetParameters().Length == 1)
                 {
-                    return props[0];
+                    var param = ctors[0].GetParameters()[0];
+                    if (props.Length == 1 && props[0].CanRead && !props[0].CanWrite && props[0].PropertyType == param.ParameterType)
+                    {
+                        return props[0];
+                    }
+                }
+                else if (ctors.Length == 0 && smeths.Length == 1)
+                {
+                    var param = smeths[0].GetParameters()[0];
+                    if (props.Length == 1 && props[0].CanRead && !props[0].CanWrite && props[0].PropertyType == param.ParameterType)
+                    {
+                        return props[0];
+                    }
                 }
             }
             return null;
@@ -70,7 +82,29 @@ namespace Biz.Morsink.Rest.Schema
 
             protected override Func<C, SItem, T> MakeDeserializer()
             {
-                var ci = typeof(T).GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic && !c.IsStatic).First();
+                var ci = typeof(T).GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic && !c.IsStatic).FirstOrDefault();
+                if (ci != null)
+                    return MakeConstructorDeserializer(ci);
+                else
+                {
+                    var mi = typeof(T).GetTypeInfo().DeclaredMethods.Where(c => c.IsStatic && c.IsPublic).First();
+                    return MakeStaticMethodDeserializer( mi);
+                }
+            }
+
+            private Func<C, SItem, T> MakeStaticMethodDeserializer(MethodInfo mi)
+            {
+                var ctx = Ex.Parameter(typeof(C), "ctx");
+                var input = Ex.Parameter(typeof(SItem), "input");
+                var block = Ex.Call(mi,
+                    Ex.Call(Ex.Constant(Parent), DESERIALIZE, new[] { mi.GetParameters()[0].ParameterType },
+                        ctx, input));
+                var lambda = Ex.Lambda<Func<C, SItem, T>>(block, ctx, input);
+                return lambda.Compile();
+            }
+
+            private Func<C, SItem, T> MakeConstructorDeserializer(ConstructorInfo ci)
+            {
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var input = Ex.Parameter(typeof(SItem), "input");
                 var block = Ex.New(ci,

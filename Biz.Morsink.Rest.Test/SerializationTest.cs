@@ -260,16 +260,40 @@ namespace Biz.Morsink.Rest.Test
 
             public string Address { get; }
         }
+        public struct PhoneNumber
+        {
+            public static PhoneNumber Create(string str)
+            {
+                return new PhoneNumber(str);
+            }
+            private PhoneNumber(string number)
+            {
+                Number = number;
+            }
+
+            public string Number { get; }
+        }
         [TestMethod]
-        public void Serializer_SemStr()
+        public void Serializer_SemStrCtor()
         {
             const string address = "info@example.com";
             var addr = new EmailAddress(address);
-            var actual = serializer.Serialize(NewContext(), address);
+            var actual = serializer.Serialize(NewContext(), addr);
             var expected = new SValue(address);
             Assert.AreEqual(expected, actual);
             var back = serializer.Deserialize<EmailAddress>(NewContext(), actual);
             Assert.AreEqual(address, back.Address);
+        }
+        [TestMethod]
+        public void Serializer_SemStrStatMeth()
+        {
+            const string telno = "+31673923378";
+            var tel = PhoneNumber.Create(telno);
+            var actual = serializer.Serialize(NewContext(), tel);
+            var expected = new SValue(telno);
+            Assert.AreEqual(expected, actual);
+            var back2 = serializer.Deserialize<PhoneNumber>(NewContext(), actual);
+            Assert.AreEqual(telno, back2.Number);
         }
         [TestMethod]
         public void Serializer_ImmList()
