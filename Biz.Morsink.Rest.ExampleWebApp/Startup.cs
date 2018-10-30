@@ -52,6 +52,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 .AddPathMapping<FSharp.Tryout.Person>("/fsperson/*")
                 .AddOpenApi()
                 .AddProblemJson()
+                .AddCustomJsonMediaTypes(true)
                 );
             services.Configure<RestAspNetCoreOptions>(opts =>
             {

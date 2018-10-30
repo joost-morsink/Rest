@@ -19,13 +19,13 @@ namespace Biz.Morsink.Rest.AspNetCore.Problem
         /// </summary>
         /// <param name="typeRepresentations">The type representations that may transform an object into a Problem.</param>
         /// <returns>A ProblemContextManipulator instance for the application/problem+json media type.</returns>
-        public static ProblemContextManipulator Json(IEnumerable<ITypeRepresentation> typeRepresentations) => new ProblemContextManipulator(typeRepresentations, "application/json", "application/problem+json");
+        public static ProblemContextManipulator Json(ITypeRepresentations typeRepresentations) => new ProblemContextManipulator(typeRepresentations, "application/json", "application/problem+json");
         /// <summary>
         /// Creates a ProblemContextManipulator for the application/problem+xml media type.
         /// </summary>
         /// <param name="typeRepresentations">The type representations that may transform an object into a Problem.</param>
         /// <returns>A ProblemContextManipulator instance for the application/problem+xml media type.</returns>
-        public static ProblemContextManipulator Xml(IEnumerable<ITypeRepresentation> typeRepresentations) => new ProblemContextManipulator(typeRepresentations, "application/xml", "application/problem+xml");
+        public static ProblemContextManipulator Xml(ITypeRepresentations typeRepresentations) => new ProblemContextManipulator(typeRepresentations, "application/xml", "application/problem+xml");
 
         /// <summary>
         /// Sets the correct media type, if a Problem object is encountered.
@@ -42,13 +42,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Problem
         }
 
         private bool IsProblemType(Type valueType)
-            => typeof(Problem).IsAssignableFrom(valueType)
-               || isProblem.GetOrAdd(valueType,
-                ty => typeRepresentations
-                    .Select(tr => tr.GetRepresentationType(ty))
-                    .Where(rept => rept != null)
-                    .Take(1)
-                    .Any(rept => typeof(Problem).IsAssignableFrom(rept)));
+            => typeof(Problem).IsAssignableFrom(typeRepresentations.GetRepresentationType(valueType));
 
 
         /// <summary>
@@ -57,16 +51,14 @@ namespace Biz.Morsink.Rest.AspNetCore.Problem
         /// <param name="typeRepresentations">The type representations that may transform an object into a Problem.</param>
         /// <param name="mediaType">The incoming media type.</param>
         /// <param name="problemMediaType">The problem media type.</param>
-        protected ProblemContextManipulator(IEnumerable<ITypeRepresentation> typeRepresentations, string mediaType, string problemMediaType)
+        protected ProblemContextManipulator(ITypeRepresentations typeRepresentations, string mediaType, string problemMediaType)
         {
-            this.typeRepresentations = typeRepresentations;
+            this.typeRepresentations = typeRepresentations.AsTypeRepresentation();
             MediaType = mediaType;
             ProblemMediaType = problemMediaType;
-            isProblem = new ConcurrentDictionary<Type, bool>();
         }
 
-        private readonly IEnumerable<ITypeRepresentation> typeRepresentations;
-        private readonly ConcurrentDictionary<Type, bool> isProblem;
+        private readonly ITypeRepresentation typeRepresentations;
 
         /// <summary>
         /// The incoming media type.

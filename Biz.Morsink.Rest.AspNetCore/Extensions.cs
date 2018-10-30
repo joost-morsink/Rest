@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
 using Biz.Morsink.Rest.AspNetCore.Problem;
 using Biz.Morsink.Rest.Jobs;
 using Biz.Morsink.Rest.Schema;
@@ -896,7 +897,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddProblemJson(this IRestServicesBuilder builder)
         {
-            builder.AddContextManipulator(sp => ProblemContextManipulator.Json(sp.GetServices<ITypeRepresentation>()));
+            builder.AddContextManipulator(sp => ProblemContextManipulator.Json(sp.GetService<ITypeRepresentations>()));
             if (!builder.ServiceCollection.Any(sd => sd.ServiceType == typeof(ITypeRepresentation) && sd.ImplementationType == typeof(SValidationMessageProblemRepresentation)))
                 builder.ServiceCollection.AddSingleton<ITypeRepresentation, SValidationMessageProblemRepresentation>();
             return builder;
@@ -909,11 +910,110 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>The builder.</returns>
         public static IRestServicesBuilder AddProblemXml(this IRestServicesBuilder builder)
         {
-            builder.AddContextManipulator(sp => ProblemContextManipulator.Xml(sp.GetServices<ITypeRepresentation>()));
+            builder.AddContextManipulator(sp => ProblemContextManipulator.Xml(sp.GetService<ITypeRepresentations>()));
             if (!builder.ServiceCollection.Any(sd => sd.ServiceType == typeof(ITypeRepresentation) && sd.ImplementationType == typeof(SValidationMessageProblemRepresentation)))
                 builder.ServiceCollection.AddSingleton<ITypeRepresentation, SValidationMessageProblemRepresentation>();
             return builder;
         }
-
+        /// <summary>
+        /// Adds support for custom media types instead of application/json.
+        /// </summary>
+        /// <param name="services">A service collection.</param>
+        /// <param name="useAttributes">Indicates whether MediaTypeAttributes should be used as mappings.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddRestCustomJsonMediaTypes(this IServiceCollection services, bool useAttributes = false)
+        {
+            services.AddRestContextManipulator(sp => CustomMediaTypeContextManipulator.Json(sp.GetService<IMediaTypeProvider>(), sp.GetService<ITypeRepresentations>()));
+            if (useAttributes)
+                services.AddSingleton<IMediaTypeMapping, AttributedMediaTypeMapping>();
+            return services;
+        }
+        /// <summary>
+        /// Adds support for custom media types instead of application/json.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="useAttributes">Indicates whether MediaTypeAttributes should be used as mappings.</param>
+        /// <returns>The builder.</returns>
+        public static IRestServicesBuilder AddCustomJsonMediaTypes(this IRestServicesBuilder builder, bool useAttributes = false)
+        {
+            builder.ServiceCollection.AddRestCustomJsonMediaTypes(useAttributes);
+            return builder;
+        }
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="services">A service collection.</param>
+        /// <param name="mapping">The media type mapping.</param>
+        /// <returns>The service collection.</returns>
+        public static IServiceCollection AddRestMediaTypeMapping(this IServiceCollection services, IMediaTypeMapping mapping)
+        {
+            services.AddSingleton(mapping);
+            return services;
+        }
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="mapping">The media type mapping.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, IMediaTypeMapping mapping)
+        {
+            builder.ServiceCollection.AddRestMediaTypeMapping(mapping);
+            return builder;
+        }
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <typeparam name="T">The type of the media type mapping.</typeparam>
+        /// <param name="builder">A rest services builder.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping<T>(this IRestServicesBuilder builder)
+            where T : class, IMediaTypeMapping
+        {
+            builder.ServiceCollection.AddSingleton<IMediaTypeMapping, T>();
+            return builder;
+        }
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="applies">A function that should return true if the mapping applies.</param>
+        /// <param name="mediaType">A function that determines the media type if the mapping applies.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, bool> applies, Func<Type, string> mediaType)
+            => builder.AddMediaTypeMapping(new FuncMediaMapping(applies, mediaType));
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="mediaType">A function that determines the media type if the mapping applies and returns null if it doesn't apply.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, string> mediaType)
+            => builder.AddMediaTypeMapping(new FuncMediaMapping(t => mediaType(t) != null, mediaType));
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="applies">A function that should return true if the mapping applies.</param>
+        /// <param name="mediaType">The media type if the mapping applies.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, bool> applies, string mediaType)
+            => builder.AddMediaTypeMapping(applies, ty => applies(ty) ? mediaType : null);
+        /// <summary>
+        /// Adds a media type mapping for custom media types.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+        /// <param name="type">The type the mapping applies to.</param>
+        /// <param name="mediaType">The media type if the mapping applies.</param>
+        /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Type type, string mediaType)
+            => builder.AddMediaTypeMapping(ty => ty == type, ty => ty == type ? mediaType : null);
+        /// <summary>
+        /// Adds media types based on MediaTypeAttributes.
+        /// </summary>
+        /// <param name="builder">A rest services builder.</param>
+         /// <returns>The rest services builder.</returns>
+        public static IRestServicesBuilder AddAttributedMediaTypeMappings(this IRestServicesBuilder builder)
+            => builder.AddMediaTypeMapping(new AttributedMediaTypeMapping());
     }
 }

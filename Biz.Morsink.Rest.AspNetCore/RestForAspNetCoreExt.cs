@@ -1,4 +1,5 @@
 ﻿using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Schema;
 using Microsoft.AspNetCore.Builder;
@@ -55,6 +56,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<IRestRequestScopeAccessor, AspNetCoreRestRequestScopeAccessor>();
             serviceCollection.AddSingleton<ICurrentHttpRestConverterAccessor, CurrentHttpRestConverterAccessor>();
             serviceCollection.AddSingleton<IRestPrefixContainerAccessor, RestPrefixContainerAccessor>();
+            serviceCollection.AddSingleton<ITypeRepresentations, TypeRepresentations>();
+            serviceCollection.AddSingleton<IMediaTypeProvider, MediaTypeProvider>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
 
             serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>();
