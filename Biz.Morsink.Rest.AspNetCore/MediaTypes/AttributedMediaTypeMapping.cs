@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Schema;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
@@ -8,10 +12,22 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
     /// </summary>
     internal class AttributedMediaTypeMapping : IMediaTypeMapping
     {
-        public bool Applies(Type type)
-            => type.GetTypeInfo().GetCustomAttribute<MediaTypeAttribute>() != null;
+        private readonly IEnumerable<MediaTypeMapping> allTypes;
 
-        public string GetMediaType(Type type)
-            => type.GetTypeInfo().GetCustomAttribute<MediaTypeAttribute>()?.MediaType;
+        public AttributedMediaTypeMapping(IEnumerable<IRestRepository> repositories, ITypeDescriptorCreator typeDescriptorCreator)
+        {
+            var apiDescription = new RestApiDescription(repositories, typeDescriptorCreator);
+            allTypes = apiDescription.EntityTypes.Select(grp => grp.Key)
+                .Select(type => (type, type.GetTypeInfo().GetCustomAttribute<MediaTypeAttribute>()?.MediaType))
+                .Where(t => t.MediaType != null)
+                .Select(t => new MediaTypeMapping(t.MediaType, t.type))
+                .ToArray();
+        }
+
+        public IEnumerator<MediaTypeMapping> GetEnumerator()
+            => allTypes.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
     }
 }

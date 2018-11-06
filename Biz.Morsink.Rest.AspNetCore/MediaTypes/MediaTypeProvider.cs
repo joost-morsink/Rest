@@ -11,19 +11,23 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
     internal class MediaTypeProvider : IMediaTypeProvider
     {
         private readonly IEnumerable<IMediaTypeMapping> mappings;
-        private readonly ConcurrentDictionary<Type, string> mediaTypes;
+        private readonly Dictionary<Type, MediaType> mediaTypes;
+        private readonly Dictionary<MediaType, Type> types;
         public MediaTypeProvider(IEnumerable<IMediaTypeMapping> mappings)
         {
             this.mappings = mappings;
-            mediaTypes = new ConcurrentDictionary<Type, string>();
+            mediaTypes = mappings.SelectMany(x => x).ToDictionary(m => m.Type, m => m.MediaType);
+            types = mappings.SelectMany(x => x).ToDictionary(m => m.MediaType, m => m.Type);
         }
 
-        public string GetMediaType(Type original, Type representation)
+        public MediaType? GetMediaType(Type original, Type representation)
             => GetMediaType(original) ?? GetMediaType(representation);
 
-        private string GetMediaType(Type type)
-        {
-            return mediaTypes.GetOrAdd(type, ty => mappings.Where(m => m.Applies(ty)).Select(m => m.GetMediaType(ty)).FirstOrDefault());
-        }
+        public Type GetTypeForMediaType(MediaType mediaType)
+            => types.TryGetValue(mediaType, out var type) ? type : default;
+
+        private MediaType? GetMediaType(Type type)
+            => mediaTypes.TryGetValue(type, out var mediaType) ? mediaType : default(MediaType?);
+        
     }
 }

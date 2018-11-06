@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
 {
-    public struct MediaType
+    public struct MediaType : IEquatable<MediaType>
     {
         public MediaType(string main, string sub, string suffix, params MediaTypeParameter[] parameters)
         {
@@ -39,9 +39,9 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             var plusIdx = parts[0].IndexOf('+', slashIdx);
 
             if (plusIdx < slashIdx)
-                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1), null, parseOtherParts().ToArray());
+                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1), null, parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
             else
-                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1, plusIdx - slashIdx - 1), parts[0].Substring(plusIdx + 1), parseOtherParts().ToArray());
+                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1, plusIdx - slashIdx - 1), parts[0].Substring(plusIdx + 1), parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
             return true;
 
             IEnumerable<MediaTypeParameter> parseOtherParts()
@@ -61,8 +61,16 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             => Parse(str);
         public static implicit operator string(MediaType mediaType)
             => mediaType.ToString();
+
+        public override int GetHashCode()
+            => Main.GetHashCode() ^ Sub.GetHashCode() ^ Suffix.GetHashCode();
+        public override bool Equals(object obj)
+            => obj is MediaType mt && Equals(mt);
+        public bool Equals(MediaType other)
+            => Main == other.Main && Sub == other.Sub && Suffix == other.Suffix && Parameters.SequenceEqual(other.Parameters);
     }
-    public struct MediaTypeParameter
+
+    public struct MediaTypeParameter : IEquatable<MediaTypeParameter>
     {
         public MediaTypeParameter(string name, string value)
         {
@@ -87,5 +95,15 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
                 return false;
             }
         }
+        public override int GetHashCode()
+            => Name.GetHashCode() ^ Value.GetHashCode();
+        public override bool Equals(object obj)
+            => obj is MediaTypeParameter mtp && Equals(mtp);
+        public bool Equals(MediaTypeParameter other)
+            => Name == other.Name && Value == other.Value;
+        public static bool operator ==(MediaTypeParameter left, MediaTypeParameter right)
+            => left.Equals(right);
+        public static bool operator !=(MediaTypeParameter left, MediaTypeParameter right)
+            => !left.Equals(right);
     }
 }

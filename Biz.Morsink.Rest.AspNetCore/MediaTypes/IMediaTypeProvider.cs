@@ -15,6 +15,12 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
         /// <param name="representation">The representation type of the original. 
         /// If there is no representation, this value should equal the 'original' parameter.</param>
         /// <returns>A media type if one could be found, null otherwise.</returns>
-        string GetMediaType(Type original, Type representation);
+        MediaType? GetMediaType(Type original, Type representation);
+        /// <summary>
+        /// Checks for a recognized media type.
+        /// </summary>
+        /// <param name="mediaType"></param>
+        /// <returns>The Type corresponding to the media type if one could be found, null otherwise.</returns>
+        Type GetTypeForMediaType(MediaType mediaType);
     }
 }

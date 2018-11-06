@@ -973,32 +973,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             builder.ServiceCollection.AddSingleton<IMediaTypeMapping, T>();
             return builder;
         }
-        /// <summary>
-        /// Adds a media type mapping for custom media types.
-        /// </summary>
-        /// <param name="builder">A rest services builder.</param>
-        /// <param name="applies">A function that should return true if the mapping applies.</param>
-        /// <param name="mediaType">A function that determines the media type if the mapping applies.</param>
-        /// <returns>The rest services builder.</returns>
-        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, bool> applies, Func<Type, string> mediaType)
-            => builder.AddMediaTypeMapping(new FuncMediaMapping(applies, mediaType));
-        /// <summary>
-        /// Adds a media type mapping for custom media types.
-        /// </summary>
-        /// <param name="builder">A rest services builder.</param>
-        /// <param name="mediaType">A function that determines the media type if the mapping applies and returns null if it doesn't apply.</param>
-        /// <returns>The rest services builder.</returns>
-        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, string> mediaType)
-            => builder.AddMediaTypeMapping(new FuncMediaMapping(t => mediaType(t) != null, mediaType));
-        /// <summary>
-        /// Adds a media type mapping for custom media types.
-        /// </summary>
-        /// <param name="builder">A rest services builder.</param>
-        /// <param name="applies">A function that should return true if the mapping applies.</param>
-        /// <param name="mediaType">The media type if the mapping applies.</param>
-        /// <returns>The rest services builder.</returns>
-        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Func<Type, bool> applies, string mediaType)
-            => builder.AddMediaTypeMapping(applies, ty => applies(ty) ? mediaType : null);
+        
         /// <summary>
         /// Adds a media type mapping for custom media types.
         /// </summary>
@@ -1006,14 +981,14 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="type">The type the mapping applies to.</param>
         /// <param name="mediaType">The media type if the mapping applies.</param>
         /// <returns>The rest services builder.</returns>
-        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Type type, string mediaType)
-            => builder.AddMediaTypeMapping(ty => ty == type, ty => ty == type ? mediaType : null);
+        public static IRestServicesBuilder AddMediaTypeMapping(this IRestServicesBuilder builder, Type type, MediaType mediaType)
+            => builder.AddMediaTypeMapping(new SingleMediaMapping(mediaType,type));
         /// <summary>
         /// Adds media types based on MediaTypeAttributes.
         /// </summary>
         /// <param name="builder">A rest services builder.</param>
-         /// <returns>The rest services builder.</returns>
+        /// <returns>The rest services builder.</returns>
         public static IRestServicesBuilder AddAttributedMediaTypeMappings(this IRestServicesBuilder builder)
-            => builder.AddMediaTypeMapping(new AttributedMediaTypeMapping());
+            => builder.AddMediaTypeMapping<AttributedMediaTypeMapping>();
     }
 }
