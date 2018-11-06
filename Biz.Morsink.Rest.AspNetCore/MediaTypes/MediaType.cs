@@ -63,11 +63,14 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             => mediaType.ToString();
 
         public override int GetHashCode()
-            => Main.GetHashCode() ^ Sub.GetHashCode() ^ Suffix.GetHashCode();
+            => Main.GetHashCode() ^ Sub.GetHashCode() ^ (Suffix == null ? 0 : Suffix.GetHashCode());
         public override bool Equals(object obj)
             => obj is MediaType mt && Equals(mt);
         public bool Equals(MediaType other)
             => Main == other.Main && Sub == other.Sub && Suffix == other.Suffix && Parameters.SequenceEqual(other.Parameters);
+
+        public MediaType WithoutSuffix()
+            => new MediaType(Main, Sub, null, Parameters);
     }
 
     public struct MediaTypeParameter : IEquatable<MediaTypeParameter>

@@ -1,5 +1,6 @@
 ﻿using Biz.Morsink.Identity.PathProvider;
 using Biz.Morsink.Rest.AspNetCore.Identity;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
 using Biz.Morsink.Rest.AspNetCore.Utils;
 using Biz.Morsink.Rest.Metadata;
 using Microsoft.AspNetCore.Http;
@@ -49,6 +50,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly RestRequestDelegate restRequestDelegate;
         private readonly IAuthorizationProvider authorizationProvider;
         private readonly IEnumerable<IRestExceptionListener> exceptionListeners;
+        private readonly IMediaTypeProvider mediaTypeProvider;
         private readonly IOptions<RestAspNetCoreOptions> options;
 
         /// <summary>
@@ -59,7 +61,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="httpHandler">A Rest HTTP pipeline.</param>
         /// <param name="identityProvider">A Rest identity provider.</param>
         /// <param name="converters">A collection of applicable Rest converters for HTTP.</param>
-        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider, IEnumerable<IRestExceptionListener> exceptionListeners, IOptions<RestAspNetCoreOptions> options)
+        public RestForAspNetCore(RequestDelegate next, IRestRequestHandler restHandler, IHttpRestRequestHandler httpHandler, IRestIdentityProvider identityProvider, IEnumerable<IHttpRestConverter> converters, IAuthorizationProvider authorizationProvider, IEnumerable<IRestExceptionListener> exceptionListeners, IMediaTypeProvider mediaTypeProvider, IOptions<RestAspNetCoreOptions> options)
         {
             this.handler = restHandler;
             this.converters = converters.ToArray();
@@ -67,6 +69,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.restRequestDelegate = httpHandler.GetRequestDelegate(restHandler);
             this.authorizationProvider = authorizationProvider;
             this.exceptionListeners = exceptionListeners;
+            this.mediaTypeProvider = mediaTypeProvider;
             this.options = options;
         }
         /// <summary>
@@ -94,7 +97,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                         if (options.Value.VersionHeader != null && resp.Metadata.TryGet(out Versioning ver))
                         {
                             var supportedHeader = options.Value.SupportedVersionsHeader ?? "Supported-Versions";
-                            if(ver.Current != null)
+                            if (ver.Current != null)
                                 context.Response.Headers[options.Value.VersionHeader] = ver.Current.ToString();
                             context.Response.Headers[supportedHeader] = new StringValues(ver.Supported.Select(v => v.ToString()).ToArray());
                         }
@@ -133,6 +136,17 @@ namespace Biz.Morsink.Rest.AspNetCore
             else
                 return (null, null);
 
+            var (best, bestQ) = DetermineBestConverter(context);
+            if (best == null)
+                return (null, null);
+
+            context.SetContextItem(bestQ);
+            RestRequest req = GetRequest(context, request, best, bestQ);
+            return (best?.ManipulateRequest(req, context), best);
+        }
+
+        private (IHttpRestConverter, NegotiationScore) DetermineBestConverter(HttpContext context)
+        {
             IHttpRestConverter best = null;
             NegotiationScore bestQ = default;
             for (int i = 0; i < converters.Length; i++)
@@ -144,20 +158,33 @@ namespace Biz.Morsink.Rest.AspNetCore
                     best = converters[i];
                 }
             }
-            if (best == null)
-                return (null, null);
+            return (best, bestQ);
+        }
 
-            context.SetContextItem(bestQ);
-
+        private RestRequest GetRequest(HttpContext context, HttpRequest request, IHttpRestConverter best, NegotiationScore bestQ)
+        {
             var vm = GetVersionMatcher(context) ?? best.DefaultVersionMatcher;
-            var matches = identityProvider.Match(request.Path + request.QueryString);
-            var match = vm.Match(matches.Select(m => (m.Version, m)));
-            var versioning = new Versioning(() => new VersionInRange(match.Item1, matches.Select(m => m.Version)));
 
-            var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: vm),
-                request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v)))).AddMetadata(versioning);
-           
-            return (best?.ManipulateRequest(req, context), best);
+            var requestedType = mediaTypeProvider.GetTypeForMediaType(MediaType.Parse(bestQ.MediaType).WithoutSuffix());
+            if (requestedType != null)
+            {
+                var ver = identityProvider.GetSupportedVersions(requestedType).Where(t => t.Item2 == requestedType).Select(t => t.Item1).First();
+                //var versioning = new Versioning(() => new VersionInRange(ver, new[] { ver }));
+                return RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: VersionMatcher.OnMajor(ver.Major)),
+                    request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v))));
+
+            }
+            else
+            {
+                var req = RestRequest.Create(request.Method, identityProvider.Parse(request.Path + request.QueryString, versionMatcher: vm),
+                    request.Query.SelectMany(kvp => kvp.Value.Select(v => new KeyValuePair<string, string>(kvp.Key, v))));
+
+                var matches = identityProvider.Match(request.Path + request.QueryString);
+                var match = vm.Match(matches.Select(m => (m.Version, m)));
+                var versioning = new Versioning(() => new VersionInRange(match.Item1, matches.Select(m => m.Version)));
+
+                return req.AddMetadata(versioning);
+            }
         }
 
         private VersionMatcher? GetVersionMatcher(HttpContext context)
