@@ -71,6 +71,8 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
 
         public MediaType WithoutSuffix()
             => new MediaType(Main, Sub, null, Parameters);
+        public MediaType WithSuffix(string suffix)
+            => new MediaType(Main, Sub, suffix, Parameters);
     }
 
     public struct MediaTypeParameter : IEquatable<MediaTypeParameter>

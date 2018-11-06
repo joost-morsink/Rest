@@ -18,14 +18,14 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
         /// <param name="mediaTypeProvider">A provider for media types.</param>
         /// <param name="typeRepresentations">A provider for type representations.</param>
         /// <returns>A CustomMediaTypeContextManipulator for the application/json media type.</returns>
-        public static CustomMediaTypeContextManipulator Json(IMediaTypeProvider mediaTypeProvider, ITypeRepresentations typeRepresentations) => new CustomMediaTypeContextManipulator(mediaTypeProvider, typeRepresentations, "application/json", "+json");
+        public static CustomMediaTypeContextManipulator Json(IMediaTypeProvider mediaTypeProvider, ITypeRepresentations typeRepresentations) => new CustomMediaTypeContextManipulator(mediaTypeProvider, typeRepresentations, "application/json", "json");
         /// <summary>
         /// Creates a CustomMediaTypeContextManipulator for the application/xml media type.
         /// </summary>
         /// <param name="mediaTypeProvider">A provider for media types.</param>
         /// <param name="typeRepresentations">A provider for type representations.</param>
         /// <returns>A CustomMediaTypeContextManipulator for the application/xml media type.</returns>
-        public static CustomMediaTypeContextManipulator Xml(IMediaTypeProvider mediaTypeProvider, ITypeRepresentations typeRepresentations) => new CustomMediaTypeContextManipulator(mediaTypeProvider, typeRepresentations, "application/xml", "+xml");
+        public static CustomMediaTypeContextManipulator Xml(IMediaTypeProvider mediaTypeProvider, ITypeRepresentations typeRepresentations) => new CustomMediaTypeContextManipulator(mediaTypeProvider, typeRepresentations, "application/xml", "xml");
 
         private readonly IMediaTypeProvider mediaTypeProvider;
         private readonly ITypeRepresentation typeRepresentations;
@@ -59,8 +59,8 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             {
                 var type = rv.RestValue.Value?.GetType() ?? rv.RestValue.ValueType;
                 var mediaType = mediaTypeProvider.GetMediaType(type, typeRepresentations.GetRepresentationType(type));
-                if (mediaType != null)
-                    typedHeaders.ContentType = new MediaTypeHeaderValue(mediaType + suffix);
+                if (mediaType.HasValue)
+                    typedHeaders.ContentType = MediaTypeHeaderValue.Parse(mediaType.Value.WithSuffix(suffix).ToString());
             }
         }
     }

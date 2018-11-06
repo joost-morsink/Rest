@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.AspNetCore.MediaTypes;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
@@ -23,57 +25,47 @@ namespace Biz.Morsink.Rest.AspNetCore
             /// Constructor.
             /// </summary>
             /// <param name="str">The string representing the case.</param>
-            public Case(string str)
+            public Case(MediaType str)
             {
-                str = str.Trim();
-                if (str.IndexOf(';') < 0)
-                {
-                    MainWildcard = str == "*/*";
-                    SubWildcard = str.EndsWith("/*");
-                    MimeType = str.Trim(' ', '*');
-                    Q = 1m;
-                }
-                else
-                {
-                    var parts = str.Split(';');
-                    MainWildcard = parts[0] == "*/*";
-                    SubWildcard = parts[0].EndsWith("/*");
-                    MimeType = parts[0].Trim(' ', '*');
-                    var qpart = parts[1].Trim();
-                    Q = qpart.StartsWith("q=") ? decimal.Parse(qpart.Substring(2), CultureInfo.InvariantCulture) : 1m;
-                }
+                MediaType = str;
             }
 
             /// <summary>
             /// Contains the mime type (or part thereof, depending on the wildcard properties).
             /// </summary>
-            public string MimeType { get; }
+            public MediaType MediaType { get; }
             /// <summary>
             /// Indicates whether the case is a */* pattern.
             /// </summary>
-            public bool MainWildcard { get; }
+            public bool MainWildcard => MediaType.Main == "*";
             /// <summary>
             /// Indicates whether the case has a /* suffix.
             /// </summary>
-            public bool SubWildcard { get; }
+            public bool SubWildcard => MediaType.Sub == "*";
             /// <summary>
             /// Gets the Q value for this case.
             /// </summary>
-            public decimal Q { get; }
+            public decimal Q => 
+                MediaType.Parameters
+                .Where(p => p.Name == "q")
+                .Select(p => decimal.TryParse(p.Value, out var res) ? res : 0m)
+                .Append(1m)
+                .First();
+
             /// <summary>
             /// Scores a mime type against this case.
             /// </summary>
             /// <param name="mimeType">The mime type to score.</param>
             /// <returns>A score.</returns>
-            public decimal Score(string mimeType, string suffix)
+            public decimal Score(MediaType mimeType, string suffix)
             {
                 if (MainWildcard)
                     return Q;
                 else if (SubWildcard)
-                    return mimeType.StartsWith(MimeType) ? Q : 0m;
-                else if (mimeType == MimeType)
+                    return mimeType.Main == MediaType.Main ? Q : 0m;
+                else if (mimeType == MediaType)
                     return Q;
-                else if (suffix != null && MimeType.EndsWith("+" + suffix))
+                else if (suffix != null && MediaType.Suffix == suffix)
                     return Q - 0.001m;
                 else
                     return 0m;
@@ -95,7 +87,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="mimeType">The mime type to score.</param>
         /// <returns>A score.</returns>
-        public (Case, decimal) Score(string mimeType, string suffix)
+        public (Case, decimal) Score(MediaType mimeType, string suffix)
         {
             for (int i = 0; i < Cases.Length; i++)
             {

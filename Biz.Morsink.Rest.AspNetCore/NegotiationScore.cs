@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.AspNetCore.MediaTypes;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,7 +15,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// </summary>
         /// <param name="mediaType">The media type.</param>
         /// <param name="q">The effective Q for the media type.</param>
-        public NegotiationScore(string mediaType, decimal q)
+        public NegotiationScore(MediaType mediaType, decimal q)
         {
             MediaType = mediaType;
             Q = q;
@@ -22,7 +23,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <summary>
         /// The media type.
         /// </summary>
-        public string MediaType { get; }
+        public MediaType MediaType { get; }
         /// <summary>
         /// The effective Q value.
         /// </summary>

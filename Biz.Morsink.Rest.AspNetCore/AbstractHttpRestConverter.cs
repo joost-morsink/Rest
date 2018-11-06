@@ -199,7 +199,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             if (request.HttpContext.TryGetContextItem<AcceptStructure>(out var acceptStructure))
             {
                 var (cas, q) = acceptStructure.Score(mimeType, suffix);
-                return new NegotiationScore(cas?.MimeType, q);
+                return new NegotiationScore(cas?.MediaType ?? default, q);
             }
             else
                 return HasAcceptHeader(request, mimeType) ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(null, 0m);

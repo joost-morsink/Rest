@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
     /// <summary>
     /// A Person reosurce.
     /// </summary>
-    [MediaType("application/x.Person.v1")]
+    [MediaType("application/x.Person;version=1")]
     public class Person : IHasIdentity<Person>
     {
         /// <summary>
@@ -44,7 +44,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
 
         IIdentity IHasIdentity.Id => Id;
     }
-    [MediaType("application/x.Person.v2")]
+    [MediaType("application/x.Person;version=2")]
     public class PersonV2 : IHasIdentity<PersonV2>
     {
         public static PersonV2 Create(Person person)
