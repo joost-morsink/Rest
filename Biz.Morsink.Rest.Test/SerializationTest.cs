@@ -14,6 +14,8 @@ using System.Text;
 namespace Biz.Morsink.Rest.Test
 {
     using UPC = UnionRepresentation<Helpers.Person, Car>;
+    using static PaymentInstrument;
+    using Microsoft.FSharp.Core;
 
     [TestClass]
     public class SerializationTest
@@ -120,6 +122,126 @@ namespace Biz.Morsink.Rest.Test
             Assert.AreEqual(expected, actual);
         }
         [TestMethod]
+        public void Serializer_FsOption()
+        {
+            var fso = FSharpOption<int>.Some(42);
+            var expected = new SValue(42);
+            var actual = serializer.Serialize(NewContext(), fso);
+            Assert.AreEqual(expected, actual);
+
+            var back = serializer.Deserialize<FSharpOption<int>>(NewContext(), actual);
+            Assert.IsTrue(back != null && back.Value == 42);
+
+            fso = FSharpOption<int>.None;
+            expected = SValue.Null;
+            actual = serializer.Serialize(NewContext(), fso);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<FSharpOption<int>>(NewContext(), actual);
+            Assert.IsNull(back);
+        }
+        [TestMethod]
+        public void Serializer_FsList()
+        {
+            var fsl = ListModule.OfArray(new[] { "abc", "def", "ghi" });
+            var expected = new SArray(
+                new SValue("abc"),
+                new SValue("def"),
+                new SValue("ghi"));
+            var actual = serializer.Serialize(NewContext(), fsl);
+            Assert.AreEqual(expected, actual);
+
+            var back = serializer.Deserialize<FSharpList<string>>(NewContext(), actual);
+            Assert.AreEqual(3, ListModule.Length(back));
+            Assert.AreEqual("abc", ListModule.Head(back));
+            Assert.AreEqual("def", ListModule.Head(ListModule.Tail(back)));
+            Assert.AreEqual("ghi", ListModule.Head(ListModule.Tail(ListModule.Tail(back))));
+        }
+        [TestMethod]
+        public void Serializer_FsUnion()
+        {
+            var fsu = Union.NewA(42);
+            var expected = new SObject(
+                new SProperty("Tag", new SValue("A")),
+                new SProperty("A", new SValue(42)));
+            var actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            var back = serializer.Deserialize<Union>(NewContext(), actual);
+            Assert.IsTrue(back is Union.A a && a.a == 42);
+
+            fsu = Union.NewB("abc");
+            expected = new SObject(
+                new SProperty("Tag", new SValue("B")),
+                new SProperty("B", new SValue("abc")));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<Union>(NewContext(), actual);
+            Assert.IsTrue(back is Union.B b && b.b == "abc");
+
+            fsu = Union.NewC(3.14);
+            expected = new SObject(
+                new SProperty("Tag", new SValue("C")),
+                new SProperty("C", new SValue(3.14)));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<Union>(NewContext(), actual);
+            Assert.IsTrue(back is Union.C c && c.c == 3.14);
+
+            fsu = Union.D;
+            expected = new SObject(
+                new SProperty("Tag", new SValue("D")));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<Union>(NewContext(), actual);
+            Assert.IsTrue(back.IsD);
+        }
+        [TestMethod]
+        public void Serializer_FsUnionStruct()
+        {
+            var fsu = UnionStruct.NewA(42);
+            var expected = new SObject(
+                new SProperty("Tag", new SValue("A")),
+                new SProperty("A", new SValue(42)));
+            var actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            var back = serializer.Deserialize<UnionStruct>(NewContext(), actual);
+            Assert.IsTrue(back.IsA && back.a == 42);
+
+            fsu = UnionStruct.NewB("abc");
+            expected = new SObject(
+                new SProperty("Tag", new SValue("B")),
+                new SProperty("B", new SValue("abc")));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<UnionStruct>(NewContext(), actual);
+            Assert.IsTrue(back.IsB && back.b == "abc");
+
+            fsu = UnionStruct.NewC(3.14);
+            expected = new SObject(
+                new SProperty("Tag", new SValue("C")),
+                new SProperty("C", new SValue(3.14)));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<UnionStruct>(NewContext(), actual);
+            Assert.IsTrue(back.IsC && back.c == 3.14);
+
+            fsu = UnionStruct.D;
+            expected = new SObject(
+                new SProperty("Tag", new SValue("D")));
+            actual = serializer.Serialize(NewContext(), fsu);
+            Assert.AreEqual(expected, actual);
+
+            back = serializer.Deserialize<UnionStruct>(NewContext(), actual);
+            Assert.IsTrue(back.IsD);
+        }
+        [TestMethod]
         public void Serializer_Intersection()
         {
             var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
@@ -143,6 +265,29 @@ namespace Biz.Morsink.Rest.Test
         }
         [TestMethod]
         public void Serializer_Union()
+        {
+            var cc = new CreditCard { CardNumber = "1234", ExpiryDate = "11/18" };
+            var expected = new SObject(
+                new SProperty("CardNumber", new SValue("1234")),
+                new SProperty("ExpiryDate", new SValue("11/18")));
+            var actual = serializer.Serialize(NewContext(), cc);
+            Assert.AreEqual(expected, actual);
+            // Todo:
+            // var back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
+            // Assert.IsTrue(back is CreditCard c && c.CardNumber == "1234" && c.ExpiryDate == "11/18");
+
+            var ba = new BankAccount { AccountNumber = "12345" };
+            expected = new SObject(
+                new SProperty("AccountNumber", new SValue("12345")));
+            actual = serializer.Serialize(NewContext(), ba);
+            Assert.AreEqual(expected, actual);
+            // Todo:
+            // back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
+            // Assert.IsTrue(back is BankAccount acc && acc.AccountNumber == "12345");
+        }
+
+        [TestMethod]
+        public void Serializer_UnionRepr()
         {
             var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 39 };
             var c = new Helpers.Car { Brand = "Volvo", Model = "V40" };
