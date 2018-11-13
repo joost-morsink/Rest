@@ -246,12 +246,11 @@ namespace Biz.Morsink.Rest.AspNetCore
         {
             if (TryGetContentTypeHeader(request, out var mediaType))
             {
-
                 if (suffix == null)
                     return mediaType == mimeType ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(mimeType, 0.1m);
                 else
                 {
-                    return mediaType == mimeType || MediaType.TryParse(mediaType, out var media) && media.Suffix == suffix
+                    return mediaType == mimeType || mediaType.Suffix == suffix
                         ? new NegotiationScore(mediaType, 1m)
                         : new NegotiationScore(mediaType, 0m);
                 }

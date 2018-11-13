@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Primitives;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,7 +8,7 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
 {
     public struct MediaType : IEquatable<MediaType>
     {
-        public MediaType(string main, string sub, string suffix, params MediaTypeParameter[] parameters)
+        public MediaType(StringSegment main, StringSegment sub, StringSegment suffix, params MediaTypeParameter[] parameters)
         {
             Main = main;
             Sub = sub;
@@ -15,9 +16,9 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             Parameters = parameters ?? new MediaTypeParameter[0];
         }
 
-        public string Main { get; }
-        public string Sub { get; }
-        public string Suffix { get; }
+        public StringSegment Main { get; }
+        public StringSegment Sub { get; }
+        public StringSegment Suffix { get; }
         public MediaTypeParameter[] Parameters { get; }
         public override string ToString()
         {
@@ -27,11 +28,11 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             else
                 return string.Join(";", Parameters.Select(p => p.ToString()).Prepend(str));
         }
-        public static MediaType? TryParse(string str)
+        public static MediaType? TryParse(StringSegment str)
             => TryParse(str, out var res) ? res : default(MediaType?);
-        public static bool TryParse(string str, out MediaType result)
+        public static bool TryParse(StringSegment str, out MediaType result)
         {
-            var parts = str.Split(';');
+            var parts = str.Split(new[] { ';' }).ToArray();
             var slashIdx = parts[0].IndexOf('/');
             if (slashIdx < 0)
             {
@@ -41,9 +42,9 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             var plusIdx = parts[0].IndexOf('+', slashIdx);
 
             if (plusIdx < slashIdx)
-                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1), null, parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
+                result = new MediaType(parts[0].Subsegment(0, slashIdx), parts[0].Subsegment(slashIdx + 1), null, parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
             else
-                result = new MediaType(parts[0].Substring(0, slashIdx), parts[0].Substring(slashIdx + 1, plusIdx - slashIdx - 1), parts[0].Substring(plusIdx + 1), parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
+                result = new MediaType(parts[0].Subsegment(0, slashIdx), parts[0].Subsegment(slashIdx + 1, plusIdx - slashIdx - 1), parts[0].Subsegment(plusIdx + 1), parseOtherParts().OrderBy(mtp => mtp.Name).ToArray());
             return true;
 
             IEnumerable<MediaTypeParameter> parseOtherParts()
@@ -79,21 +80,21 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
 
     public struct MediaTypeParameter : IEquatable<MediaTypeParameter>
     {
-        public MediaTypeParameter(string name, string value)
+        public MediaTypeParameter(StringSegment name, StringSegment value)
         {
             Name = name;
             Value = value;
         }
-        public string Name { get; }
-        public string Value { get; }
+        public StringSegment Name { get; }
+        public StringSegment Value { get; }
         public override string ToString()
             => $"{Name}={Value}";
-        public static bool TryParse(string str, out MediaTypeParameter result)
+        public static bool TryParse(StringSegment str, out MediaTypeParameter result)
         {
             var idx = str.IndexOf('=');
             if (idx > 0)
             {
-                result = new MediaTypeParameter(str.Substring(0, idx), str.Substring(idx + 1));
+                result = new MediaTypeParameter(str.Subsegment(0, idx), str.Subsegment(idx + 1));
                 return true;
             }
             else
