@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.AspNetCore.MediaTypes;
+﻿using Biz.Morsink.DataConvert;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -48,7 +49,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             public decimal Q => 
                 MediaType.Parameters
                 .Where(p => p.Name == "q")
-                .Select(p => decimal.TryParse(p.Value, out var res) ? res : 0m)
+                .Select(p => DataConverter.Default.Convert(p.Value).To(0m))
                 .Append(1m)
                 .First();
 
