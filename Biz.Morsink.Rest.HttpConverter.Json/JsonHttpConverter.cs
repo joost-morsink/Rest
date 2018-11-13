@@ -86,7 +86,11 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 }
             }
         }
-
+        protected override bool IsTypeValid(MediaType requested, MediaType provided, Type type)
+        {
+            return requested.Main == "application" && requested.Sub == "json" 
+                || requested.WithoutSuffix() == provided.WithoutSuffix() && requested.Suffix == "json";
+        }
         protected override void ApplyGeneralHeaders(HttpResponse httpResponse, RestResponse response)
         {
             httpResponse.ContentType = MEDIA_TYPE;

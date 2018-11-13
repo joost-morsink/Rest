@@ -14,6 +14,8 @@ using Biz.Morsink.Rest.AspNetCore.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Biz.Morsink.Rest.AspNetCore.Identity;
 using Biz.Morsink.Rest.Utils;
+using Biz.Morsink.Rest.AspNetCore.MediaTypes;
+using System.Reflection;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
@@ -84,7 +86,18 @@ namespace Biz.Morsink.Rest.AspNetCore
             });
             if (SupportsCuries)
                 ParseCurieHeaders(context.Request, scopeAccessor.Scope.GetScopeItem<RestPrefixContainer>());
-            return new RestRequest(req.Capability, req.Address, req.Parameters, ty => ParseBody(ty, body.Value), req.Metadata);
+
+            return new RestRequest(req.Capability, req.Address, req.Parameters, ty =>
+            {
+                var attr = ty.GetTypeInfo().GetCustomAttribute<MediaTypeAttribute>();
+                if (attr != null && context.TryGetContextItem(out NegotiationScore score) && !IsTypeValid(score.MediaType, attr.MediaType, ty))
+                    throw new RestFailureException(RestResult.BadRequest<object>("Incorrect media type."));
+                return ParseBody(ty, body.Value);
+            }, req.Metadata);
+        }
+        protected virtual bool IsTypeValid(MediaType requested, MediaType provided, Type type)
+        {
+            return true;
         }
         /// <summary>
         /// A converter is able to parse an HTTP body if it knows the type of data to expect. 
@@ -211,24 +224,38 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <param name="request">The HttpRequest</param>
         /// <param name="mimeType">The contents of the Content-Type header.</param>
         /// <returns>True if the request has a Content-Type header, false otherwise.</returns>
-        protected bool TryGetContentTypeHeader(HttpRequest request, out string mimeType)
+        protected bool TryGetContentTypeHeader(HttpRequest request, out MediaType mimeType)
         {
             var contentType = request.GetTypedHeaders().ContentType;
             if (contentType != null && contentType.Type.HasValue)
             {
-                mimeType = contentType.Type.Value;
+                var idx = contentType.SubType.Value.IndexOf('+');
+                if (idx < 0)
+                    mimeType = new MediaType(contentType.Type.Value, contentType.SubType.Value, null, contentType.Parameters.Select(p => new MediaTypeParameter(p.Name.Value, p.Value.Value)).ToArray());
+                else
+                    mimeType = new MediaType(contentType.Type.Value, contentType.SubType.Value.Substring(0, idx), contentType.SubType.Value.Substring(idx + 1), contentType.Parameters.Select(p => new MediaTypeParameter(p.Name.Value, p.Value.Value)).ToArray());
                 return true;
             }
             else
             {
-                mimeType = null;
+                mimeType = default;
                 return false;
             }
         }
         protected NegotiationScore ScoreContentTypeAndAcceptHeaders(HttpRequest request, string mimeType, string suffix = null)
         {
             if (TryGetContentTypeHeader(request, out var mediaType))
-                return mediaType == mimeType ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(null, 0.1m);
+            {
+
+                if (suffix == null)
+                    return mediaType == mimeType ? new NegotiationScore(mimeType, 1m) : new NegotiationScore(mimeType, 0.1m);
+                else
+                {
+                    return mediaType == mimeType || MediaType.TryParse(mediaType, out var media) && media.Suffix == suffix
+                        ? new NegotiationScore(mediaType, 1m)
+                        : new NegotiationScore(mediaType, 0m);
+                }
+            }
             else
             {
                 var score = ScoreAcceptHeader(request, mimeType, suffix);

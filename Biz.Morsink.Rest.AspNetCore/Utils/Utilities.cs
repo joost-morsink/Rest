@@ -139,11 +139,18 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         /// <param name="item">When found, this parameter will contain the found object.</param>
         /// <returns>True if the object was found, false otherwise.</returns>
         public static bool TryGetContextItem<T>(this HttpContext httpContext, out T item)
-            where T : class
         {
             var res = httpContext.Items.TryGetValue(typeof(T), out var val);
-            item = val as T;
-            return res;
+            if (res && val is T t)
+            {
+                item = t;
+                return true;
+            }
+            else
+            {
+                item = default;
+                return false;
+            }
         }
         /// <summary>
         /// Stores an object in an HttpContext's Items collection by using the type as key.

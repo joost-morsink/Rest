@@ -27,6 +27,8 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             else
                 return string.Join(";", Parameters.Select(p => p.ToString()).Prepend(str));
         }
+        public static MediaType? TryParse(string str)
+            => TryParse(str, out var res) ? res : default(MediaType?);
         public static bool TryParse(string str, out MediaType result)
         {
             var parts = str.Split(';');
