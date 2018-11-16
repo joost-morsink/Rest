@@ -60,13 +60,43 @@ namespace Biz.Morsink.Rest.Schema
             => IsOfKind(type)
             ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
             : null;
-        private class SerializerImpl<C,T> : Serializer<C>.Typed<T>.Func
-            where C:SerializationContext<C>
+        private class SerializerImpl<C, T> : Serializer<C>.Typed<T>.Func
+            where C : SerializationContext<C>
         {
-            public SerializerImpl(Serializer<C> parent) : base(parent) { }
+            public SerializerImpl(Serializer<C> parent) : base(parent)
+            {
+            }
 
             protected override Func<C, SItem, T> MakeDeserializer()
-                => (ctx,item) => throw new NotSupportedException();
+            {
+                var specifics = GetOptionsForType(typeof(T))
+                    .Select(ty => (type: ty, deserializer: MakeSpecificDeserializer(ty)))
+                    .ToDictionary(t => t.type, t => t.deserializer);
+                var options = GetOptionsForType(typeof(T))
+                    .Select(ty => (type: ty, descriptor: Parent.TypeDescriptorCreator.GetDescriptor(ty)))
+                    .ToArray();
+                return (ctx, item) =>
+                {
+                    var bestScore = 0;
+                    Type bestType = null;
+                    foreach (var option in options)
+                    {
+                        var score = Score(option.descriptor, item);
+                        if (score > bestScore)
+                        {
+                            bestScore = score;
+                            bestType = option.type;
+                        }
+                    }
+                    return specifics[bestType](ctx, item);
+                };
+            }
+
+            private Func<C, SItem, T> MakeSpecificDeserializer(Type ty)
+            {
+                var serializer = RecordDescriptorKind.Instance.GetSerializer(Parent, ty);
+                return (ctx, item) => (T)serializer.Deserialize(ctx, item);
+            }
 
             protected override Func<C, T, SItem> MakeSerializer()
             {
@@ -84,6 +114,34 @@ namespace Biz.Morsink.Rest.Schema
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
             }
+
+
+            private int Score(TypeDescriptor desc, SItem item)
+            {
+                var score = 0;
+                if (item is SObject obj)
+                {
+                    var props = (desc as TypeDescriptor.Record)?.Properties;
+                    if (props != null)
+                    {
+                        var req = new HashSet<string>(props.Where(p => p.Value.Required).Select(p => p.Key));
+                        foreach (var prop in obj.Properties)
+                        {
+                            if (props.TryGetValue(prop.Name, out var pdesc))
+                            {
+                                if (pdesc.Required)
+                                    req.Remove(pdesc.Name);
+                                score += 10;
+                            }
+                        }
+                        if (req.Count == 0)
+                            score *= 10;
+                        return score;
+                    }
+                }
+                return 1;
+            }
+
         }
     }
 }

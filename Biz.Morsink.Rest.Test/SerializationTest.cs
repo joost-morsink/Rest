@@ -272,18 +272,18 @@ namespace Biz.Morsink.Rest.Test
                 new SProperty("ExpiryDate", new SValue("11/18")));
             var actual = serializer.Serialize(NewContext(), cc);
             Assert.AreEqual(expected, actual);
-            // Todo:
-            // var back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
-            // Assert.IsTrue(back is CreditCard c && c.CardNumber == "1234" && c.ExpiryDate == "11/18");
+
+            var back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
+            Assert.IsTrue(back is CreditCard c && c.CardNumber == "1234" && c.ExpiryDate == "11/18");
 
             var ba = new BankAccount { AccountNumber = "12345" };
             expected = new SObject(
                 new SProperty("AccountNumber", new SValue("12345")));
             actual = serializer.Serialize(NewContext(), ba);
             Assert.AreEqual(expected, actual);
-            // Todo:
-            // back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
-            // Assert.IsTrue(back is BankAccount acc && acc.AccountNumber == "12345");
+
+            back = serializer.Deserialize<PaymentInstrument>(NewContext(), actual);
+            Assert.IsTrue(back is BankAccount acc && acc.AccountNumber == "12345");
         }
 
         [TestMethod]
