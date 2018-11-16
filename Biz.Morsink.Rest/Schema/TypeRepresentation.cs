@@ -15,9 +15,9 @@ namespace Biz.Morsink.Rest.Schema
         /// Constructor.
         /// </summary>
         /// <param name="provider">A service provider used to get an instance of ITypeDescriptorCreator lazily.</param>
-        public TypeRepresentation(IServiceProvider provider)
+        public TypeRepresentation(Lazy<ITypeDescriptorCreator> creator)
         {
-            creator = new Lazy<ITypeDescriptorCreator>(() => (ITypeDescriptorCreator)provider.GetService(typeof(ITypeDescriptorCreator)));
+            this.creator = creator;
         }
 
         public override Type GetRepresentable(TypeDescriptor representation)

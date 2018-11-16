@@ -79,13 +79,13 @@ namespace Biz.Morsink.Rest.Schema
                 {
                     var bestScore = 0;
                     Type bestType = null;
-                    foreach (var option in options)
+                    foreach (var (type, descriptor) in options)
                     {
-                        var score = Score(option.descriptor, item);
+                        var score = Score(descriptor, item);
                         if (score > bestScore)
                         {
                             bestScore = score;
-                            bestType = option.type;
+                            bestType = type;
                         }
                     }
                     return specifics[bestType](ctx, item);

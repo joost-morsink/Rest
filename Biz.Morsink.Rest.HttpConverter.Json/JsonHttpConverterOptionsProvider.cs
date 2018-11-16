@@ -16,9 +16,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="contractResolver">An IContractResolver instance.</param>
         /// <param name="configure">A optional function to configure the JsonHttpConverterOptions.</param>
-        public JsonHttpConverterOptionsProvider(IServiceProvider serviceProvider, Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
+        public JsonHttpConverterOptionsProvider(Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
         {
             options = new Lazy<JsonHttpConverterOptions>(() =>
             {

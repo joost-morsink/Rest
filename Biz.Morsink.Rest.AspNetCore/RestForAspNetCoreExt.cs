@@ -39,6 +39,8 @@ namespace Biz.Morsink.Rest.AspNetCore
 
             return app.UseMiddleware<RestForAspNetCore>();
         }
+        public static Lazy<T> GetLazyService<T>(this IServiceProvider sp)
+            => new Lazy<T>(() => sp.GetRequiredService<T>());
         /// <summary>
         /// Adds services for RestForAspNetCore to the specified service collection.
         /// RestForAspNetCore depends on the IHttpContextAccessor implementation for its security implementation,
@@ -60,7 +62,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<IMediaTypeProvider, MediaTypeProvider>();
             serviceCollection.AddTransient<IUser, AspNetCoreUser>();
 
-            serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>();
+            serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>(sp => new TypeRepresentation(sp.GetLazyService<ITypeDescriptorCreator>()));
             serviceCollection.AddTransient<ITypeRepresentation, RestCapabilitiesRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExpandoObjectRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
@@ -68,6 +70,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, VersionRepresentation>();
 
+            serviceCollection.AddScoped<ITokenProviderFactory, TokenProviderFactory>();
             var restbuilder = new RestServicesBuilder(serviceCollection);
             builder?.Invoke(restbuilder);
             restbuilder.EndConfiguration();

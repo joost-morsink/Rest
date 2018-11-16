@@ -18,7 +18,7 @@ namespace Biz.Morsink.Rest
     public class HashTokenProvider<T> : ITokenProvider<T>
     {
         #region Code generation
-        private static Func<T, IDataConverter, string> getToken { get; } = MakeGetToken();
+        private static Func<T, IDataConverter, string> GetToken { get; } = MakeGetToken();
 
         private static Func<T, IDataConverter, string> MakeGetToken()
         {
@@ -73,7 +73,7 @@ namespace Biz.Morsink.Rest
         /// <param name="item">The item to create a hash token for.</param>
         /// <returns>A strring representation of the token.</returns>
         public VersionToken GetTokenFor(T item)
-            => new VersionToken { Token = getToken(item, converter), IsStrong = false };
+            => new VersionToken { Token = GetToken(item, converter), IsStrong = false };
 
         VersionToken ITokenProvider.GetTokenFor(object item)
             => GetTokenFor((T)item);

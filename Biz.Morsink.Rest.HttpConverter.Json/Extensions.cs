@@ -51,7 +51,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
             builder?.Invoke(new RestJsonHttpConverterBuilder(serviceCollection));
             if (!serviceCollection.Any(sd => sd.ServiceType == typeof(IOptions<JsonHttpConverterOptions>)))
                 serviceCollection.AddSingleton(sp =>
-                    new JsonHttpConverterOptionsProvider(sp, opts => opts).GetOptions());
+                    new JsonHttpConverterOptionsProvider(opts => opts).GetOptions());
             return serviceCollection;
         }
         private class RestJsonHttpConverterBuilder : IJsonHttpConverterBuilder
@@ -83,7 +83,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
         public static IJsonHttpConverterBuilder Configure(this IJsonHttpConverterBuilder builder, Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
         {
             builder.ServiceCollection.AddSingleton(sp =>
-                new JsonHttpConverterOptionsProvider(sp, configure ?? (opts => opts)).GetOptions());
+                new JsonHttpConverterOptionsProvider(configure ?? (opts => opts)).GetOptions());
             return builder;
         }
 

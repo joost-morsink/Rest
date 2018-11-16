@@ -12,17 +12,17 @@ namespace Biz.Morsink.Rest
     public class CacheVersionTokenHandler : IRestRequestHandler
     {
         private readonly RestRequestHandlerDelegate next;
-        private readonly IServiceProvider serviceProvider;
+        private readonly ITokenProviderFactory tokenProviderFactory;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="next">The next Rest request handler in the pipeline.</param>
         /// <param name="serviceProvider">A service provider for resolving token providers.</param>
-        public CacheVersionTokenHandler(RestRequestHandlerDelegate next, IServiceProvider serviceProvider)
+        public CacheVersionTokenHandler(RestRequestHandlerDelegate next, ITokenProviderFactory tokenProviderFactory)
         {
             this.next = next;
-            this.serviceProvider = serviceProvider;
+            this.tokenProviderFactory = tokenProviderFactory;
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Biz.Morsink.Rest
                 {
 
                     var restValue = resp.UntypedResult.AsSuccess().RestValue;
-                    var tokenProvider = (ITokenProvider)serviceProvider.GetService(typeof(ITokenProvider<>).MakeGenericType(restValue.ValueType));
+                    var tokenProvider = tokenProviderFactory.GetTokenProvider(restValue.ValueType);
                     if (tokenProvider != null)
                     {
                         var token = tokenProvider.GetTokenFor(restValue.Value);

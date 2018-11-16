@@ -278,7 +278,7 @@ namespace Biz.Morsink.Rest.AspNetCore
                 => Create(value);
         }
         #endregion
-        private DataConverter converter = Converters.CreatePipeline(regular: Converters.Regular.Concat(new IConverter[] {
+        private readonly DataConverter converter = Converters.CreatePipeline(regular: Converters.Regular.Concat(new IConverter[] {
             RecordConverter.ForDictionaries()
         }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();
