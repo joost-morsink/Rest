@@ -41,15 +41,17 @@ namespace Biz.Morsink.Rest
                 new FromStringRepresentationConverter().Restrict((from, to) => from != typeof(Version)), // Version could conflict with numeric types' syntaxes.
                 new DynamicConverter());
         private readonly IDataConverter converter;
+        private readonly IServiceProviderAccessor serviceProviderAccessor;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="locator">A service locator to resolve repositories.</param>
         /// <param name="converter">An optional DataConverter for use within the handler.</param>
-        public CoreRestRequestHandler(IDataConverter converter = null)
+        public CoreRestRequestHandler(IServiceProviderAccessor serviceProviderAccessor, IDataConverter converter = null)
         {
             this.converter = converter ?? DefaultDataConverter;
+            this.serviceProviderAccessor = serviceProviderAccessor;
         }
         /// <summary>
         /// Handles a RestRequest
@@ -64,9 +66,7 @@ namespace Biz.Morsink.Rest
 
                 var t = Activator.CreateInstance(typeof(RestRequestHandler<>).MakeGenericType(type), new object[]
                 {
-                    request.Metadata.TryGet<IServiceProvider>(out var locator)
-                        ? locator
-                        : throw new ArgumentException("RestRequest does not carry IServiceProvider"),
+                    serviceProviderAccessor.ServiceProvider ?? throw new ArgumentException("No scoped IServiceProvider"),
                     converter
                 });
                 return await (ValueTask<RestResponse>)

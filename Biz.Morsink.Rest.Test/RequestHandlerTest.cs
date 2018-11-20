@@ -13,18 +13,20 @@ namespace Biz.Morsink.Rest.Test
     [TestClass]
     public class RequestHandlerTest
     {
+
         private ContainerBuilder CreateContainerBuilder()
         {
             var cb = new ContainerBuilder();
             cb.RegisterType<AutofacServiceProvider>().AsImplementedInterfaces();
             cb.RegisterType<CoreRestRequestHandler>().AsImplementedInterfaces().SingleInstance();
+            cb.RegisterInstance(ServiceProviderAccessor.Instance).AsImplementedInterfaces();
             return cb;
         }
         private RestRequest CreateRequest(IContainer container, string cap, IIdentity target, IEnumerable<(string, string)> parameters = null)
         {
             var sp = container.Resolve<IServiceProvider>();
-            return RestRequest.Create(cap, target, parameters?.Select(x => new KeyValuePair<string, string>(x.Item1, x.Item2)), null, null)
-                .AddMetadata(sp);
+            ServiceProviderAccessor.Instance.ServiceProvider = sp;
+            return RestRequest.Create(cap, target, parameters?.Select(x => new KeyValuePair<string, string>(x.Item1, x.Item2)), null, null);
         }
         [TestMethod]
         public async Task RequestHandler_HappyGet()

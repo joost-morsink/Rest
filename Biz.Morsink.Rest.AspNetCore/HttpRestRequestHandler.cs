@@ -43,7 +43,7 @@ namespace Biz.Morsink.Rest.AspNetCore
         /// <returns>A RestRequestDelegate that incorporates all the logic for the middleware and the core request handler.</returns>
         public RestRequestDelegate GetRequestDelegate(IRestRequestHandler handler)
         {
-            RestRequestDelegate result = (context, req, conv) => handler.HandleRequest(req.AddMetadata(context.RequestServices));
+            RestRequestDelegate result = (context, req, conv) => handler.HandleRequest(req);
             foreach (var m in middlewares.Reverse())
                 result = m(result);
             return result;
