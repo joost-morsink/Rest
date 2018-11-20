@@ -12,24 +12,20 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverterOptionsProvider : IOptions<JsonHttpConverterOptions>
     {
-        private readonly Lazy<JsonHttpConverterOptions> options;
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="configure">A optional function to configure the JsonHttpConverterOptions.</param>
         public JsonHttpConverterOptionsProvider(Func<JsonHttpConverterOptions, JsonHttpConverterOptions> configure)
         {
-            options = new Lazy<JsonHttpConverterOptions>(() =>
-            {
-                var opts = new JsonHttpConverterOptions();
-                opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-                return configure == null ? opts : configure(opts);
-            });
+            var opts = new JsonHttpConverterOptions();
+            opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+            Value = configure == null ? opts : configure(opts);
         }
         /// <summary>
         /// Gets an instance of JsonHttpConverterOptions.
         /// </summary>
-        public JsonHttpConverterOptions Value => options.Value;
+        public JsonHttpConverterOptions Value { get; }
         /// <summary>
         /// Gets an instance of the IOptions instance.
         /// </summary>

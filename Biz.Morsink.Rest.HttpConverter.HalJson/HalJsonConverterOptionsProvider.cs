@@ -13,7 +13,6 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
     /// </summary>
     public class HalJsonConverterOptionsProvider : IOptions<HalJsonConverterOptions>
     {
-        private readonly Lazy<HalJsonConverterOptions> options;
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -21,18 +20,14 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// <param name="configure">An optional configuration function.</param>
         public HalJsonConverterOptionsProvider(IServiceProvider serviceProvider, Func<HalJsonConverterOptions, HalJsonConverterOptions> configure)
         {
-            options = new Lazy<HalJsonConverterOptions>(() =>
-            {
-                var opts = new HalJsonConverterOptions();
-                opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-                opts.SerializerSettings.ContractResolver = serviceProvider.GetRequiredService<IContractResolver>();
-                return configure == null ? opts : configure(opts);
-            });
+            var opts = new HalJsonConverterOptions();
+            opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+            Value = configure == null ? opts : configure(opts);
         }
         /// <summary>
         /// Contains the options value.
         /// </summary>
-        public HalJsonConverterOptions Value => options.Value;
+        public HalJsonConverterOptions Value { get; }
         /// <summary>
         /// Returns 'this'. 
         /// </summary>
