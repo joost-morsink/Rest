@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConver
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.HalJson", "Biz.Morsink.Rest.HttpConverter.HalJson\Biz.Morsink.Rest.HttpConverter.HalJson.csproj", "{234E9152-1A7E-4D2F-8F01-D2EB514962E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biz.Morsink.Rest.HttpConverter.HalJson.Test", "Biz.Morsink.Rest.HttpConverter.HalJson.Test\Biz.Morsink.Rest.HttpConverter.HalJson.Test.csproj", "{F63E852C-1CDA-485E-8E5F-81BE735B3B23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biz.Morsink.Rest.HttpConverter.HalJson.Test", "Biz.Morsink.Rest.HttpConverter.HalJson.Test\Biz.Morsink.Rest.HttpConverter.HalJson.Test.csproj", "{F63E852C-1CDA-485E-8E5F-81BE735B3B23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
