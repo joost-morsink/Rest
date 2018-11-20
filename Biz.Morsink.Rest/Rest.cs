@@ -1,4 +1,6 @@
 ﻿
+using System.Linq;
+
 namespace Biz.Morsink.Rest
 {
     /// <summary>
@@ -23,7 +25,7 @@ namespace Biz.Morsink.Rest
         /// <returns>A RestValue containing the provided underlying collection.</returns>
         public static RestValue<T> Collection<T>(T item)
             where T : IRestCollection
-            => ValueBuilder(item).WithEmbeddings(item.Items).Build();
+            => ValueBuilder(item).WithEmbeddings(item.Items.Select(i => new Embedding("item", i))).Build();
         /// <summary>
         /// Constructs a RestValue&lt;T&gt;.Builder from a value of type T.
         /// Using this builder, the other properties can be set before actual creation of the RestValue instance.

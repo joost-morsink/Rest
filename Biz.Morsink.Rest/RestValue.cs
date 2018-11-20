@@ -29,14 +29,14 @@ namespace Biz.Morsink.Rest
         /// <param name="value">An underlying (main) value.</param>
         /// <param name="links">An optional collection of links for the value.</param>
         /// <param name="embeddings">An optional collection of embeddings for the value.</param>
-        public RestValue(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+        public RestValue(T value, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
         {
             Value = value;
             this.links = links is IReadOnlyList<Link> rolLink ? ReadOnlyList<Link>.Create(rolLink) : ReadOnlyList<Link>.Create((links ?? Enumerable.Empty<Link>()).ToArray());
-            this.embeddings = embeddings is IReadOnlyList<object> rolEmbedding ? ReadOnlyList<object>.Create(rolEmbedding) : ReadOnlyList<object>.Create((embeddings ?? Enumerable.Empty<object>()).ToArray());
+            this.embeddings = embeddings is IReadOnlyList<Embedding> rolEmbedding ? ReadOnlyList<Embedding>.Create(rolEmbedding) : ReadOnlyList<Embedding>.Create((embeddings ?? Enumerable.Empty<Embedding>()).ToArray());
         }
         private readonly ReadOnlyList<Link> links;
-        private readonly ReadOnlyList<object> embeddings;
+        private readonly ReadOnlyList<Embedding> embeddings;
         /// <summary>
         /// Gets the underlying (main) value.
         /// </summary>
@@ -50,7 +50,7 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets a list of embeddings for the value.
         /// </summary>
-        public IReadOnlyList<object> Embeddings => embeddings;
+        public IReadOnlyList<Embedding> Embeddings => embeddings;
         /// <summary>
         /// Implementation of Linq Select method.
         /// </summary>
@@ -65,25 +65,25 @@ namespace Biz.Morsink.Rest
         /// <param name="links">An optional function to manipulate the Links.</param>
         /// <param name="embeddings">An optional function to manipulate the embeddings.</param>
         /// <returns>A new RestValue with manipualted Links and/or Embeddings.</returns>
-        public RestValue<T> Manipulate(Func<RestValue<T>, IEnumerable<Link>> links = null, Func<RestValue<T>, IEnumerable<object>> embeddings = null)
+        public RestValue<T> Manipulate(Func<RestValue<T>, IEnumerable<Link>> links = null, Func<RestValue<T>, IEnumerable<Embedding>> embeddings = null)
         {
             var l = links == null ? Links : links(this);
             var e = embeddings == null ? Embeddings : embeddings(this);
             return new RestValue<T>(Value, l, e);
         }
-        IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<object>> embeddings)
+        IRestValue IRestValue.Manipulate(Func<IRestValue, IEnumerable<Link>> links, Func<IRestValue, IEnumerable<Embedding>> embeddings)
             => Manipulate(links == null ? (Func<RestValue<T>, IEnumerable<Link>>)null : rv => links(rv),
-                embeddings == null ? (Func<RestValue<T>, IEnumerable<object>>)null : rv => embeddings(rv));
-        IRestValue<T> IRestValue<T>.Manipulate(Func<IRestValue<T>, IEnumerable<Link>> links, Func<IRestValue<T>, IEnumerable<object>> embeddings)
+                embeddings == null ? (Func<RestValue<T>, IEnumerable<Embedding>>)null : rv => embeddings(rv));
+        IRestValue<T> IRestValue<T>.Manipulate(Func<IRestValue<T>, IEnumerable<Link>> links, Func<IRestValue<T>, IEnumerable<Embedding>> embeddings)
             => Manipulate(links == null ? (Func<RestValue<T>, IEnumerable<Link>>)null : rv => links(rv),
-                embeddings == null ? (Func<RestValue<T>, IEnumerable<object>>)null : rv => embeddings(rv));
+                embeddings == null ? (Func<RestValue<T>, IEnumerable<Embedding>>)null : rv => embeddings(rv));
 
         /// <summary>
         /// Create a Builder for a RestValue&lt;T&gt;
         /// </summary>
         /// <returns></returns>
         public static Builder Build()
-            => new Builder(default, ImmutableList<Link>.Empty, ImmutableList<object>.Empty);
+            => new Builder(default, ImmutableList<Link>.Empty, ImmutableList<Embedding>.Empty);
         /// <summary>
         /// Builder struct for RestValue&lt;T&gt;
         /// </summary>
@@ -91,9 +91,9 @@ namespace Biz.Morsink.Rest
         {
             private readonly T value;
             private readonly ImmutableList<Link> links;
-            private readonly ImmutableList<object> embeddings;
+            private readonly ImmutableList<Embedding> embeddings;
 
-            internal Builder(T value, ImmutableList<Link> links, ImmutableList<object> embeddings)
+            internal Builder(T value, ImmutableList<Link> links, ImmutableList<Embedding> embeddings)
             {
                 this.value = value;
                 this.links = links;
@@ -125,14 +125,14 @@ namespace Biz.Morsink.Rest
             /// </summary>
             /// <param name="embedding">The embedding to add.</param>
             /// <returns>A Builder with an added embedding.</returns>
-            public Builder WithEmbedding(object embedding)
+            public Builder WithEmbedding(Embedding embedding)
                 => new Builder(value, links, embeddings.Add(embedding));
             /// <summary>
             /// Creates a Builder with added embeddings.
             /// </summary>
             /// <param name="embedding">The embeddings to add.</param>
             /// <returns>A Builder with added embeddings.</returns>
-            public Builder WithEmbeddings(IEnumerable<object> embeddings)
+            public Builder WithEmbeddings(IEnumerable<Embedding> embeddings)
                 => new Builder(value, links, this.embeddings.AddRange(embeddings));
             /// <summary>
             /// Build the RestValue&lt;T&gt;

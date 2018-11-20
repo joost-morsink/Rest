@@ -40,7 +40,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 if (blog.Owner != null)
                 {
                     var personResponse = await personRepo.GetCapability<IRestGet<Person, Empty>>().Get(blog.Owner, new Empty(), CancellationToken.None);
-                    personResponse.OnSuccess(p => vb = vb.WithEmbedding(p));
+                    personResponse.OnSuccess(p => vb = vb.WithEmbedding(new Embedding("owner", p)));
                 }
                 return vb.BuildResult();
             }

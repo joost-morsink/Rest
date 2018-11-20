@@ -296,7 +296,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             };
             var rv = RestValue<HelperC>.Build()
                 .WithValue(c)
-                .WithEmbeddings(new object[] { a1, a2, b1, b2 })
+                .WithEmbeddings(new [] { new Embedding("a", a1), new Embedding("a", a2), new Embedding("b",b1), new Embedding("b", b2) })
                 .WithLink(Link.Create("self", c.Id))
                 .Build();
             var json = serializer.WriteJson(rv) as JObject;

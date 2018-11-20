@@ -87,7 +87,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
                 if (Parent.jsonOptions.Value.EmbedEmbeddings
                     && item is IIdentity id
                     && context.TryGetEmbedding(id, out var embedding))
-                    return Parent.Serialize(context.Without(id), embedding);
+                    return Parent.Serialize(context.Without(id), embedding.Object);
                 else
                     return inner.Serialize(context, item);
             }

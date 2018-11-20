@@ -14,17 +14,17 @@ namespace Biz.Morsink.Rest.Serialization
         where C : SerializationContext<C>
     {
         protected IIdentityProvider IdentityProvider { get; }
-        protected ImmutableDictionary<IIdentity, object> Embeddings { get; }
+        protected ImmutableDictionary<IIdentity, Embedding> Embeddings { get; }
         protected ImmutableStack<IIdentity> ParentChain { get; }
 
-        protected SerializationContext(IIdentityProvider identityProvider, C previous, ImmutableDictionary<IIdentity, object> embeddings, ImmutableStack<IIdentity> parentChain)
+        protected SerializationContext(IIdentityProvider identityProvider, C previous, ImmutableDictionary<IIdentity, Embedding> embeddings, ImmutableStack<IIdentity> parentChain)
         {
             Parent = previous;
             IdentityProvider = identityProvider;
-            Embeddings = embeddings ?? ImmutableDictionary<IIdentity, object>.Empty;
+            Embeddings = embeddings ?? ImmutableDictionary<IIdentity, Embedding>.Empty;
             ParentChain = parentChain ?? ImmutableStack<IIdentity>.Empty;
         }
-        protected abstract C New(ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null);
+        protected abstract C New(ImmutableDictionary<IIdentity, Embedding> embeddings = null, ImmutableStack<IIdentity> parentChain = null);
 
         /// <summary>
         /// Adds a Rest Value to the lexical scope of the (de-)serialization process.
@@ -33,7 +33,10 @@ namespace Biz.Morsink.Rest.Serialization
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
         public C With(IRestValue value)
         {
-            var e = Embeddings.AddRange(value.Embeddings.OfType<IHasIdentity>().Select(o => new KeyValuePair<IIdentity, object>(IdentityProvider.Translate(o.Id), o)));
+            var e = Embeddings.AddRange(value.Embeddings
+                .Select(o => (o, o.Object as IHasIdentity))
+                .Where(o => o.Item2!=null)
+                .Select(o => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(o.Item2.Id), o.Item1)));
             return New(embeddings: e);
         }
         /// <summary>
@@ -44,7 +47,10 @@ namespace Biz.Morsink.Rest.Serialization
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
         public C With<T>(IRestValue<T> value)
         {
-            var e = Embeddings.AddRange(value.Embeddings.OfType<IHasIdentity>().Select(o => new KeyValuePair<IIdentity, object>(IdentityProvider.Translate(o.Id), o)));
+            var e = Embeddings.AddRange(value.Embeddings
+                .Select(o => (o, o.Object as IHasIdentity))
+                .Where(o => o.Item2 != null)
+                .Select(o => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(o.Item2.Id), o.Item1)));
             return New(embeddings: e);
         }
         /// <summary>
@@ -65,7 +71,7 @@ namespace Biz.Morsink.Rest.Serialization
         /// <param name="id">The identity value for the object.</param>
         /// <param name="result">An out parameter a found object will be assigned to.</param>
         /// <returns>True if an object with the specified id could be found, false otherwise.</returns>
-        public bool TryGetEmbedding(IIdentity id, out object result)
+        public bool TryGetEmbedding(IIdentity id, out Embedding result)
             => Embeddings.TryGetValue(IdentityProvider.Translate(id), out result);
 
         /// <summary>
@@ -92,11 +98,11 @@ namespace Biz.Morsink.Rest.Serialization
         /// <returns>A new and empty SerializationContext.</returns>
         public static SerializationContext Create(IIdentityProvider identityProvider) => new SerializationContext(identityProvider, null, null, null);
 
-        public SerializationContext(IIdentityProvider identityProvider, SerializationContext previous, ImmutableDictionary<IIdentity, object> embeddings, ImmutableStack<IIdentity> parentChain)
+        public SerializationContext(IIdentityProvider identityProvider, SerializationContext previous, ImmutableDictionary<IIdentity, Embedding> embeddings, ImmutableStack<IIdentity> parentChain)
             : base(identityProvider, previous, embeddings, parentChain)
         { }
 
-        protected override SerializationContext New(ImmutableDictionary<IIdentity, object> embeddings = null, ImmutableStack<IIdentity> parentChain = null)
+        protected override SerializationContext New(ImmutableDictionary<IIdentity, Embedding> embeddings = null, ImmutableStack<IIdentity> parentChain = null)
             => new SerializationContext(IdentityProvider, this, embeddings ?? Embeddings, parentChain ?? ParentChain);
     }
 }

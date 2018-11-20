@@ -193,7 +193,7 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="restValue">The original Rest Value.</param>
         /// <param name="embeddings">The set of embeddings to put on the new Rest Value.</param>
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
-        public static IRestValue WithEmbeddings(this IRestValue restValue, IEnumerable<object> embeddings)
+        public static IRestValue WithEmbeddings(this IRestValue restValue, IEnumerable<Embedding> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
         /// <summary>
         /// Constructs a new Rest Value with a different set of links.
@@ -229,7 +229,7 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="restValue">The original Rest Value.</param>
         /// <param name="embeddings">The set of embeddings to put on the new Rest Value.</param>
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
-        public static IRestValue<T> WithEmbeddings<T>(this IRestValue<T> restValue, IEnumerable<object> embeddings)
+        public static IRestValue<T> WithEmbeddings<T>(this IRestValue<T> restValue, IEnumerable<Embedding> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
         /// <summary>
         /// Constructs a new Rest Value with a different set of links.
@@ -247,7 +247,7 @@ namespace Biz.Morsink.Rest.Utils
         /// <param name="restValue">The original Rest Value.</param>
         /// <param name="embeddings">The set of embeddings to put on the new Rest Value.</param>
         /// <returns>A new Rest Value with the specified set of embeddings.</returns>
-        public static RestValue<T> WithEmbeddings<T>(this RestValue<T> restValue, IEnumerable<object> embeddings)
+        public static RestValue<T> WithEmbeddings<T>(this RestValue<T> restValue, IEnumerable<Embedding> embeddings)
             => restValue.Manipulate(rv => rv.Links, _ => embeddings);
         /// <summary>
         /// Makes a rest value ready to accept lazily evaluated modifications.

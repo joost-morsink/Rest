@@ -209,7 +209,7 @@ namespace Biz.Morsink.Rest.HttpConverter.Json.Test
             };
             nl.People.AddRange(new[] { me, wa });
             de.People.Add(rc);
-            var json = serializer.WriteJson(Rest.Value(me).WithEmbeddings(new object[] { nl, de }));
+            var json = serializer.WriteJson(Rest.Value(me).WithEmbeddings(new [] { new Embedding("lang", nl), new Embedding("lang",de) }));
             Assert.IsNotNull(json);
             Assert.IsNotNull(json["countryOfResidence"]);
             Assert.IsNotNull(json["nationality"]);

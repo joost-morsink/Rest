@@ -22,7 +22,7 @@ namespace Biz.Morsink.Rest
         /// <param name="links">Optionally a collection of links for the result.</param>
         /// <param name="embeddings">Optionally a collection of embeddings for the result.</param>
         /// <returns>A successful Rest result.</returns>
-        public static RestResult<T>.Success Create<T>(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null) 
+        public static RestResult<T>.Success Create<T>(T value, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null) 
             => new RestResult<T>.Success(value, links, embeddings);
         /// <summary>
         /// Creates a failed Rest result indicating the request was in some way not correct.
@@ -137,7 +137,7 @@ namespace Biz.Morsink.Rest
             /// <param name="value">The underlying value for the successful result.</param>
             /// <param name="links">An optional collection of links for the result.</param>
             /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-            public Success(T value, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+            public Success(T value, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
                : this(new RestValue<T>(value, links, embeddings))
             { }
             /// <summary>
@@ -183,7 +183,7 @@ namespace Biz.Morsink.Rest
                 /// <param name="data">A value describing the reason why the request was bad.</param>
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public BadRequest(object data, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+                public BadRequest(object data, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
                     : this(new RestValue<object>(data, links, embeddings))
                 { }
                 /// <summary>
@@ -259,7 +259,7 @@ namespace Biz.Morsink.Rest
                 /// <param name="data">A value describing the reason why the request was not executed.</param>              
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+                public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
                     : this(new RestValue<object>(data, links, embeddings), RestEntityKind.Resource)
                 { }
                 /// <summary>
@@ -305,7 +305,7 @@ namespace Biz.Morsink.Rest
                 /// <param name="ex">An exception describing the unexpected error.</param>
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public Error(ExceptionInfo ex, IEnumerable<Link> links = null, IEnumerable<object> embeddings = null)
+                public Error(ExceptionInfo ex, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
                     : this(new RestValue<ExceptionInfo>(ex, links, embeddings), RestEntityKind.Resource)
                 { }
                 /// <summary>
