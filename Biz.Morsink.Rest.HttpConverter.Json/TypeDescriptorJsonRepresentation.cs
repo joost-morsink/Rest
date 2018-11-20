@@ -62,7 +62,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                 if (todo.Count > 0)
                     res = AddDefinitions(res);
 
-                return new SObject(res.Properties.Append(new SProperty("$ref", new SValue(JsonSchema.JSON_SCHEMA_VERSION))));
+                return new SObject(res.Properties.Append(new SProperty("$schema", new SValue(JsonSchema.JSON_SCHEMA_VERSION))));
             }
 
             private string GetSchemaAddress(string name)
