@@ -55,6 +55,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddSingleton<ITypeDescriptorCreator, StandardTypeDescriptorCreator>();
             serviceCollection.AddRestRepository<SchemaRepository>();
             serviceCollection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            serviceCollection.AddSingleton<IServiceProviderAccessor, ServiceProviderAccessor>();
             serviceCollection.AddSingleton<IRestRequestScopeAccessor, AspNetCoreRestRequestScopeAccessor>();
             serviceCollection.AddSingleton<ICurrentHttpRestConverterAccessor, CurrentHttpRestConverterAccessor>();
             serviceCollection.AddSingleton<IRestPrefixContainerAccessor, RestPrefixContainerAccessor>();
