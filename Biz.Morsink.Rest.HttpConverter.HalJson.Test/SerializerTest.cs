@@ -316,7 +316,12 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             Assert.AreEqual(1, json.Value<JArray>("moreAs").Count);
 
             Assert.IsNotNull(json["_embedded"]);
-            Assert.AreEqual(4, json.Value<JArray>("_embedded").Count);
+            var embedded = json.Value<JObject>("_embedded");
+            Assert.AreEqual(2, embedded.Properties().Count());
+            Assert.IsNotNull(embedded["a"]);
+            Assert.IsNotNull(embedded["b"]);
+            Assert.AreEqual(2, embedded.Value<JArray>("a").Count);
+            Assert.AreEqual(2, embedded.Value<JArray>("b").Count);
 
             Assert.IsNotNull(json["_links"]);
             Assert.AreEqual(1, json["_links"].Children().Count());

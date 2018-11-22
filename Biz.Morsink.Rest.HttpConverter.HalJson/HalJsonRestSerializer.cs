@@ -104,16 +104,21 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 res = new SObject(res.Properties
                     .Concat(new[] {
                         new SProperty("_links", serializeLinks()),
-                        new SProperty("_embedded", new SArray(
-                            item.Embeddings.Select(serializeEmbedding)))
+                        new SProperty("_embedded", new SObject(
+                            item.Embeddings.GroupBy(e => e.Reltype)
+                            .Select(g => (reltype:g.Key,items:g,num:g.Count()))
+                            .Select(t => new SProperty(t.reltype, t.num==1 
+                                ? serializeEmbedding(t.items.First()) 
+                                : new SArray(t.items.Select(serializeEmbedding)))))
+                            )
                         }));
                 return res;
-                SItem serializeEmbedding(object o)
+                SItem serializeEmbedding(Embedding o)
                 {
-                    var ctx = o is IHasIdentity hid
+                    var ctx = o.Object is IHasIdentity hid
                         ? ctxWithItem.Without(hid.Id)
                         : ctxWithItem;
-                    return Parent.Serialize(ctx, o);
+                    return Parent.Serialize(ctx, o.Object);
                 }
                 SObject serializeLinks()
                 {
