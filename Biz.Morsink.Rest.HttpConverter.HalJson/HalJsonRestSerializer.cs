@@ -38,7 +38,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             : base(new DecoratedTypeDescriptorCreator(typeDescriptorCreator)
                   .Decorate(tdc => new ITypeRepresentation[]
                   {
-
+                      SimpleTypeDescriptorRepresentation.Instance
                   }), converter)
         {
             this.halOptions = halOptions;
