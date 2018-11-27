@@ -1,23 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\Common.Props"/>
+  <Import Project="..\Package.Props"/>
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>Json implementation for Rest service</Title>
-    <VersionPrefix>0.1.0</VersionPrefix>
-    <Authors>Joost W. Morsink</Authors>
-    <Company>Morsink Software</Company>
     <PackageId>Biz.Morsink.Rest.HttpConverter.Json</PackageId>
     <Description>Implementation of the json format for REST level 3 services.</Description>
-    <PackageProjectUrl>https://github.com/joost-morsink/Rest</PackageProjectUrl>
     <RootNamespace>Biz.Morsink.Rest.HttpConverter</RootNamespace>
-    <Copyright>(C) 2018 Joost W. Morsink</Copyright>
     <PackageTags>Rest Json</PackageTags>
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <RepositoryType>Git</RepositoryType>
-    <RepositoryUrl>https://github.com/joost-morsink/Rest.git</RepositoryUrl>
-    <Configurations>Debug;Release;Prerelease</Configurations>
-    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration) == 'Prerelease'">
     <VersionSuffix>beta001</VersionSuffix>
