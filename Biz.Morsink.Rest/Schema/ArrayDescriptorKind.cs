@@ -42,7 +42,7 @@ namespace Biz.Morsink.Rest.Schema
             {
                 var q = from itf in type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
                         let iti = itf.GetTypeInfo()
-                        let ga = iti.GetGenericArguments()
+                        let ga = iti.GenericTypeArguments
                         where ga.Length == 1 && iti.GetGenericTypeDefinition() == typeof(IEnumerable<>)
                         select ga[0];
                 return q.FirstOrDefault() ?? typeof(object);

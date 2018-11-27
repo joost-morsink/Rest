@@ -20,13 +20,15 @@ namespace Biz.Morsink.Rest.Utils
 
         public static Type GetGeneric(this Type type, Type interf)
             => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
-                .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == interf)
-                .Select(i => i.GetGenericArguments()[0])
+                .Select(i => i.GetTypeInfo())
+                .Where(i => i.GenericTypeArguments.Length == 1 && i.GetGenericTypeDefinition() == interf)
+                .Select(i => i.GenericTypeArguments[0])
                 .FirstOrDefault();
         public static (Type, Type) GetGenerics2(this Type type, Type interf)
             => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
-                .Where(i => i.GetGenericArguments().Length == 2 && i.GetGenericTypeDefinition() == interf)
-                .Select(i => (i.GetGenericArguments()[0], i.GetGenericArguments()[1]))
+                .Select(i => i.GetTypeInfo())
+                .Where(i => i.GenericTypeArguments.Length == 2 && i.GetGenericTypeDefinition() == interf)
+                .Select(i => (i.GenericTypeArguments[0], i.GenericTypeArguments[1]))
                 .FirstOrDefault();
 
 

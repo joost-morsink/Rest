@@ -19,8 +19,8 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     {
         private static Type GetGeneric(this Type type, Type interf)
             => type.GetTypeInfo().ImplementedInterfaces
-                .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == interf)
-                .Select(i => i.GetGenericArguments()[0])
+                .Where(i => i.GenericTypeArguments.Length == 1 && i.GetGenericTypeDefinition() == interf)
+                .Select(i => i.GenericTypeArguments[0])
                 .FirstOrDefault();
 
         /// <summary>

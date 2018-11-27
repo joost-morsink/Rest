@@ -37,9 +37,9 @@ namespace Biz.Morsink.Rest.Schema
         private static Type GetValueType(Type type)
         {
             var gendict = type.GetTypeInfo().ImplementedInterfaces.Prepend(type)
-                .Where(i => i.GetTypeInfo().GetGenericArguments().Length == 2
+                .Where(i => i.GetTypeInfo().GenericTypeArguments.Length == 2
                    && (i.GetGenericTypeDefinition() == typeof(IDictionary<,>) || i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>) || i.GetGenericTypeDefinition() == typeof(IImmutableDictionary<,>)))
-                .Select(i => i.GetGenericArguments())
+                .Select(i => i.GenericTypeArguments)
                 .FirstOrDefault();
             if (gendict != null && gendict[0] == typeof(string))
                 return gendict[1];

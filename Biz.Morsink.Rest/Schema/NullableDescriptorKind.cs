@@ -35,7 +35,7 @@ namespace Biz.Morsink.Rest.Schema
         private static Type GetInner(Type type)
         {
             var ti = type.GetTypeInfo();
-            var ga = ti.GetGenericArguments();
+            var ga = ti.GenericTypeArguments;
             if (ga.Length == 1)
             {
                 if (ti.GetGenericTypeDefinition() == typeof(Nullable<>))

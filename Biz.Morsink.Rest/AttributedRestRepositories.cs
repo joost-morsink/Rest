@@ -21,8 +21,9 @@ namespace Biz.Morsink.Rest
         }
         private static Type GetGeneric(this Type type, Type interf)
         => type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { type })
-            .Where(i => i.GetGenericArguments().Length == 1 && i.GetGenericTypeDefinition() == interf)
-            .Select(i => i.GetGenericArguments()[0])
+            .Select(i => i.GetTypeInfo())
+            .Where(i => i.GenericTypeArguments.Length == 1 && i.GetGenericTypeDefinition() == interf)
+            .Select(i => i.GenericTypeArguments[0])
             .FirstOrDefault();
         private static (Type, Type) ExtractGeneric(this Type type)
         {
