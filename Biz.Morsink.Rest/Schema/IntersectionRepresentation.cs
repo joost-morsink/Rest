@@ -136,7 +136,7 @@ namespace Biz.Morsink.Rest.Schema
     public sealed class IntersectionRepresentation<T, U>
         : IntersectionRepresentation
     {
-        private static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U>));
+        private readonly static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U>));
         private object[] values;
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace Biz.Morsink.Rest.Schema
     public sealed class IntersectionRepresentation<T, U, V>
         : IntersectionRepresentation
     {
-        private static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V>));
+        private readonly static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V>));
         private object[] values;
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace Biz.Morsink.Rest.Schema
     public sealed class IntersectionRepresentation<T, U, V, W>
         : IntersectionRepresentation
     {
-        private static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V, W>));
+        private readonly static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V, W>));
         private object[] values;
 
         /// <summary>
@@ -307,7 +307,7 @@ namespace Biz.Morsink.Rest.Schema
     public sealed class IntersectionRepresentation<T, U, V, W, X>
         : IntersectionRepresentation
     {
-        private static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V, W>));
+        private readonly static Type[] types = GetTypeParameters(typeof(IntersectionRepresentation<T, U, V, W>));
         private object[] values;
         /// <summary>
         /// Constructor.

@@ -193,8 +193,8 @@ namespace Biz.Morsink.Rest
                 => new Capability(container, func);
             private class Capability : IRestPost<T, P, E, R>, IRestRequestContainer
             {
-                private C container;
-                private Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func;
+                private readonly C container;
+                private readonly Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func;
                 public Capability(C container, Func<C, IIdentity<T>, P, E, RestRequest, CancellationToken, ValueTask<RestResponse<R>>> func)
                 {
                     this.container = container;

@@ -64,8 +64,10 @@ namespace Biz.Morsink.Rest
         {
             if (this is Link<T> res)
                 return res;
-            var id = Target as IIdentity<T>;
-            return id == null ? null : new Link<T>(RelType, id, Parameters, Capability);
+            else if (Target is IIdentity<T> id)
+                return new Link<T>(RelType, id, Parameters, Capability);
+            else
+                return null;
         }
     }
     /// <summary>

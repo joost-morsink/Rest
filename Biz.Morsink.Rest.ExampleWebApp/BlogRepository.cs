@@ -20,10 +20,10 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         private static ConcurrentDictionary<string, Blog> data;
         private readonly IRestRepository<Person> personRepo;
 
-        private string next() => Interlocked.Increment(ref counter).ToString();
+        private string Next() => Interlocked.Increment(ref counter).ToString();
         public BlogRepository(IRestRepository<Person> personRepo)
         {
-            var id = next();
+            var id = Next();
             var blogId = FreeIdentity<Blog>.Create(id);
             data = data ?? new ConcurrentDictionary<string, Blog>(new[] { new KeyValuePair<string, Blog>(id, new Blog { Id = blogId, Name = "Joost's blog", Owner = FreeIdentity<Person>.Create(1) }) });
             this.personRepo = personRepo;
@@ -57,7 +57,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         [RestDocumentation("Adds a new Blog to the system.")]
         public RestResponse<Blog> Post(IIdentity<BlogCollection> collId, [RestBody] Blog blog)
         {
-            var id = next();
+            var id = Next();
             blog.Id = FreeIdentity<Blog>.Create(id);
             data[id] = blog;
             return Rest.Value(blog).ToResponse().WithMetadata(new CreatedResource { Address = blog.Id });

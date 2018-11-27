@@ -13,7 +13,7 @@
     <RootNamespace>Biz.Morsink.Rest.AspNetCore</RootNamespace>
     <Copyright>(C) 2017 Joost W. Morsink</Copyright>
     <PackageTags>RestServer</PackageTags>
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/joost-morsink/RestServer.git</RepositoryUrl>

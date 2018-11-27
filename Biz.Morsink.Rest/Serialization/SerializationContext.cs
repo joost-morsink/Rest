@@ -33,11 +33,11 @@ namespace Biz.Morsink.Rest.Serialization
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
         public C With(IRestValue value)
         {
-            var e = Embeddings.AddRange(value.Embeddings
-                .Select(o => (o, o.Object as IHasIdentity))
-                .Where(o => o.Item2!=null)
-                .Select(o => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(o.Item2.Id), o.Item1)));
-            return New(embeddings: e);
+            var embeddings = Embeddings.AddRange(value.Embeddings
+                .Select(e => (embedding: e, hasId: e.Object as IHasIdentity))
+                .Where(e => e.hasId != null)
+                .Select(e => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(e.hasId.Id), e.embedding)));
+            return New(embeddings);
         }
         /// <summary>
         /// Adds a Rest Value to the lexical scope of the (de-)serialization process.
@@ -47,11 +47,11 @@ namespace Biz.Morsink.Rest.Serialization
         /// <returns>A new SerializationContext with added information from the Rest Value.</returns>
         public C With<T>(IRestValue<T> value)
         {
-            var e = Embeddings.AddRange(value.Embeddings
-                .Select(o => (o, o.Object as IHasIdentity))
-                .Where(o => o.Item2 != null)
-                .Select(o => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(o.Item2.Id), o.Item1)));
-            return New(embeddings: e);
+            var embeddings = Embeddings.AddRange(value.Embeddings
+                .Select(e => (embedding: e, hasId: e.Object as IHasIdentity))
+                .Where(e => e.hasId != null)
+                .Select(e => new KeyValuePair<IIdentity, Embedding>(IdentityProvider.Translate(e.hasId.Id), e.embedding)));
+            return New(embeddings);
         }
         /// <summary>
         /// Removes an object with specified identity value from the embeddings of the context.

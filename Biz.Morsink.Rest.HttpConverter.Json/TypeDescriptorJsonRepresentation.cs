@@ -36,7 +36,7 @@ namespace Biz.Morsink.Rest.HttpConverter
         {
             if (typeof(TypeDescriptor).IsAssignableFrom(item.AssociatedType))
                 return new SObject(new SProperty("$ref", new SValue(JsonSchema.JSON_SCHEMA_VERSION)));
-            var visitor = new Visitor(typeDescriptorCreator,jsonOptions.Value.NamingStrategy);
+            var visitor = new Visitor(typeDescriptorCreator, jsonOptions.Value.NamingStrategy);
             return visitor.Transform(item);
         }
 
@@ -56,8 +56,10 @@ namespace Biz.Morsink.Rest.HttpConverter
             public SObject Transform(TypeDescriptor descriptor)
             {
                 todo = new Dictionary<string, string>();
-                done = new Dictionary<string, string>();
-                done.Add(descriptor.Name, "#");
+                done = new Dictionary<string, string>
+                {
+                    [descriptor.Name] = "#"
+                };
                 var res = Visit(descriptor);
                 if (todo.Count > 0)
                     res = AddDefinitions(res);
@@ -129,7 +131,7 @@ namespace Biz.Morsink.Rest.HttpConverter
                     new SProperty("type", new SValue("object")),
                     new SProperty("properties",
                         new SObject(from p in props select new SProperty(p.Name, p.Type))),
-                    new SProperty("required", new SArray(from p in props where p.Required select new SValue(naming.GetPropertyName(p.Name,false)))));
+                    new SProperty("required", new SArray(from p in props where p.Required select new SValue(naming.GetPropertyName(p.Name, false)))));
 
             protected override SObject VisitReferable(TypeDescriptor.Referable r, SObject expandedDescriptor)
                 => expandedDescriptor;
