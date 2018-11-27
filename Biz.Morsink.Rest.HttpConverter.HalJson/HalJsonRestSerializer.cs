@@ -54,6 +54,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                 return CreateIdentitySerializer(ser, ty);
             else if (typeof(IHasIdentity).IsAssignableFrom(ty))
                 return CreateHasIdentitySerializer(ser, ty);
+            else if (typeof(TypeDescriptor).IsAssignableFrom(ty))
+                return CreateTypeDescriptorSerializer(base.CreateSerializer(typeof(TypeDescriptor)), ty);
             else
                 return ser;
         }
@@ -64,7 +66,31 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
             => (IForType)Activator.CreateInstance(typeof(IdentityType<>).MakeGenericType(ty), this, ser);
         private IForType CreateHasIdentitySerializer(IForType ser, Type ty)
             => (IForType)Activator.CreateInstance(typeof(HasIdentityType<>).MakeGenericType(ty), this, ser);
+        private IForType CreateTypeDescriptorSerializer(IForType ser, Type ty)
+            => (IForType)Activator.CreateInstance(typeof(TypeDescriptorType<>).MakeGenericType(ty), this, ser);
 
+        private class TypeDescriptorType<T> : Typed<T>
+            where T : TypeDescriptor
+        {
+            private readonly Typed<TypeDescriptor> inner;
+
+            public new HalJsonRestSerializer Parent => (HalJsonRestSerializer)base.Parent;
+            public TypeDescriptorType(HalJsonRestSerializer parent, Typed<TypeDescriptor> inner) : base(parent)
+            {
+                this.inner = inner;
+            }
+
+            public override SItem Serialize(SerializationContext context, T item)
+            {
+                var realDescr = Parent.TypeDescriptorCreator.GetDescriptor(item.AssociatedType);
+                return inner.Serialize(context, realDescr);
+            }
+
+            public override T Deserialize(SerializationContext context, SItem item)
+            {
+                throw new NotSupportedException();
+            }
+        }
         private class IdentityType<T> : Typed<T>
         {
             private readonly Typed<T> inner;
@@ -107,8 +133,8 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                         new SProperty("_embedded", new SObject(
                             item.Embeddings.GroupBy(e => e.Reltype)
                             .Select(g => (reltype:g.Key,items:g,num:g.Count()))
-                            .Select(t => new SProperty(t.reltype, t.num==1 
-                                ? serializeEmbedding(t.items.First()) 
+                            .Select(t => new SProperty(t.reltype, t.num==1
+                                ? serializeEmbedding(t.items.First())
                                 : new SArray(t.items.Select(serializeEmbedding)))))
                             )
                         }));
@@ -127,7 +153,7 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
                                 let num = g.Count()
                                 select num == 1
                                     ? new SProperty(g.First().RelType, Parent.Serialize(context, g.First().Target))
-                                    : new SProperty(g.First().RelType, 
+                                    : new SProperty(g.First().RelType,
                                         new SArray(g.Select(x => Parent.Serialize(context, x.Target))));
                     return new SObject(props);
                 }
