@@ -110,7 +110,11 @@ namespace Biz.Morsink.Rest.ExampleWebApp
         public async ValueTask<RestResponse<PersonCollection>> Get(IIdentity<PersonCollection> id)
         {
             var resp = await collectionRepository.GetCapability<IRestGet<PersonV2Collection, Empty>>().Get(Convert(id), new Empty(), default);
-            return resp.Select(r => r.Select(v => new RestValue<PersonCollection>(v.Value.ToV1(), v.Links, v.Embeddings)));
+            return resp.Select(r => r.Select(v =>
+                new RestValue<PersonCollection>(
+                    v.Value.ToV1(),
+                    v.Links,
+                    v.Embeddings.Select(e => e.Object is PersonV2 p ? new Embedding(e.Reltype, p.ToV1()) : e))));
         }
         /// <summary>
         /// Post implementation of a Person to a PersonCollection.
@@ -242,7 +246,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                     .OnRestPath("/person/*", bld =>
                         bld.ForVersion(1).Add<Person>()
                         .ForVersion(2).Add<PersonV2>())
-                    .OnRestPath("/person?*", bld => 
+                    .OnRestPath("/person?*", bld =>
                         bld.ForVersion(1).Add<PersonCollection>(wildcards)
                         .ForVersion(2).Add<PersonV2Collection>(wildcards))
                     .AddScoped<IDynamicLinkProvider<PersonV2Collection>, PersonCollectionLinks>()
