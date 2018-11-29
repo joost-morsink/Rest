@@ -151,7 +151,7 @@ namespace Biz.Morsink.Rest.Schema
         public static bool IsOfKindMutable(Type type)
             => GetWritableProperties(type).Any();
 
-
+        #region Serialization implementation
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
             ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
@@ -268,5 +268,6 @@ namespace Biz.Morsink.Rest.Schema
                 }
             }
         }
+        #endregion
     }
 }

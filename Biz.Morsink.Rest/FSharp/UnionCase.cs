@@ -71,6 +71,9 @@ namespace Biz.Morsink.Rest.FSharp
         /// Contains the case's name.
         /// </summary>
         public string Name { get; }
+        /// <summary>
+        /// The type of the case.
+        /// </summary>
         public Type Type { get; }
     }
 }

@@ -83,6 +83,13 @@ namespace Biz.Morsink.Rest.Schema
             return (pi, meth);
         }
 
+        /// <summary>
+        /// Gets a serializer for sequential collection types (serialized as arrays).
+        /// </summary>
+        /// <typeparam name="C">The type of the serialization context.</typeparam>
+        /// <param name="serializer">A parent serializer.</param>
+        /// <param name="type">The sequential collection type.</param>
+        /// <returns>A serializer for the specified type if it is a sequential collection, null otherwise.</returns>
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
                 ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)

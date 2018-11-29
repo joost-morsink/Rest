@@ -69,18 +69,41 @@ namespace Biz.Morsink.Rest.FSharp
                 }
             }
         }
+        /// <summary>
+        /// Gets the generic type argument of the F# option type.
+        /// Returns null if it is not an F# option type.
+        /// </summary>
+        /// <param name="type">The F# option type to get the generic type argument from.</param>
+        /// <returns>The generic type argument of the F# option type; null if the specified type is not an F# option.</returns>
         public static Type GetOptionKindInnerType(Type type)
             => type.Namespace == Microsoft_FSharp_Core && type.Name == FSharpOption_1
             ? type.GetGenericArguments()[0]
             : null;
+        /// <summary>
+        /// Gets the generic type argument of the F# list type.
+        /// Returns null if it is not an F# list type.
+        /// </summary>
+        /// <param name="type">The F# list type to get the generic type argument from.</param>
+        /// <returns>The generic type argument of the F# list type; null if the specified type is not an F# list.</returns>
         public static Type GetListKindInnerType(Type type)
             => type.Namespace == Microsoft_FSharp_Collections && type.Name == FSharpList_1
             ? type.GetGenericArguments()[0]
             : null;
-
+        /// <summary>
+        /// Checks whether the specified type is a union type defined in F#.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <returns>True if the specified type is an F# union type, false otherwise.</returns>
         public bool IsOfKind(Type type)
             => IsFsharpUnionType(type);
 
+        /// <summary>
+        /// Gets a serializer for an F# union type.
+        /// </summary>
+        /// <typeparam name="C">The serialization context type.</typeparam>
+        /// <param name="serializer">The parent serializer.</param>
+        /// <param name="type">The F# union type to serialize.</param>
+        /// <returns>A serializer for an F# union type, or null if the specified type is not an F# union type.</returns>
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
             ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)

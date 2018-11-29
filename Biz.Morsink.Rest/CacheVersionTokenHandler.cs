@@ -43,7 +43,7 @@ namespace Biz.Morsink.Rest
                     if (tokenProvider != null)
                     {
                         var token = tokenProvider.GetTokenFor(restValue.Value);
-                        if (request.Metadata.TryGet<TokenMatching>(out var tokenMatching) && !tokenMatching.Matches && tokenMatching.Tokens.Contains(token))
+                        if (request.Metadata.TryGet<TokenMatching>(out var tokenMatching) && !tokenMatching.ShouldMatch && tokenMatching.Tokens.Contains(token))
                             return resp.Select(r => r.MakeNotNecessary()).AddMetadata(token);
                         else
                             return resp.AddMetadata(token);

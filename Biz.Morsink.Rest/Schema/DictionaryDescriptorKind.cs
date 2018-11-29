@@ -72,13 +72,20 @@ namespace Biz.Morsink.Rest.Schema
             => type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) && type.GetGenericArguments()[0] == typeof(string);
 
         bool TypeDescriptorCreator.IKind.IsOfKind(Type type) => IsOfKind(type);
-
+        /// <summary>
+        /// Gets a serializer for a dictionary type.
+        /// </summary>
+        /// <typeparam name="C">The serialization context type.</typeparam>
+        /// <param name="serializer">A parent serializer.</param>
+        /// <param name="type">The type to get a serializer for.</param>
+        /// <returns>A serializer for the specified type if one could be constructed, null otherwise.</returns>
         public Serializer<C>.IForType GetSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
             => IsOfKind(type)
                 ? IsImmutableDictionary(type)
                     ? (Serializer<C>.IForType)Activator.CreateInstance(typeof(ImmSerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
                     : (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), type), serializer)
                 : null;
+        #region Serializer implementation
         private class ImmSerializerImpl<C, T> : Serializer<C>.Typed<T>.Func
             where C : SerializationContext<C>
         {
@@ -264,5 +271,6 @@ namespace Biz.Morsink.Rest.Schema
                 }
             }
         }
+        #endregion
     }
 }

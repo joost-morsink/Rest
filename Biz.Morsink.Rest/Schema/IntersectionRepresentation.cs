@@ -11,6 +11,11 @@ namespace Biz.Morsink.Rest.Schema
     /// </summary>
     public abstract class IntersectionRepresentation
     {
+        /// <summary>
+        /// Gets the types the intersection is based upon.
+        /// </summary>
+        /// <param name="type">The type to get the generic type arguments from.</param>
+        /// <returns>An array of generic type arguments.</returns>
         public static Type[] GetTypeParameters(Type type)
         {
             if (type.BaseType != typeof(IntersectionRepresentation))

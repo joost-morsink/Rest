@@ -36,6 +36,12 @@ namespace Biz.Morsink.Rest.Schema
 
         public override bool Equals(object obj)
             => obj is PropertyDescriptor<T> && Equals((PropertyDescriptor<T>)obj);
+        /// <summary>
+        /// Checks whether this and another PropertyDescriptor are considered equal.
+        /// Uses the default equality comparer for T to compare types.
+        /// </summary>
+        /// <param name="other">The other property descriptor.</param>
+        /// <returns>True if this and the other PropertyDescriptor are considered equal, false otherwise.</returns>
         public bool Equals(PropertyDescriptor<T> other)
             => Name == other.Name && Required == other.Required && EqualityComparer<T>.Default.Equals(Type, other.Type);
         public override int GetHashCode()

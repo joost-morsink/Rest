@@ -64,12 +64,23 @@ namespace Biz.Morsink.Rest.Schema
             representations.AddRange(typeRepresentation(this));
             return this;
         }
+        /// <summary>
+        /// Creates a serializer for the specified type.
+        /// </summary>
+        /// <typeparam name="C">The type of serialization context.</typeparam>
+        /// <param name="serializer">A parent serializer/</param>
+        /// <param name="type">The type to get a serializer for.</param>
+        /// <returns>A serializer for the specified type if one could be constructed, null otherwise.</returns>
         public Serializer<C>.IForType CreateSerializer<C>(Serializer<C> serializer, Type type) where C : SerializationContext<C>
         {
             var specificSerializer = representableDescriptorKind.Value.GetSerializer(serializer, type);
             return specificSerializer ?? inner.CreateSerializer(serializer, type);
         }
-
+        /// <summary>
+        /// Gets a TypeDescriptor for a specified TypeDescriptor creation context.
+        /// </summary>
+        /// <param name="context">A context/</param>
+        /// <returns>A TypeDescriptor for the specified context, if one could be created, null otherwise.</returns>
         public TypeDescriptor GetDescriptor(TypeDescriptorCreator.Context context)
             => byType.GetOrAdd(context.Type, ty =>
             {
@@ -79,12 +90,25 @@ namespace Biz.Morsink.Rest.Schema
             });
 
 
+        /// <summary>
+        /// Gets a TypeDescriptor for a specified Type.
+        /// </summary>
+        /// <param name="type">The type to get a TypeDescriptor for.</param>
+        /// <returns>A TypeDescriptor for the specified type.</returns>
         public TypeDescriptor GetDescriptor(Type type)
             => GetDescriptor(new TypeDescriptorCreator.Context(type));
-
+        /// <summary>
+        /// Gets a TypeDescriptor for a specified type name.
+        /// </summary>
+        /// <param name="name">The type's name.</param>
+        /// <returns>A TypeDescriptor.</returns>
         public TypeDescriptor GetDescriptorByName(string name)
             => byName.TryGetValue(name, out var res) ? res : null;
-
+        /// <summary>
+        /// Gets a referable TypeDescriptor for a specified TypeDescriptor creation context.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>A TypeDescriptor if one could be constructed, null otherwise.</returns>
         public TypeDescriptor GetReferableDescriptor(TypeDescriptorCreator.Context context)
         {
             var desc = GetDescriptor(context);
@@ -93,7 +117,11 @@ namespace Biz.Morsink.Rest.Schema
             else
                 return TypeDescriptor.Referable.Create(GetTypeName(context.Type), desc);
         }
-
+        /// <summary>
+        /// Gets the type name for some type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>A name fot the specified type.</returns>
         public string GetTypeName(Type type)
             => inner.GetTypeName(type);
     }

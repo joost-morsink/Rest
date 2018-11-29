@@ -16,7 +16,7 @@ namespace Biz.Morsink.Rest.FSharp
         /// Tests whether the argument is an F# union type.
         /// </summary>
         /// <param name="type">The type to check.</param>
-        /// <returns>True if the argument is an F# union type.</returns>
+        /// <returns>True if the argument is an F# union type, false otherwise.</returns>
         public static bool IsFsharpUnionType(Type type)
         {
             return type.GetCustomAttributes().Where(a => a.GetType().Name == CompilationMappingAttribute)

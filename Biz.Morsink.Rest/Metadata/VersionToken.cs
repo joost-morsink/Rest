@@ -25,8 +25,13 @@ namespace Biz.Morsink.Rest.Metadata
             => (int)(IsStrong ? 0xaaaaaaaa : 0x55555555) ^ Token.GetHashCode();
         public override bool Equals(object obj)
             => Equals((VersionToken)obj);
+        /// <summary>
+        /// Checks if another VersionToken is equal to this one.
+        /// </summary>
+        /// <param name="other">The other VersionToken.</param>
+        /// <returns>True if the version tokens are considered equal, false otherwise.</returns>
         public bool Equals(VersionToken other)
-            => !ReferenceEquals(other,null) && IsStrong == other.IsStrong && Token == other.Token;
+            => !ReferenceEquals(other, null) && IsStrong == other.IsStrong && Token == other.Token;
         public static bool operator ==(VersionToken x, VersionToken y)
             => x.Equals(y);
         public static bool operator !=(VersionToken x, VersionToken y)

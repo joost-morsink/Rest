@@ -15,6 +15,9 @@ namespace Biz.Morsink.Rest.Jobs
     [RestDocumentation("Repository for Rest Jobs (collection path).")]
     public class JobCollectionRepository : RestRepository<RestJobCollection>, IRestPost<RestJobCollection, JobCollectionRepository.PostParameters, Empty, Empty>
     {
+        /// <summary>
+        /// Helper class for parameters in Rest Post requests.
+        /// </summary>
         public class PostParameters
         {
             [RestDocumentation("True if the Job should be secure, meaning it is only accessible by the current security principal.")]
@@ -34,6 +37,14 @@ namespace Biz.Morsink.Rest.Jobs
             this.user = user;
         }
 
+        /// <summary>
+        /// Administers a new 'Job' in the Job repository.
+        /// </summary>
+        /// <param name="target">An identity value for the Job collection.</param>
+        /// <param name="parameters">Parameters for the request.</param>
+        /// <param name="empty">Empty.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An asynchronous Rest Response of the Empty type.</returns>
         [RestDocumentation("Administers a new 'Job' in the Job repository.")]
         [RestMetaDataOut(typeof(CreatedResource))]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobCollection> target, PostParameters parameters, Empty empty, CancellationToken cancellationToken)

@@ -24,6 +24,14 @@ namespace Biz.Morsink.Rest.Jobs
         {
             this.store = store;
         }
+        /// <summary>
+        /// Messages posted to this endpoint finish the addressed Rest Job.
+        /// </summary>
+        /// <param name="target">An identity value for a Rest Job finished target.</param>
+        /// <param name="parameters">No parameters.</param>
+        /// <param name="entity">The RestJobFinished entity.</param>
+        /// <param name="cancellationToken">A CancellationToken.</param>
+        /// <returns>An asynchronous Rest response of the Empty type.</returns>
         [RestDocumentation("Messages posted to this endpoint finish the addressed Rest Job.")]
         public async ValueTask<RestResponse<Empty>> Post(IIdentity<RestJobFinished> target, Empty parameters, RestJobFinished entity, CancellationToken cancellationToken)
         {

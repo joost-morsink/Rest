@@ -58,7 +58,13 @@ namespace Biz.Morsink.Rest.FSharp
         /// FSharpList`1
         /// </summary>
         public static readonly string FSharpList_1 = nameof(FSharpList_1).Replace('_', '`');
+        /// <summary>
+        /// ListModule
+        /// </summary>
         public const string ListModule = nameof(ListModule);
+        /// <summary>
+        /// OfSeq
+        /// </summary>
         public const string OfSeq = nameof(OfSeq);
     }
 }
