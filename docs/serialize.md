@@ -32,3 +32,24 @@ Support for some advanced features may therefore be unsupported for the Xml form
 
 The Html converter does not support deserialization and is able to use a quite straightforward serialization algorithm.
 It generates tables for objects.
+
+## Binary representation
+The `SItem` family of classes can be serialized to a binary representation. 
+The format is a _type-length-value_ format for primitive types and a _type-value_ format for structured types. 
+Little endian encoding is used for primitive values.
+
+| Type byte | Type            | Includes length | Encoding | Termination    |
+| --------- | --------------- | --------------- | -------- | -------------- |
+| 0x00      | Null            | No              |          | None           | 
+| 0x01      | SObject         | No              |          | 0x02 type byte |
+| 0x03      | SArray          | No              |          | 0x04 type byte |
+| 0x10      | Short String    | ubyte           | UTF8     |                |
+| 0x11      | String          | ushort          | UTF8     |                |
+| 0x12      | Long String     | uint            | UTF8     |                |
+| 0x20      | Blob            | uint            |          |                |
+| 0x30      | Int             | ubyte           |          |                |
+| 0x31      | Uint            | ubyte           |          |                | 
+| 0x32      | Float           | ubyte           |          |                |
+| 0x33      | Decimal         | ubyte (16)      |          |                | 
+| 0x40      | DateTime        | ubyte (8)       |          |                |
+| 0x41      | DateTimeOffset  | ubyte (16)      |          |                | 
