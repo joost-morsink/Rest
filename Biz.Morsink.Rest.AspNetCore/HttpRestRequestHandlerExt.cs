@@ -33,13 +33,13 @@ namespace Biz.Morsink.Rest.AspNetCore
                 if (httpReq.Headers.ContainsKey("If-None-Match"))
                 {
                     var tokens = httpReq.Headers["If-None-Match"];
-                    var versionTokens = new TokenMatching { Tokens = tokens.Select(ParseToken).ToList(), Matches = false };
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(ParseToken).ToList(), ShouldMatch = false };
                     response = await next(context, req.AddMetadata(versionTokens), conv);
                 }
                 else if (httpReq.Headers.ContainsKey("If-Match"))
                 {
                     var tokens = httpReq.Headers["If-Match"];
-                    var versionTokens = new TokenMatching { Tokens = tokens.Select(ParseToken).ToList(), Matches = true };
+                    var versionTokens = new TokenMatching { Tokens = tokens.Select(ParseToken).ToList(), ShouldMatch = true };
                     response = await next(context, req.AddMetadata(versionTokens), conv);
                 }
                 else
