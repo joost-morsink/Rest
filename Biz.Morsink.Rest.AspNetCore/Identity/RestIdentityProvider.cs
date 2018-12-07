@@ -13,6 +13,7 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
+    using System.Linq.Expressions;
     using static Utilities;
     /// <summary>
     /// IdentityProvider for a Rest service.
@@ -277,8 +278,27 @@ namespace Biz.Morsink.Rest.AspNetCore
             IIdentity IIdentityCreator.Create<K>(K value)
                 => Create(value);
         }
+        private class DictionaryToStringConverter : IConverter
+        {
+            public static DictionaryToStringConverter Instance { get; } = new DictionaryToStringConverter();
+            private DictionaryToStringConverter() { }
+
+            public bool SupportsLambda => true;
+
+            public bool CanConvert(Type from, Type to)
+                => from == typeof(Dictionary<string, string>) && to == typeof(string);
+
+            public Delegate Create(Type from, Type to)
+                => CreateLambda(from, to).Compile();
+
+            public LambdaExpression CreateLambda(Type from, Type to)
+                => Lambda();
+            public Expression<Func<Dictionary<string, string>, ConversionResult<string>>> Lambda()
+                => dict => new ConversionResult<string>(string.Join("\t", dict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}={kvp.Value}")));
+        }
         #endregion
         private readonly DataConverter converter = Converters.CreatePipeline(regular: Converters.Regular.Concat(new IConverter[] {
+            DictionaryToStringConverter.Instance,
             RecordConverter.ForDictionaries()
         }));
         private Dictionary<Type, Entry> entries = new Dictionary<Type, Entry>();

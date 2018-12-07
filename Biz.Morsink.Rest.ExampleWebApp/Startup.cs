@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
                 // Configure the basics
                 .AddDefaultServices()
                 .AddDefaultIdentityProvider("http://localhost:5000", new RestPrefix("http://localhost:5000", "api"))
-                .AddCache<RestMemoryCache>()
+                .AddCache<RestDistributedCache>()
                 .AddJobs()
                 .UseRequestHandler((sp, hbld) => hbld
                     .Use<SelfRequestHandler>(sp)
@@ -62,6 +62,7 @@ namespace Biz.Morsink.Rest.ExampleWebApp
             });
             services.AddTransient<ITokenProvider<Person>, HashTokenProvider<Person>>();
             services.AddMemoryCache();
+            services.AddDistributedMemoryCache(); // Just for testing purposes.
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime, ILoggerFactory loggerFactory)

@@ -219,9 +219,9 @@ namespace Biz.Morsink.Rest
                 /// Gets an instance of the NotFound class.
                 /// </summary>
                 public static NotFound Instance(RestEntityKind kind) => kinds[kind];
-                private NotFound(RestEntityKind entityKind)
+                private NotFound(RestEntityKind failureOn)
                 {
-                    FailureOn = entityKind;
+                    FailureOn = failureOn;
                 }
                 /// <summary>
                 /// Changes the underlying successful value type for the Failure.
@@ -383,12 +383,12 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="target">The target of the redirect.</param>
-                /// <param name="value">An optional underlying Rest value.</param>
-                public Permanent(IIdentity target, IRestValue<object> value) : base(target)
+                /// <param name="restValue">An optional underlying Rest value.</param>
+                public Permanent(IIdentity target, IRestValue<object> restValue) : base(target)
                 {
                     if (target == null)
                         throw new ArgumentNullException(nameof(target));
-                    RestValue = value;
+                    RestValue = restValue;
                 }
                 public override RestRedirectType Type => RestRedirectType.Permanent;
 
@@ -412,12 +412,12 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="target">The target of the redirect.</param>
-                /// <param name="value">An optional underlying Rest value.</param>
-                public Temporary(IIdentity target, IRestValue<object> value) : base(target)
+                /// <param name="restValue">An optional underlying Rest value.</param>
+                public Temporary(IIdentity target, IRestValue<object> restValue) : base(target)
                 {
                     if (target == null)
                         throw new ArgumentNullException(nameof(target));
-                    RestValue = value;
+                    RestValue = restValue;
                 }
                 public override RestRedirectType Type => RestRedirectType.Temporary;
 

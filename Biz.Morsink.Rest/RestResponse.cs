@@ -59,11 +59,11 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="value">A typed RestResult for the response.</param>
+        /// <param name="result">A typed RestResult for the response.</param>
         /// <param name="metadata">Metadata for the response.</param>
-        public RestResponse(RestResult<T> value, TypeKeyedDictionary metadata) : base(metadata)
+        public RestResponse(RestResult<T> result, TypeKeyedDictionary metadata) : base(metadata)
         {
-            Result = value;
+            Result = result;
         }
         /// <summary>
         /// Gets the typed Rest result.
