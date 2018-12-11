@@ -155,6 +155,37 @@ namespace Biz.Morsink.Rest.Test
             Assert.IsTrue(prop.Required);
             Assert.IsInstanceOfType(prop.Type, typeof(TypeDescriptor.Primitive.String));
         }
+        [TestMethod]
+        public void TypeDescriptor_RestResult()
+        {
+            var tdc = new StandardTypeDescriptorCreator(new ITypeRepresentation[] {
+                RestResultTypeRepresentation.Instance,
+                new RestJobRepresentation(),
+                new RestJobResultRepresentation(),
+                TestIdentityRepresentation.Instance
+            });
+            //var res = RestResult.Create(new Person { FirstName = "Joost", LastName = "Morsink", Age = 39 });
+            var desc = tdc.GetDescriptor(typeof(RestResult<Person>));
+            if (desc is TypeDescriptor.Union u)
+            {
+                Assert.AreEqual(8, u.Options.Count);
+                foreach (var tag in new[] { "Success", "Error", "NotFound", "BadRequest", "Temporary", "Permanent", "NotExecuted", "NotNecessary" })
+                    Assert.IsTrue(u.Options.Any(o => o is TypeDescriptor.Record r && r.Properties.ContainsKey(tag)));
+                var props = u.Options
+                    .OfType<TypeDescriptor.Record>()
+                    .Where(r => r.Properties.ContainsKey("Success"))
+                    .SelectMany(r => ((TypeDescriptor.Record)r.Properties["Success"].Type).Properties.Values)
+                    .Where(p => p.Name == nameof(RestResult<object>.Success.RestValue))
+                    .Select(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties)
+                    .First();
+                Assert.IsTrue(props.ContainsKey(nameof(Person.FirstName)));
+                Assert.IsTrue(props.ContainsKey(nameof(Person.LastName)));
+                Assert.IsTrue(props.ContainsKey(nameof(Person.Age)));
+            }
+            else
+                Assert.Fail();
+        }
+
         public struct EmailAddress
         {
             public EmailAddress(string address)

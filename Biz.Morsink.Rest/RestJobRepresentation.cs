@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Biz.Morsink.Rest.AspNetCore
+namespace Biz.Morsink.Rest
 {
     /// <summary>
     /// A ITypeRepresentation implementation for RestJobs.
