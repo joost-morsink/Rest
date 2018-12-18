@@ -14,7 +14,7 @@ namespace Biz.Morsink.Rest
         private ConcurrentDictionary<Type, ITypeRepresentation> typeReprs = new ConcurrentDictionary<Type, ITypeRepresentation>();
         private ITypeRepresentation GetByRepresentation(Type representationType)
         {
-            var key = representationType?.GetGeneric(typeof(RestResultTypeRepresentation<>.ReprType));
+            var key = representationType?.GetGeneric(typeof(RestResultTypeRepresentation<>.Representation));
             if (key == null)
                 return null;
             return typeReprs.GetOrAdd(key, k => (ITypeRepresentation)Activator.CreateInstance(typeof(RestResultTypeRepresentation<>).MakeGenericType(k)));
@@ -50,11 +50,11 @@ namespace Biz.Morsink.Rest
         public bool IsRepresentation(Type type)
             => GetByRepresentation(type)?.IsRepresentation(type) ?? false;
     }
-    public class RestResultTypeRepresentation<T> : TaggedUnionTypeRepresentation<RestResult<T>, RestResultTypeRepresentation<T>.ReprType>
+    public class RestResultTypeRepresentation<T> : TaggedUnionTypeRepresentation<RestResult<T>, RestResultTypeRepresentation<T>.Representation>
     {
-        public class ReprType : TaggedUnionRepresentationType
+        public class Representation : TaggedUnionRepresentationType
         {
-            public ReprType(): base(typeof(RestResult<T>),
+            public Representation(): base(typeof(RestResult<T>),
                 ("Success", typeof(RestResult<T>.Success)),
                 ("BadRequest", typeof(RestResult<T>.Failure.BadRequest)),
                 ("Error", typeof(RestResult<T>.Failure.Error)),

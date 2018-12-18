@@ -160,6 +160,7 @@ namespace Biz.Morsink.Rest.Test
         {
             var tdc = new StandardTypeDescriptorCreator(new ITypeRepresentation[] {
                 RestResultTypeRepresentation.Instance,
+                RestValueTypeRepresentation.Instance,
                 new RestJobRepresentation(),
                 new RestJobResultRepresentation(),
                 TestIdentityRepresentation.Instance
@@ -176,6 +177,8 @@ namespace Biz.Morsink.Rest.Test
                     .Where(r => r.Properties.ContainsKey("Success"))
                     .SelectMany(r => ((TypeDescriptor.Record)r.Properties["Success"].Type).Properties.Values)
                     .Where(p => p.Name == nameof(RestResult<object>.Success.RestValue))
+                    .SelectMany(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties.Values)
+                    .Where(p => p.Name == nameof(IRestValue<object>.Value))
                     .Select(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties)
                     .First();
                 Assert.IsTrue(props.ContainsKey(nameof(Person.FirstName)));
