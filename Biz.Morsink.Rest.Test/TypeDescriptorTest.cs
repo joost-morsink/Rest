@@ -176,8 +176,8 @@ namespace Biz.Morsink.Rest.Test
                     .OfType<TypeDescriptor.Record>()
                     .Where(r => r.Properties.ContainsKey("Success"))
                     .SelectMany(r => ((TypeDescriptor.Record)r.Properties["Success"].Type).Properties.Values)
-                    .Where(p => p.Name == nameof(RestResult<object>.Success.RestValue))
-                    .SelectMany(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties.Values)
+                    //.Where(p => p.Name == nameof(RestResult<object>.Success.RestValue))
+                    //.SelectMany(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties.Values)
                     .Where(p => p.Name == nameof(IRestValue<object>.Value))
                     .Select(p => ((TypeDescriptor.Record)((TypeDescriptor.Referable)p.Type).ExpandedDescriptor).Properties)
                     .First();

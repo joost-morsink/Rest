@@ -28,7 +28,13 @@ namespace Biz.Morsink.Rest.Test
         [TestInitialize]
         public void Init()
         {
-            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance, TupleAsIntersectionRepresentation.Instance });
+            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] 
+            {
+                TestIdentityRepresentation.Instance,
+                TupleAsIntersectionRepresentation.Instance,
+                RestResultTypeRepresentation.Instance,
+                RestValueTypeRepresentation.Instance
+            });
             serializer = new Serializer<SerializationContext>(typeDescriptorCreator);
         }
         [TestMethod]
@@ -499,6 +505,53 @@ namespace Biz.Morsink.Rest.Test
             var back = serializer.Deserialize<ImmutableHashSet<int>>(NewContext(), actual);
             Assert.AreEqual(3, back.Count);
             Assert.IsTrue(new[] { 1, 2, 3 }.All(back.Contains));
+        }
+
+        [TestMethod]
+        public void Serializer_RestValue()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
+            var rv = new RestValue<Helpers.Person>(p);
+            var expected = new SObject(
+                new SProperty("Value", new SObject(
+                    new SProperty("FirstName", new SValue("Joost")),
+                    new SProperty("LastName", new SValue("Morsink")),
+                    new SProperty("Age", new SValue(38)))),
+                new SProperty("Links", SArray.Empty),
+                new SProperty("Embeddings",SArray.Empty));
+            var actual = serializer.Serialize(NewContext(), rv);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<IRestValue<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual("Joost", back.Value.FirstName);
+            Assert.AreEqual("Morsink", back.Value.LastName);
+            Assert.AreEqual(38, back.Value.Age);
+        }
+        [TestMethod]
+        public void Serializer_RestResultSuccess()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
+            RestResult<Helpers.Person> rs = RestResult.Create(p);
+            var expected = new SObject(
+                new SProperty("Success", new SObject(
+                    new SProperty("Value", new SObject(
+                        new SProperty("FirstName", new SValue("Joost")),
+                        new SProperty("LastName", new SValue("Morsink")),
+                        new SProperty("Age", new SValue(38)))),
+                    new SProperty("Links", SArray.Empty),
+                    new SProperty("Embeddings", SArray.Empty))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            if (back is RestResult<Helpers.Person>.Success suc)
+            {
+                Assert.AreEqual("Joost", suc.RestValue.Value.FirstName);
+                Assert.AreEqual("Morsink", suc.RestValue.Value.LastName);
+                Assert.AreEqual(38, suc.RestValue.Value.Age);
+            }
+            else
+                Assert.Fail();
         }
     }
 }

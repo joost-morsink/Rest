@@ -1,5 +1,6 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Jobs;
+using Biz.Morsink.Rest.Serialization;
 using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
@@ -127,6 +128,7 @@ namespace Biz.Morsink.Rest
             /// Constructor.
             /// </summary>
             /// <param name="restValue">The underlying Rest value for the successful result.</param>
+            [SIgnore]
             public Success(IRestValue<T> restValue)
             {
                 RestValue = restValue;
@@ -155,6 +157,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the underlying RestValue.
             /// </summary>
+            [SIgnore]
             public IRestValue<T> RestValue { get; }
 
             IRestValue IHasRestValue.RestValue => RestValue;
@@ -173,6 +176,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was bad.</param>
+                [SIgnore]
                 public BadRequest(IRestValue<object> restValue)
                 {
                     RestValue = restValue;
@@ -189,6 +193,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// A Rest value describing the reason why the request was bad.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<object> RestValue { get; }
                 /// <summary>
                 /// A value describing the reason why the request was bad.
@@ -219,7 +224,7 @@ namespace Biz.Morsink.Rest
                 /// Gets an instance of the NotFound class.
                 /// </summary>
                 public static NotFound Instance(RestEntityKind kind) => kinds[kind];
-                private NotFound(RestEntityKind entityKind)
+                public NotFound(RestEntityKind entityKind)
                 {
                     FailureOn = entityKind;
                 }
@@ -248,6 +253,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was not executed.</param>
+                [SIgnore]
                 public NotExecuted(IRestValue<object> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
@@ -265,6 +271,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// A Rest value describing the reason why the request was not executed.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<object> RestValue { get; }
 
                 /// <summary>
@@ -294,6 +301,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value containing an exception describing the unexpected error.</param>
+                [SIgnore]
                 public Error(IRestValue<ExceptionInfo> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
@@ -311,6 +319,7 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Gets a Rest value for the exception describing the unexpected error.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<ExceptionInfo> RestValue { get; }
 
                 /// <summary>
@@ -341,6 +350,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the reason for failure of the Rest request.
             /// </summary>
+            [SIgnore]
             public abstract RestFailureReason Reason { get; }
             public abstract RestEntityKind FailureOn { get; }
         }
@@ -360,6 +370,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the type of redirect.
             /// </summary>
+            [SIgnore]
             public abstract RestRedirectType Type { get; }
             /// <summary>
             /// Gets the target of the redirect.

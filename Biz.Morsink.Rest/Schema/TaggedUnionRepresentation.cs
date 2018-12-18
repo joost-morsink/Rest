@@ -78,7 +78,7 @@ namespace Biz.Morsink.Rest.Schema
             if (reprType == null)
                 return null;
             else
-                return (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), reprType));
+                return (Serializer<C>.IForType)Activator.CreateInstance(typeof(SerializerImpl<,>).MakeGenericType(typeof(C), reprType), serializer);
         }
         private class SerializerImpl<C, TRepType> : Serializer<C>.Typed<TaggedUnionRepresentation<TRepType>>.Simple
             where C : SerializationContext<C>
@@ -137,7 +137,7 @@ namespace Biz.Morsink.Rest.Schema
                 : null;
 
         public Type GetRepresentationType(Type type)
-            => typeof(T).IsAssignableFrom(type)
+            => typeof(T) == type
                 ? typeof(TaggedUnionRepresentation<TRepType>)
                 : null;
 
