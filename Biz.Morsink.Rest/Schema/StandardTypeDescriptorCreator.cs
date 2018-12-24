@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Biz.Morsink.Rest.FSharp;
 using Biz.Morsink.Rest.Serialization;
+using Biz.Morsink.Rest.Utils;
 
 namespace Biz.Morsink.Rest.Schema
 {
@@ -77,6 +78,7 @@ namespace Biz.Morsink.Rest.Schema
                 UnionRepresentationDescriptorKind.Instance,
                 UnionDescriptorKind.Instance,
                 RecordDescriptorKind.Instance,
+                TypeKeyedDictionaryKind.Instance,
                 UnitDescriptorKind.Instance,
             });
         }

@@ -9,7 +9,7 @@ namespace Biz.Morsink.Rest.Utils
     /// An immutable keyed collection of typed objects.
     /// Every element is 'keyed' by a single type (statically at registration), that the element is assignable to.
     /// </summary>
-    public class TypeKeyedDictionary 
+    public class TypeKeyedDictionary
     {
         /// <summary>
         /// Gets the empty TypeKeyedDictionary.
@@ -28,6 +28,12 @@ namespace Biz.Morsink.Rest.Utils
         /// <returns>A new TypeKeyedDictionary with the modification as specified by this function call.</returns>
         public TypeKeyedDictionary Set<T>(T obj)
             => new TypeKeyedDictionary(objects.SetItem(typeof(T), obj));
+        internal TypeKeyedDictionary SetUntyped(Type type, object item)
+        {
+            if (!type.IsInstanceOfType(item))
+                throw new ArgumentException("Invalid type information for object.");
+            return new TypeKeyedDictionary(objects.SetItem(type, item));
+        }
         /// <summary>
         /// Tries to get the value for a key T.
         /// </summary>

@@ -17,7 +17,7 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
         private readonly ITypeDescriptorCreator typeDescriptorCreator;
         private readonly CacheSerializer serializer;
 
-        public RestDistributedCache(IDistributedCache cache, ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider identityProvider)
+        public RestDistributedCache(IServiceProvider serviceProvider, IDistributedCache cache, ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider identityProvider)
         {
             this.cache = cache;
             this.identityProvider = identityProvider;

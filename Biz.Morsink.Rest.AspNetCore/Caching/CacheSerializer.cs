@@ -12,7 +12,11 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
     {
         private readonly IRestIdentityProvider identityProvider;
 
-        public CacheSerializer(ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider identityProvider,IDataConverter converter = null) : base(typeDescriptorCreator, converter)
+        public CacheSerializer(ITypeDescriptorCreator typeDescriptorCreator, IRestIdentityProvider identityProvider,IDataConverter converter = null) 
+            : base(
+                new DecoratedTypeDescriptorCreator(typeDescriptorCreator)
+                    .Decorate(new TypeDescriptorTypeRepresentation(new Lazy<ITypeDescriptorCreator>(() => typeDescriptorCreator))),
+                converter)
         {
             this.identityProvider = identityProvider;
         }
@@ -49,6 +53,28 @@ namespace Biz.Morsink.Rest.AspNetCore.Caching
                     return inner.Serialize(context.WithParent(item.Id), item);
             }
         }
+        private class IdentityType<T> : Typed<T>
+        {
+            private readonly Typed<T> inner;
+
+            public new CacheSerializer Parent => (CacheSerializer)base.Parent;
+            public IdentityType(CacheSerializer parent, Typed<T> inner) : base(parent)
+            {
+                this.inner = inner;
+            }
+          
+            public override T Deserialize(Serialization.SerializationContext context, SItem item)
+            {
+                return inner.Deserialize(context, item);
+            }
+
+            public override SItem Serialize(Serialization.SerializationContext context, T item)
+            {
+
+                  return inner.Serialize(context, item);
+            }
+        }
+
 
     }
 }

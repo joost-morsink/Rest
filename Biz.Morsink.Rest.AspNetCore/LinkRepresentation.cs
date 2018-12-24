@@ -61,6 +61,6 @@ namespace Biz.Morsink.Rest.AspNetCore
             => new Representation(item);
 
         public override Link GetRepresentable(Representation representation)
-            => throw new NotSupportedException();
+            => Link.Create(representation.RelType, representation.Target, representation.Parameters);
     }
 }

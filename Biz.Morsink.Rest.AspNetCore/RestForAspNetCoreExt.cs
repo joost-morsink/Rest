@@ -71,6 +71,8 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, VersionRepresentation>();
+            serviceCollection.AddSingleton<ITypeRepresentation, RestResultTypeRepresentation>();
+            //serviceCollection.AddTransient<ITypeRepresentation, TypeDescriptorTypeRepresentation>(TypeDescriptorTypeRepresentation.Create);
 
             serviceCollection.AddScoped<ITokenProviderFactory, TokenProviderFactory>();
             var restbuilder = new RestServicesBuilder(serviceCollection);

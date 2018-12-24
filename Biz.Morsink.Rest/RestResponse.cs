@@ -1,4 +1,5 @@
-﻿using Biz.Morsink.Rest.Utils;
+﻿using Biz.Morsink.Rest.Serialization;
+using Biz.Morsink.Rest.Utils;
 using System;
 using System.Threading.Tasks;
 
@@ -20,6 +21,7 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// True if the Rest response represents a successful one.
         /// </summary>
+        [SIgnore]
         public abstract bool IsSuccess { get; }
         /// <summary>
         /// Gets the metadata for the response.
@@ -48,6 +50,7 @@ namespace Biz.Morsink.Rest
         /// <summary>
         /// Gets an untyped Rest result.
         /// </summary>
+        [SIgnore]
         public abstract IRestResult UntypedResult { get; }
     }
     /// <summary>

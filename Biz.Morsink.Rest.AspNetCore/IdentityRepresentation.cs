@@ -42,7 +42,7 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.prefixContainerAccessor = prefixContainerAccessor;
             useCuries = options.Value.UseCuries;
             this.currentHttpRestConverterAccessor = currentHttpRestConverterAccessor;
-            
+
         }
 
         public override Representation GetRepresentation(IIdentity item)
@@ -54,8 +54,11 @@ namespace Biz.Morsink.Rest.AspNetCore
         }
 
         public override IIdentity GetRepresentable(Representation representation, Type specific)
-            => specific == null
+        {
+            var gen = specific?.GetGeneric(typeof(IIdentity<>));
+            return gen == null
                 ? identityProvider.Parse(representation.Href, true, prefixContainerAccessor.RestPrefixContainer)
                 : identityProvider.Parse(representation.Href, specific.GetGeneric(typeof(IIdentity<>)), prefixContainerAccessor.RestPrefixContainer);
+        }
     }
 }

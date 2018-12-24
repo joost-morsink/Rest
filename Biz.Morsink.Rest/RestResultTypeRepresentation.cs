@@ -10,7 +10,7 @@ namespace Biz.Morsink.Rest
     public class RestResultTypeRepresentation : ITypeRepresentation
     {
         public static RestResultTypeRepresentation Instance { get; } = new RestResultTypeRepresentation();
-        private RestResultTypeRepresentation() { }
+        public RestResultTypeRepresentation() { }
         private ConcurrentDictionary<Type, ITypeRepresentation> typeReprs = new ConcurrentDictionary<Type, ITypeRepresentation>();
         private ITypeRepresentation GetByRepresentation(Type representationType)
         {
