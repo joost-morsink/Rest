@@ -65,6 +65,7 @@ namespace Biz.Morsink.Rest.Schema
         {
             var props = GetReadableProperties(type).ToArray();
             return from ci in type.GetTypeInfo().DeclaredConstructors
+                   where ci.GetCustomAttribute<SIgnoreAttribute>() == null
                    let ps = ci.GetParameters()
                    where !ci.IsStatic && ps.Length > 0
                        && ps.Join(props, p => p.Name, p => p.Name, (_, __) => 1, CaseInsensitiveEqualityComparer.Instance).Any()
@@ -84,7 +85,7 @@ namespace Biz.Morsink.Rest.Schema
                 .Iterate(x => x.BaseType?.GetTypeInfo())
                 .TakeWhile(x => x != cutoff && x != null)
                 .SelectMany(x => x.DeclaredProperties)
-                .Where(p => p.CanRead && !p.CanWrite && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
+                .Where(p => p.CanRead && !p.CanWrite && p.GetMethod.IsPublic && !p.GetMethod.IsStatic && p.GetCustomAttribute<SIgnoreAttribute>() == null)
                 .GroupBy(x => x.Name)
                 .Select(x => x.First());
 
@@ -98,7 +99,7 @@ namespace Biz.Morsink.Rest.Schema
             return ti.GetTypeInfo().Iterate(x => x.BaseType?.GetTypeInfo())
                    .TakeWhile(x => x != null)
                    .SelectMany(x => x.DeclaredProperties)
-                   .Where(p => p.CanRead && p.CanWrite && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
+                   .Where(p => p.CanRead && p.CanWrite && p.GetMethod.IsPublic && !p.GetMethod.IsStatic && p.GetCustomAttribute<SIgnoreAttribute>()==null)
                    .GroupBy(x => x.Name)
                    .Select(x => x.First());
         }
@@ -112,7 +113,7 @@ namespace Biz.Morsink.Rest.Schema
             return ti.GetTypeInfo().Iterate(x => x.BaseType?.GetTypeInfo())
                    .TakeWhile(x => x != null)
                    .SelectMany(x => x.DeclaredProperties)
-                   .Where(p => p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic)
+                   .Where(p => p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic && p.GetCustomAttribute<SIgnoreAttribute>() == null)
                    .GroupBy(x => x.Name)
                    .Select(x => x.First());
         }
@@ -123,7 +124,7 @@ namespace Biz.Morsink.Rest.Schema
         /// <param name="type"></param>
         /// <returns></returns>
         public static bool HasParameterlessConstructor(Type type)
-            => type.GetTypeInfo().DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0).Any();
+            => type.GetTypeInfo().DeclaredConstructors.Where(ci => !ci.IsStatic && ci.GetParameters().Length == 0 && ci.GetCustomAttribute<SIgnoreAttribute>() == null).Any();
         /// <summary>
         /// A record type is a type with either a parameterless constructor and a bunch of properties with getters and setters, or a type with a single constructor and for each constructor parameter a readonly property.
         /// </summary>
@@ -169,10 +170,19 @@ namespace Biz.Morsink.Rest.Schema
                 else
                     throw new NotSupportedException();
             }
+            protected override Func<C, T, SItem> MakeSerializer()
+            {
+                if (HasParameterlessConstructor(typeof(T)))
+                    return MakeMutableSerializer();
+                else if (IsOfKindImmutable(typeof(T)))
+                    return MakeImmutableSerializer();
+                else
+                    throw new NotSupportedException();
+            }
 
             private Func<C, SItem, T> MakeImmutableDeserializer()
             {
-                var x = GetConstructorProperties(typeof(T)).First();
+                var x = GetConstructorProperties(typeof(T)).OrderByDescending(c => c.Key.GetParameters().Length).First();
                 var ci = x.Key;
                 var props = x.AsEnumerable();
                 var ctx = Ex.Parameter(typeof(C), "ctx");
@@ -196,7 +206,7 @@ namespace Biz.Morsink.Rest.Schema
                                                 ctx, Ex.Property(prop, nameof(SProperty.Token)))),
                                         Ex.Default(typeof(void))),
                                     Ex.Constant(p.Item1.Name.ToLower()))).ToArray())),
-                    Ex.Assign(res,Ex.New(ci, parameters)),
+                    Ex.Assign(res, Ex.New(ci, parameters)),
                     Ex.IfThen(Ex.GreaterThan(Ex.Property(other, nameof(List<SProperty>.Count)), Ex.Constant(0)),
                         other.Foreach(prop =>
                             Ex.Switch(Ex.Call(Ex.Property(prop, nameof(SProperty.Name)), nameof(string.ToLower), Type.EmptyTypes),
@@ -238,14 +248,15 @@ namespace Biz.Morsink.Rest.Schema
                 return lambda.Compile();
             }
 
-            protected override Func<C, T, SItem> MakeSerializer()
+
+            private Func<C, T, SItem> CoreMakeSerializer(IEnumerable<PropertyInfo> properties)
             {
                 var ctx = Ex.Parameter(typeof(C), "ctx");
                 var input = Ex.Parameter(typeof(T), "input");
                 var props = Ex.Parameter(typeof(List<SProperty>), "props");
                 var block = Ex.Block(new[] { props },
                     Ex.Assign(props, Ex.New(typeof(List<SProperty>))),
-                    Ex.Block(GetReadableProperties(typeof(T)).Select(prop => handleProp(prop))),
+                    Ex.Block(properties.Select(prop => handleProp(prop))),
                     Ex.New(typeof(SObject).GetConstructor(new[] { typeof(IEnumerable<SProperty>) }), props));
                 var lambda = Ex.Lambda<Func<C, T, SItem>>(block, ctx, input);
                 return lambda.Compile();
@@ -266,6 +277,14 @@ namespace Biz.Morsink.Rest.Schema
                                     Ex.Call(Ex.Constant(Parent), SERIALIZE, new[] { prop.PropertyType },
                                         ctx, Ex.Property(input, prop))));
                 }
+            }
+            private Func<C, T, SItem> MakeMutableSerializer()
+            {
+                return CoreMakeSerializer(GetReadableProperties(typeof(T)));
+            }
+            private Func<C, T, SItem> MakeImmutableSerializer()
+            {
+                return CoreMakeSerializer(GetReadableProperties(typeof(T)));
             }
         }
         #endregion

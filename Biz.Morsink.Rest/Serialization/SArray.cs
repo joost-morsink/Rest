@@ -10,6 +10,7 @@ namespace Biz.Morsink.Rest.Serialization
     /// </summary>
     public class SArray : SItem
     {
+        public static SArray Empty { get; } = new SArray();
         /// <summary>
         /// Constructor.
         /// </summary>
