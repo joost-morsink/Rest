@@ -8,7 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 
-namespace Biz.Morsink.Rest.AspNetCore
+namespace Biz.Morsink.Rest
 {
     public class RestJobResultRepresentation : SimpleTypeRepresentation<RestJobResult, RestJobResultRepresentation.Representation>
     {

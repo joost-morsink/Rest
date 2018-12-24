@@ -41,7 +41,10 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson.Test
             public string B { get; }
             public string C { get; }
 
-            public IIdentity<HelperB> Id => FreeIdentity<HelperB>.Create(B);
+            public IIdentity<HelperB> Id
+            {
+                get => FreeIdentity<HelperB>.Create(B);
+            }
 
             IIdentity IHasIdentity.Id => Id;
         }

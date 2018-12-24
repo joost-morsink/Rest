@@ -89,7 +89,7 @@ namespace Biz.Morsink.Rest.Serialization
         /// Serialize an object to an intermediate serialization format.
         /// </summary>
         /// <param name="context">The serialization context.</param>
-        /// <param name="type">The type of the object.</param>
+        /// <param name="type">The type of the object.</param>15000
         /// <param name="item">The object to serialize.</param>
         /// <returns>An intermediate representation of the object,</returns>
         public SItem Serialize(C context, Type type, object item)

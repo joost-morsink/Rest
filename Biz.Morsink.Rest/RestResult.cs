@@ -1,5 +1,6 @@
 ﻿using Biz.Morsink.Identity;
 using Biz.Morsink.Rest.Jobs;
+using Biz.Morsink.Rest.Serialization;
 using Biz.Morsink.Rest.Utils;
 using System;
 using System.Collections.Generic;
@@ -127,6 +128,7 @@ namespace Biz.Morsink.Rest
             /// Constructor.
             /// </summary>
             /// <param name="restValue">The underlying Rest value for the successful result.</param>
+            [SIgnore]
             public Success(IRestValue<T> restValue)
             {
                 RestValue = restValue;
@@ -155,6 +157,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the underlying RestValue.
             /// </summary>
+            [SIgnore]
             public IRestValue<T> RestValue { get; }
 
             IRestValue IHasRestValue.RestValue => RestValue;
@@ -173,6 +176,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was bad.</param>
+                [SIgnore]
                 public BadRequest(IRestValue<object> restValue)
                 {
                     RestValue = restValue;
@@ -189,11 +193,14 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// A Rest value describing the reason why the request was bad.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<object> RestValue { get; }
                 /// <summary>
                 /// A value describing the reason why the request was bad.
                 /// </summary>
                 public object Data => RestValue.Value;
+                public IReadOnlyList<Link> Links => RestValue.Links;
+                public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
 
@@ -219,7 +226,7 @@ namespace Biz.Morsink.Rest
                 /// Gets an instance of the NotFound class.
                 /// </summary>
                 public static NotFound Instance(RestEntityKind kind) => kinds[kind];
-                private NotFound(RestEntityKind failureOn)
+                public NotFound(RestEntityKind failureOn)
                 {
                     FailureOn = failureOn;
                 }
@@ -248,6 +255,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value describing the reason why the request was not executed.</param>
+                [SIgnore]
                 public NotExecuted(IRestValue<object> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
@@ -259,18 +267,21 @@ namespace Biz.Morsink.Rest
                 /// <param name="data">A value describing the reason why the request was not executed.</param>              
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
-                    : this(new RestValue<object>(data, links, embeddings), RestEntityKind.Resource)
+                public NotExecuted(object data, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null, RestEntityKind failureOn = RestEntityKind.Resource)
+                    : this(new RestValue<object>(data, links, embeddings), failureOn)
                 { }
                 /// <summary>
                 /// A Rest value describing the reason why the request was not executed.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<object> RestValue { get; }
 
                 /// <summary>
                 /// A value describing the reason why the request was not executed.
                 /// </summary>
                 public object Data => RestValue.Value;
+                public IReadOnlyList<Link> Links => RestValue.Links;
+                public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
 
@@ -294,6 +305,7 @@ namespace Biz.Morsink.Rest
                 /// Constructor.
                 /// </summary>
                 /// <param name="restValue">A Rest value containing an exception describing the unexpected error.</param>
+                [SIgnore]
                 public Error(IRestValue<ExceptionInfo> restValue, RestEntityKind failureOn)
                 {
                     RestValue = restValue;
@@ -302,21 +314,24 @@ namespace Biz.Morsink.Rest
                 /// <summary>
                 /// Constructor/
                 /// </summary>
-                /// <param name="ex">An exception describing the unexpected error.</param>
+                /// <param name="exception">An exception describing the unexpected error.</param>
                 /// <param name="links">An optional collection of links for the result.</param>
                 /// <param name="embeddings">An optional collection of embeddings for the result.</param>
-                public Error(ExceptionInfo ex, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null)
-                    : this(new RestValue<ExceptionInfo>(ex, links, embeddings), RestEntityKind.Resource)
+                public Error(ExceptionInfo exception, IEnumerable<Link> links = null, IEnumerable<Embedding> embeddings = null, RestEntityKind failureOn = RestEntityKind.Resource)
+                    : this(new RestValue<ExceptionInfo>(exception, links, embeddings), failureOn)
                 { }
                 /// <summary>
                 /// Gets a Rest value for the exception describing the unexpected error.
                 /// </summary>
+                [SIgnore]
                 public IRestValue<ExceptionInfo> RestValue { get; }
 
                 /// <summary>
                 /// Gets the exception describing the unexpected error.
                 /// </summary>
                 public ExceptionInfo Exception => RestValue.Value;
+                public IReadOnlyList<Link> Links => RestValue.Links;
+                public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
                 /// <summary>
@@ -341,6 +356,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the reason for failure of the Rest request.
             /// </summary>
+            [SIgnore]
             public abstract RestFailureReason Reason { get; }
             public abstract RestEntityKind FailureOn { get; }
         }
@@ -360,6 +376,7 @@ namespace Biz.Morsink.Rest
             /// <summary>
             /// Gets the type of redirect.
             /// </summary>
+            [SIgnore]
             public abstract RestRedirectType Type { get; }
             /// <summary>
             /// Gets the target of the redirect.

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Biz.Morsink.Rest.Serialization
@@ -22,7 +23,7 @@ namespace Biz.Morsink.Rest.Serialization
 
             public override object Deserialize(C context, SItem item)
             {
-                throw new NotSupportedException();
+                return Parent.Deserialize<ExpandoObject>(context, item);
             }
 
             public override SItem Serialize(C context, object item)

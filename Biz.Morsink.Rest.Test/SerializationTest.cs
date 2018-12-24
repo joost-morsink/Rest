@@ -28,7 +28,13 @@ namespace Biz.Morsink.Rest.Test
         [TestInitialize]
         public void Init()
         {
-            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[] { TestIdentityRepresentation.Instance, TupleAsIntersectionRepresentation.Instance });
+            typeDescriptorCreator = new StandardTypeDescriptorCreator(new[]
+            {
+                TestIdentityRepresentation.Instance,
+                TupleAsIntersectionRepresentation.Instance,
+                RestResultTypeRepresentation.Instance,
+                RestValueTypeRepresentation.Instance
+            });
             serializer = new Serializer<SerializationContext>(typeDescriptorCreator);
         }
         [TestMethod]
@@ -499,6 +505,186 @@ namespace Biz.Morsink.Rest.Test
             var back = serializer.Deserialize<ImmutableHashSet<int>>(NewContext(), actual);
             Assert.AreEqual(3, back.Count);
             Assert.IsTrue(new[] { 1, 2, 3 }.All(back.Contains));
+        }
+
+        [TestMethod]
+        public void Serializer_RestValue()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
+            var rv = new RestValue<Helpers.Person>(p);
+            var expected = new SObject(
+                new SProperty("Value", new SObject(
+                    new SProperty("FirstName", new SValue("Joost")),
+                    new SProperty("LastName", new SValue("Morsink")),
+                    new SProperty("Age", new SValue(38)))),
+                new SProperty("Links", SArray.Empty),
+                new SProperty("Embeddings", SArray.Empty));
+            var actual = serializer.Serialize(NewContext(), rv);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<IRestValue<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.AreEqual("Joost", back.Value.FirstName);
+            Assert.AreEqual("Morsink", back.Value.LastName);
+            Assert.AreEqual(38, back.Value.Age);
+        }
+        [TestMethod]
+        public void Serializer_RestResultSuccess()
+        {
+            var p = new Helpers.Person { FirstName = "Joost", LastName = "Morsink", Age = 38 };
+            RestResult<Helpers.Person> rs = RestResult.Create(p);
+            var expected = new SObject(
+                new SProperty("Success", new SObject(
+                    new SProperty("Value", new SObject(
+                        new SProperty("FirstName", new SValue("Joost")),
+                        new SProperty("LastName", new SValue("Morsink")),
+                        new SProperty("Age", new SValue(38)))),
+                    new SProperty("Links", SArray.Empty),
+                    new SProperty("Embeddings", SArray.Empty))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            if (back is RestResult<Helpers.Person>.Success suc)
+            {
+                Assert.AreEqual("Joost", suc.RestValue.Value.FirstName);
+                Assert.AreEqual("Morsink", suc.RestValue.Value.LastName);
+                Assert.AreEqual(38, suc.RestValue.Value.Age);
+            }
+            else
+                Assert.Fail();
+        }
+        [TestMethod]
+        public void Serializer_RestResultBadRequest()
+        {
+            var body = new { Severity = "Error", Message = "Could not validate request" };
+            RestResult<Helpers.Person> rs = RestResult.BadRequest<Helpers.Person>(body);
+            var expected = new SObject(
+                new SProperty("BadRequest", new SObject(
+                    new SProperty("Data", new SObject(
+                        new SProperty("Severity", new SValue(body.Severity)),
+                        new SProperty("Message", new SValue(body.Message)))),
+                    new SProperty("Links", SArray.Empty),
+                    new SProperty("Embeddings", SArray.Empty),
+                    new SProperty("FailureOn", new SValue("General")))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            if (back is RestResult<Helpers.Person>.Failure.BadRequest br)
+            {
+                Assert.AreEqual(body.Message, ((dynamic)br.Data).Message);
+                Assert.AreEqual(body.Severity, ((dynamic)br.Data).Severity);
+
+            }
+            else
+                Assert.Fail();
+        }
+        [TestMethod]
+        public void Serializer_RestResultNotFound()
+        {
+            RestResult<Helpers.Person> rs = RestResult.NotFound<Helpers.Person>();
+            var expected = new SObject(
+                new SProperty("NotFound", new SObject(
+                    new SProperty("FailureOn", new SValue("Resource")))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.IsInstanceOfType(back, typeof(RestResult<Helpers.Person>.Failure.NotFound));
+        }
+        [TestMethod]
+        public void Serializer_RestResultError()
+        {
+            RestResult<Helpers.Person> rs = RestResult.Error<Helpers.Person>(new Exception("Testexception"));
+            var expected = new SObject(
+                new SProperty("Error", new SObject(
+                    new SProperty("Exception", new SObject(
+                        new SProperty("Message", new SValue("Testexception")),
+                        new SProperty("Inner", SValue.Null),
+                        new SProperty("Type", new SValue("Exception")))),
+                    new SProperty("Links", SArray.Empty),
+                    new SProperty("Embeddings", SArray.Empty),
+                    new SProperty("FailureOn", new SValue("Resource")))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            if (back is RestResult<Helpers.Person>.Failure.Error err)
+            {
+                Assert.AreEqual("Testexception", err.Exception.Message);
+                Assert.AreEqual("Exception", err.Exception.Type);
+            }
+            else
+                Assert.Fail();
+        }
+        [TestMethod]
+        public void Serializer_RestResultNotExecuted()
+        {
+            var body = new { Severity = "Error", Message = "Cannot update old version of entity." };
+            RestResult<Helpers.Person> rs = new RestResult<Helpers.Person>.Failure.NotExecuted(body);
+            var expected = new SObject(
+                new SProperty("NotExecuted", new SObject(
+                    new SProperty("Data", new SObject(
+                        new SProperty("Severity", new SValue(body.Severity)),
+                        new SProperty("Message", new SValue(body.Message)))),
+                    new SProperty("Links", SArray.Empty),
+                    new SProperty("Embeddings", SArray.Empty),
+                    new SProperty("FailureOn", new SValue("Resource")))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            if (back is RestResult<Helpers.Person>.Failure.NotExecuted nex)
+            {
+                Assert.AreEqual(body.Message, ((dynamic)nex.Data).Message);
+                Assert.AreEqual(body.Severity, ((dynamic)nex.Data).Severity);
+
+            }
+            else
+                Assert.Fail();
+        }
+        [TestMethod]
+        public void Serializer_RestResultRedirectPermanent()
+        {
+            RestResult<Helpers.Person> rs = new RestResult<Helpers.Person>.Redirect.Permanent(FreeIdentityProvider.Instance.Creator<Helpers.Person>().Create(4), null);
+            var expected = new SObject(
+                new SProperty("Permanent", new SObject(
+                    new SProperty("Target", new SObject(
+                        new SProperty("Href", new SValue("/Person/4")))),
+                    new SProperty("RestValue", SValue.Null))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.IsInstanceOfType(back, typeof(RestResult<Helpers.Person>.Redirect.Permanent));
+        }
+        [TestMethod]
+        public void Serializer_RestResultRedirectTemporary()
+        {
+            RestResult<Helpers.Person> rs = new RestResult<Helpers.Person>.Redirect.Temporary(FreeIdentityProvider.Instance.Creator<Helpers.Person>().Create(4), null);
+            var expected = new SObject(
+                new SProperty("Temporary", new SObject(
+                    new SProperty("Target", new SObject(
+                        new SProperty("Href", new SValue("/Person/4")))),
+                    new SProperty("RestValue", SValue.Null))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.IsInstanceOfType(back, typeof(RestResult<Helpers.Person>.Redirect.Temporary));
+        }
+        [TestMethod]
+        public void Serializer_RestResultNotNecessary()
+        {
+            RestResult<Helpers.Person> rs = new RestResult<Helpers.Person>.Redirect.NotNecessary();
+            var expected = new SObject(
+                new SProperty("NotNecessary", new SObject(
+                    new SProperty("Target", SValue.Null))));
+            var actual = serializer.Serialize(NewContext(), rs);
+            Assert.AreEqual(expected, actual);
+            var back = serializer.Deserialize<RestResult<Helpers.Person>>(NewContext(), actual);
+            Assert.IsNotNull(back);
+            Assert.IsInstanceOfType(back, typeof(RestResult<Helpers.Person>.Redirect.NotNecessary));
         }
     }
 }
