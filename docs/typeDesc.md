@@ -30,7 +30,7 @@ The subtype hierarchy is as follows:
   * Reference
   * Referable
 
-TypeDescriptors constrain other types in some way, ultimately constraining a 'Anything' type containing all possible values. 
+TypeDescriptors constrain other types in some way, ultimately constraining an 'Anything' type containing all possible values. 
 The absence of a descriptor means any value (Anything) and the presence of multiple descriptors should be interpreted as an intersection of those types.
 At the other end of the type spectrum there is 'Nothing', a type that is not inhabited by any value.
 
@@ -158,25 +158,42 @@ If a registration of a certain type is not yet present, the creator must create 
 These forms are called kinds, which are organized in a kind pipeline.
 This pipeline tries the registered kinds in sequence, until it can find a kind that is able to create a type descriptor for the type.
 Kinds are not only able to construct `TypeDescriptor` instances for types that are of its _kind_, but can also construct basic [serializers](serialize.md) for serializing and deserializing these types to and from the intermediate format.
+Kinds are responsible for matching the type description and serialization format.
 
 A kind implements the `TypeDescriptorCreator.IKind` interface, and the pipeline the `TypeDescriptorCreator.IKindPipeline` interface.
 Both interfaces have essentially the same signature.
 
 At the moment the following kinds are configured in the default pipeline:
 
+* Intermediate serialization objects
+* Representables
 * Nullability
+* Enums
 * Dictionaries
-* Sequential collections
 * Semantic structs
+* Tagged union representations
 * F# union types
+* Sequential collections
+* Intersection representations
+* Union representations
 * Disjoint union types 
 * Records
 * Units
+
+#### Intermediate serialization objects
+The types of intermediate serialization objects are all derivations of `SItem`, and should be serialized literally.
+
+#### Representables
+Representable types are types for which an `ITypeRepresentation` exists and they may be transformed to the representation type specified by the `ITypeRepresentation`. 
+Type description and serialization are affected by representation.
 
 #### Nullability
 The nullability check is a check whether the type is of the form `Nullable<T>` for some type `T`.
 The type constraint on `Nullable<T>`make `T` a struct type.
 The result is a union of the `Null` type and the type descriptor for `T`.
+
+#### Enums
+.Net enums are treated by this kind as an enumerated set of strings.
 
 #### Dictionaries
 Dictionaries are key-value mapping collections.
@@ -184,23 +201,18 @@ They implement `IDictionary<string,V>` for some value type `V`.
 The first implementation of `IDictionary<string, V>` is used to describe the item type.
 Instances of the non-generic `IDictionary` can also be used and is treated as an `IDictionary<string,object>`.
 
-#### Sequential collections
-Sequential collections include types that implement `IEnumerable`, but don't implement `IDictionary<K,V>` for any `K` and `V`.
-Sequential collections are described as the `Array` type.
-The first implementation of `IEnumerable<T>` is used to describe the item type. 
-If such an implementation is not found, `object` and as such an any type descriptor is used as the item type.
-
 #### Semantic structs
 Semantic structs are value types that contain a single value.
-The only thing the structs adds is typing information (of the struct itself) and operations on the value (methods).
+The only thing the structs add is typing information (of the struct itself) and operations on the value (methods).
 The underlying value is said to be enriched with semantic information. 
 For representation/serialization purposes this semantic information is not necessary as it should be contained in the static models of data transfer.
 For this reason a semantic struct is treated as the underlying type.
 
-#### Disjoint union types
-A disjoint union type is an abstract class containing (nested) derived classes. 
-The type descriptor generated for these types is a `Union` over all the derived public classes.
-When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
+#### Tagged unions representations
+Tagged union representations are a specific set of types used to represent other classes as a tagged union.
+To describe this set of classes, the classes are first handled as a representable and then by this one specifically.
+A tagged union is represented and serialized by an object with a single property with the tag name.
+The property contains the object that is represented.
 
 #### F# union types
 A special case of disjoint union types is F# union types.
@@ -211,9 +223,17 @@ F# union types with a single case and single value are just some decoration over
 They are isomorphic to the inner type of the case of the union and should be treated as such.
 
 F# union types are annotated with a `CompilationMapping(SourceConstructFlags.SumType)`.
-Based on this criterion a specialized subform exists.
 
-At the time of writing only the JSON HttpConverter supports F# union types.
+#### Sequential collections
+Sequential collections include types that implement `IEnumerable`, but don't implement `IDictionary<K,V>` for any `K` and `V`.
+Sequential collections are described as the `Array` type.
+The first implementation of `IEnumerable<T>` is used to describe the item type. 
+If such an implementation is not found, `object` and as such an any type descriptor is used as the item type.
+
+#### Disjoint union types
+A disjoint union type is an abstract class containing (nested) derived classes. 
+The type descriptor generated for these types is a `Union` over all the derived public classes.
+When the base class contains relevant state, an `Intersection` of the base class and the `Union` of the cases is returned. 
 
 #### Records
 There are two kinds of record forms supported by the `TypeDescriptorCreator` mechanism.
@@ -239,7 +259,7 @@ We say the _representable_ type is represented by the _representation_ type.
 
 A very good example is the `Identity<T>` types. 
 They contain a lot of information that is very useful in an in-process context.
-However, it is not information that you would want to be serialized. 
+However, it is not information that you would want to have serialized. 
 Every type of `T` in `Identity<T>` must be known by the Rest Identity Provider, allowing the identity value to be converted into a URL.
 This URL is part of the representation type for identity values. (`Href` property)
 
@@ -258,7 +278,5 @@ interface ITypeRepresentation
 ```
 
 The type representation implementation supports querying representation eligibility through the `IsRepresentable` and `IsRepresentation` methods. 
-It supports querying the representable or representation types responding to each other through the `GetRepresentationType` and `GetRepresentableType`, because the information is needed for serialization and de-serialization.
+It supports querying the representable or representation types responding to each other through the `GetRepresentationType` and `GetRepresentableType` methods, because the information is needed for serialization and de-serialization.
 The actual conversion is implemented in the `GetRepresentation` and `GetRepresentable` methods.
-
-The type representations are injected into the Http converters at runtime, and queried when necessary.

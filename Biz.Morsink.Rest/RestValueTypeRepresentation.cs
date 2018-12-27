@@ -5,9 +5,19 @@ using System.Collections.Concurrent;
 
 namespace Biz.Morsink.Rest
 {
+    /// <summary>
+    /// A type representation for RestValues.
+    /// This class creates a specific type representation for each generic parameter and delegates all calls to that instances.
+    /// </summary>
     public class RestValueTypeRepresentation : ITypeRepresentation
     {
+        /// <summary>
+        /// A singleton instance.
+        /// </summary>
         public static RestValueTypeRepresentation Instance { get; } = new RestValueTypeRepresentation();
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         private RestValueTypeRepresentation() { }
         private ConcurrentDictionary<Type, ITypeRepresentation> typeReprs = new ConcurrentDictionary<Type, ITypeRepresentation>();
         private ITypeRepresentation GetByRepresentation(Type representationType)
@@ -48,6 +58,10 @@ namespace Biz.Morsink.Rest
         public bool IsRepresentation(Type type)
             => GetByRepresentation(type)?.IsRepresentation(type) ?? false;
     }
+    /// <summary>
+    /// A type represenation for IRestValues of a specific type.
+    /// </summary>
+    /// <typeparam name="T">The type of value contained in the IRestValue.</typeparam>
     public class RestValueTypeRepresentation<T> : SimpleTypeRepresentation<IRestValue<T>, RestValueTypeRepresentation<T>.Representation>
     {
         public override IRestValue<T> GetRepresentable(Representation representation)
@@ -60,11 +74,22 @@ namespace Biz.Morsink.Rest
                 Embeddings = item.Embeddings.ToArray(),
                 Value = item.Value
             };
-
+        /// <summary>
+        /// The actual representation class for an IRestValue&lt;T&gt;
+        /// </summary>
         public class Representation
         {
+            /// <summary>
+            /// Contains the collection of links.
+            /// </summary>
             public Link[] Links { get; set; }
+            /// <summary>
+            /// Contains the collection of embeddings.
+            /// </summary>
             public Embedding[] Embeddings { get; set; }
+            /// <summary>
+            /// Contains the actual value.
+            /// </summary>
             public T Value { get; set; }
         }
     } 

@@ -7,10 +7,21 @@ using System.Text;
 
 namespace Biz.Morsink.Rest
 {
+    /// <summary>
+    /// A Type representation for RestResults.
+    /// The class constructs a specific type representation for each generic parameter and delegates all calls to that instance.
+    /// </summary>
     public class RestResultTypeRepresentation : ITypeRepresentation
     {
+        /// <summary>
+        /// A singleton instance.
+        /// </summary>
         public static RestResultTypeRepresentation Instance { get; } = new RestResultTypeRepresentation();
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         private RestResultTypeRepresentation() { }
+
         private ConcurrentDictionary<Type, ITypeRepresentation> typeReprs = new ConcurrentDictionary<Type, ITypeRepresentation>();
         private ITypeRepresentation GetByRepresentation(Type representationType)
         {
@@ -50,10 +61,21 @@ namespace Biz.Morsink.Rest
         public bool IsRepresentation(Type type)
             => GetByRepresentation(type)?.IsRepresentation(type) ?? false;
     }
+    /// <summary>
+    /// A type representation class for RestResults of a specific type.
+    /// </summary>
+    /// <typeparam name="T">The type of the result in the RestResult.</typeparam>
     public class RestResultTypeRepresentation<T> : TaggedUnionTypeRepresentation<RestResult<T>, RestResultTypeRepresentation<T>.Representation>
     {
+        /// <summary>
+        /// An actual representation class for RestResult&lt;T&gt;.
+        /// </summary>
         public class Representation : TaggedUnionRepresentationType
         {
+            /// <summary>
+            /// Constructor. 
+            /// Calls the base constructor with all type and tag information.
+            /// </summary>
             public Representation(): base(typeof(RestResult<T>),
                 ("Success", typeof(RestResult<T>.Success)),
                 ("BadRequest", typeof(RestResult<T>.Failure.BadRequest)),
