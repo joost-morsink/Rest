@@ -40,6 +40,11 @@ namespace Biz.Morsink.Rest.Utils
         public static bool IsAllowedBy(this Link link, IAuthorizationProvider provider, IUser user)
             => provider == null || provider.IsAllowed(user?.Principal, link.Target, GetCapabilityString(link.Capability));
 
+        /// <summary>
+        /// Gets the name of the capability in the Link.
+        /// </summary>
+        /// <param name="link">The link.</param>
+        /// <returns>A name for the capability.</returns>
         public static string GetCapabilityString(this Link link)
             => link.Capability.GetTypeInfo().GetCustomAttribute<CapabilityAttribute>().Name;
 
@@ -448,6 +453,13 @@ namespace Biz.Morsink.Rest.Utils
             public void Run(Action act)
                 => Run(() => { act(); return 0; });
         }
+        /// <summary>
+        /// Validate an SItem using a specified TypeDescriptor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A type descriptor creator.</param>
+        /// <param name="item">The item to validate.</param>
+        /// <param name="desc">The descriptor to use for validation.</param>
+        /// <returns>A collection of validation messages.</returns>
         public static IEnumerable<SValidation.Message> Validate(this ITypeDescriptorCreator typeDescriptorCreator, SItem item, TypeDescriptor desc)
             => item.Validate(desc, typeDescriptorCreator, DataConvert.DataConverter.Default);
     }

@@ -7,23 +7,29 @@ using System.Text;
 using Ex = System.Linq.Expressions.Expression;
 namespace Biz.Morsink.Rest.Utils
 {
+    /// <summary>
+    /// A static class for reflection utility functions.
+    /// </summary>
     public static class ReflectionUtils
     {
-        public static IEnumerable<T> Iterate<T>(this T seed, Func<T, T> next)
-        {
-            while (true)
-            {
-                yield return seed;
-                seed = next(seed);
-            }
-        }
-
+        /// <summary>
+        /// Gets the generic type argument of some interface or base class for a type.
+        /// </summary>
+        /// <param name="type">The type that implements the interface.</param>
+        /// <param name="interf">A generic interface with one type parameter.</param>
+        /// <returns>The generic type argument of the implemented interface.</returns>
         public static Type GetGeneric(this Type type, Type interf)
             => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
                 .Select(i => i.GetTypeInfo())
                 .Where(i => i.GenericTypeArguments.Length == 1 && i.GetGenericTypeDefinition() == interf)
                 .Select(i => i.GenericTypeArguments[0])
                 .FirstOrDefault();
+        /// <summary>
+        /// Gets the generic type arguments of some interface or base class for a type.
+        /// </summary>
+        /// <param name="type">The type that implements the interface.</param>
+        /// <param name="interf">A generic interface with two type parameters.</param>
+        /// <returns>The generic type arguments of the implemented interface.</returns>
         public static (Type, Type) GetGenerics2(this Type type, Type interf)
             => type.GetTypeInfo().ImplementedInterfaces.Concat(type.Iterate(t => t.BaseType).TakeWhile(t => t != null))
                 .Select(i => i.GetTypeInfo())
@@ -31,7 +37,12 @@ namespace Biz.Morsink.Rest.Utils
                 .Select(i => (i.GenericTypeArguments[0], i.GenericTypeArguments[1]))
                 .FirstOrDefault();
 
-
+        /// <summary>
+        /// Creates a Linq expression that foreaches over an enumerable Expression.
+        /// </summary>
+        /// <param name="enumerable">The enumerable to traverse.</param>
+        /// <param name="body">The Expression to execute for each element in the enumerable.</param>
+        /// <returns>A new Linq expression containing the foreach loop.</returns>
         public static Ex Foreach(this Ex enumerable, Func<Ex, Ex> body)
         {
             var elementType = enumerable.Type.GetGeneric(typeof(IEnumerable<>));

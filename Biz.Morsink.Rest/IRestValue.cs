@@ -39,6 +39,9 @@ namespace Biz.Morsink.Rest
     /// <typeparam name="T"></typeparam>
     public interface IRestValue<T> : IRestValue
     {
+        /// <summary>
+        /// Gets the actual underlying value.
+        /// </summary>
         new T Value { get; }
         /// <summary>
         /// A method to manupulate the Rest value into a new one.

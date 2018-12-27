@@ -77,6 +77,12 @@ namespace Biz.Morsink.Rest
         /// True if the Value is a successful one.
         /// </summary>
         public override bool IsSuccess => Result is IRestSuccess;
+        /// <summary>
+        /// Functor implementation for RestResponse.
+        /// </summary>
+        /// <typeparam name="U">The underlying type of the projected RestResponse.</typeparam>
+        /// <param name="f">The transforming function for the underlying RestResult.</param>
+        /// <returns>A projected RestResponse.</returns>
         public RestResponse<U> Select<U>(Func<RestResult<T>, RestResult<U>> f)
         {
             return new RestResponse<U>(f(Result), Metadata);

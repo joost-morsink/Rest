@@ -8,13 +8,28 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.Serialization
 {
+    /// <summary>
+    /// A serializer (base) class
+    /// </summary>
+    /// <typeparam name="C">The type of SerializationContext.</typeparam>
     public partial class Serializer<C>
         where C : SerializationContext<C>
     {
         private readonly ConcurrentDictionary<Type, IForType> serializers;
+        /// <summary>
+        /// Contains the ITypeDescriptorCreator for this serializer.
+        /// </summary>
         public ITypeDescriptorCreator TypeDescriptorCreator { get; }
+        /// <summary>
+        /// Contains the data converter for this serializer.
+        /// </summary>
         public IDataConverter Converter { get; }
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">The ITypeDescriptorCreator for this serializer.</param>
+        /// <param name="converter">A data converter.</param>
         public Serializer(ITypeDescriptorCreator typeDescriptorCreator, IDataConverter converter = null)
         {
             serializers = new ConcurrentDictionary<Type, IForType>();
@@ -51,6 +66,11 @@ namespace Biz.Morsink.Rest.Serialization
         private IForType GetSerializer(Type t)
             => serializers.GetOrAdd(t, ty => CreateSerializer(ty));
 
+        /// <summary>
+        /// This method creates a serializer for a specific type and can be overridden in derived classes.
+        /// </summary>
+        /// <param name="ty">The type to create a specific serializer for.</param>
+        /// <returns>A serializer for the specified type.</returns>
         protected virtual IForType CreateSerializer(Type ty)
             => TypeDescriptorCreator.CreateSerializer(this, ty);
 

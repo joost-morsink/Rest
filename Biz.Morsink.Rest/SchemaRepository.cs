@@ -25,6 +25,10 @@ namespace Biz.Morsink.Rest
         };
         private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="typeDescriptorCreator">A type descriptor creator instance for schema information.</param>
         public SchemaRepository(ITypeDescriptorCreator typeDescriptorCreator) {
             this.typeDescriptorCreator = typeDescriptorCreator;
         }

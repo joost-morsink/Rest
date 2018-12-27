@@ -65,6 +65,14 @@ namespace Biz.Morsink.Rest
     public class RestCollection<T> : RestCollection<T, T>
         where T : IHasIdentity<T>
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="id">The collection's identity value.</param>
+        /// <param name="items">The items in the current slice.</param>
+        /// <param name="count">The total number of items in the collection (slice).</param>
+        /// <param name="limit">The maximum number of items in the slice. Default = null.</param>
+        /// <param name="skip">The number of entities to skip before containing entities in the slice. Default = 0.</param>
         public RestCollection(IIdentity id, IEnumerable<T> items, int count, int? limit = null, int skip = 0)
             : base(id, items, count, limit, skip) { }
     }

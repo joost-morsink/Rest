@@ -199,7 +199,13 @@ namespace Biz.Morsink.Rest
                 /// A value describing the reason why the request was bad.
                 /// </summary>
                 public object Data => RestValue.Value;
+                /// <summary>
+                /// Links for the result.
+                /// </summary>
                 public IReadOnlyList<Link> Links => RestValue.Links;
+                /// <summary>
+                /// Embeddings for the result.
+                /// </summary>
                 public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
@@ -226,6 +232,10 @@ namespace Biz.Morsink.Rest
                 /// Gets an instance of the NotFound class.
                 /// </summary>
                 public static NotFound Instance(RestEntityKind kind) => kinds[kind];
+                /// <summary>
+                /// Constructor.
+                /// </summary>
+                /// <param name="failureOn">Indicator of that which could not be found.</param>
                 public NotFound(RestEntityKind failureOn)
                 {
                     FailureOn = failureOn;
@@ -280,7 +290,13 @@ namespace Biz.Morsink.Rest
                 /// A value describing the reason why the request was not executed.
                 /// </summary>
                 public object Data => RestValue.Value;
+                /// <summary>
+                /// Links for the result.
+                /// </summary>
                 public IReadOnlyList<Link> Links => RestValue.Links;
+                /// <summary>
+                /// Embeddings for the result.
+                /// </summary>
                 public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
@@ -330,7 +346,13 @@ namespace Biz.Morsink.Rest
                 /// Gets the exception describing the unexpected error.
                 /// </summary>
                 public ExceptionInfo Exception => RestValue.Value;
+                /// <summary>
+                /// Links for the result.
+                /// </summary>
                 public IReadOnlyList<Link> Links => RestValue.Links;
+                /// <summary>
+                /// Embeddings for the result.
+                /// </summary>
                 public IReadOnlyList<Embedding> Embeddings => RestValue.Embeddings;
 
                 IRestValue IHasRestValue.RestValue => RestValue;
@@ -483,6 +505,11 @@ namespace Biz.Morsink.Rest
             /// </summary>
             public RestJob Job { get; }
 
+            /// <summary>
+            /// Default trivial functor implementation.
+            /// </summary>
+            /// <typeparam name="U">The underlying type of the projected RestResult.</typeparam>
+            /// <returns>A projected RestResult of a possibly different underlying type.</returns>
             public RestResult<U> Select<U>()
                 => new RestResult<U>.Pending(Job);
         }
@@ -491,7 +518,7 @@ namespace Biz.Morsink.Rest
         /// </summary>
         /// <typeparam name="U">The new underlying successful value type.</typeparam>
         /// <param name="f">A manipulation function to manipulate successful Rest values.</param>
-        /// <returns>A new RestResult</returns>
+        /// <returns>A new RestResult.</returns>
         public RestResult<U> Select<U>(Func<IRestValue<T>, IRestValue<U>> f)
         {
             switch (this)
