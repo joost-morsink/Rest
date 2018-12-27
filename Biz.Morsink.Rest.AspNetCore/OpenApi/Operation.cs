@@ -27,6 +27,12 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// Possible responses for the operation.
         /// </summary>
         public Dictionary<string, Response> Responses { get; set; } = new Dictionary<string, Response>();
+        /// <summary>
+        /// Aggregates two operations.
+        /// </summary>
+        /// <param name="left">The left side of the aggregation.</param>
+        /// <param name="right">The right side of the aggregation.</param>
+        /// <returns>A single operation (the right one).</returns>
         public static Operation Aggregate(Operation left, Operation right)
         {
             return right;

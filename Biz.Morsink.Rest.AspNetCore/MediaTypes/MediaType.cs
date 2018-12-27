@@ -6,8 +6,18 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
 {
+    /// <summary>
+    /// A struct representing a media type.
+    /// </summary>
     public struct MediaType : IEquatable<MediaType>
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="main">The main (pre-slash) part of the mediatype.</param>
+        /// <param name="sub">The sub (post-slash, pre-plus) part of the mediatype.</param>
+        /// <param name="suffix">An optional suffix (post-plus) part for the media type</param>
+        /// <param name="parameters">Optional parameters for the media type.</param>
         public MediaType(StringSegment main, StringSegment sub, StringSegment suffix, params MediaTypeParameter[] parameters)
         {
             Main = main;
@@ -15,10 +25,21 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             Suffix = suffix;
             Parameters = parameters ?? new MediaTypeParameter[0];
         }
-
+        /// <summary>
+        /// The main part of the media type.
+        /// </summary>
         public StringSegment Main { get; }
+        /// <summary>
+        /// The sub part of the media type.
+        /// </summary>
         public StringSegment Sub { get; }
+        /// <summary>
+        /// The optional media type suffix.
+        /// </summary>
         public StringSegment Suffix { get; }
+        /// <summary>
+        /// Optional parameters for the media type.
+        /// </summary>
         public MediaTypeParameter[] Parameters { get; }
         public override string ToString()
         {
@@ -28,8 +49,19 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
             else
                 return string.Join(";", Parameters.Select(p => p.ToString()).Prepend(str));
         }
+        /// <summary>
+        /// Tries to parse a media type instance from a StringSegment.
+        /// </summary>
+        /// <param name="str">A StringSegment to parse.</param>
+        /// <returns>A nullable MediaType.</returns>
         public static MediaType? TryParse(StringSegment str)
             => TryParse(str, out var res) ? res : default(MediaType?);
+        /// <summary>
+        /// Tries to parse a media type instance from a StringSegment.
+        /// </summary>
+        /// <param name="str">A StringSegment to parse.</param>
+        /// <param name="result">The result of the parse action if succesful, null otherwise.</param>
+        /// <returns>True if the StringSegment could be parsed as a MediaType, false otherwise.</returns>
         public static bool TryParse(StringSegment str, out MediaType result)
         {
             var parts = str.Split(new[] { ';' }).ToArray();
@@ -54,6 +86,11 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
                         yield return par;
             }
         }
+        /// <summary>
+        /// Parses the string as a MediaType.
+        /// </summary>
+        /// <param name="str">The string to parse.</param>
+        /// <returns>A MediaType instance.</returns>
         public static MediaType Parse(string str)
         {
             if (!TryParse(str, out var result))
@@ -72,23 +109,51 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
         public bool Equals(MediaType other)
             => Main == other.Main && Sub == other.Sub && Suffix == other.Suffix && Parameters.SequenceEqual(other.Parameters);
 
+        /// <summary>
+        /// Gets the same MediaType, but without the suffix.
+        /// </summary>
+        /// <returns>The same MediaType, but without the suffix.</returns>
         public MediaType WithoutSuffix()
             => new MediaType(Main, Sub, null, Parameters);
+        /// <summary>
+        /// Gets the same MediaType, but with a different suffix.
+        /// </summary>
+        /// <param name="suffix"></param>
+        /// <returns>The same MediaType, but with a different suffix.</returns>
         public MediaType WithSuffix(string suffix)
             => new MediaType(Main, Sub, suffix, Parameters);
     }
-
+    /// <summary>
+    /// A parameter for a MediaType.
+    /// </summary>
     public struct MediaTypeParameter : IEquatable<MediaTypeParameter>
     {
+        /// <summary>
+        /// Cosntructor.
+        /// </summary>
+        /// <param name="name">The name of the media type parameter.</param>
+        /// <param name="value">The value of the media type parameter.</param>
         public MediaTypeParameter(StringSegment name, StringSegment value)
         {
             Name = name;
             Value = value;
         }
+        /// <summary>
+        /// The name of the media type parameter.
+        /// </summary>
         public StringSegment Name { get; }
+        /// <summary>
+        /// The Value of the media type parameter.
+        /// </summary>
         public StringSegment Value { get; }
         public override string ToString()
             => $"{Name}={Value}";
+        /// <summary>
+        /// Tries to parse a StringSegment as a MediaTypeParmeter.
+        /// </summary>
+        /// <param name="str">The StringSegment to parse.</param>
+        /// <param name="result">The resulting MediaTypeParameter if successful, default otherwise.</param>
+        /// <returns>True if the parse was successful, false otherwise.</returns>
         public static bool TryParse(StringSegment str, out MediaTypeParameter result)
         {
             var idx = str.IndexOf('=');

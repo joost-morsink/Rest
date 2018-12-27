@@ -45,13 +45,22 @@ namespace Biz.Morsink.Rest.AspNetCore.Utils
         /// <param name="value">The value.</param>
         /// <returns>A new PrefixMatcher containing the added mapping.</returns>
         public abstract PrefixMatcher<T> Add(string prefix, T value);
+        /// <summary>
+        /// Translates the matcher with the specified offset.
+        /// </summary>
+        /// <param name="offset">The offset to translate the matcher with.</param>
+        /// <returns>A translated matcher.</returns>
         protected abstract PrefixMatcher<T> Translate(int offset);
         /// <summary>
         /// Gets a collection of all prefix value mappings.
         /// </summary>
         /// <returns>A collection of all prefix value mappings in this PrefixMatcher.</returns>
         public abstract IEnumerable<(string, T)> GetPrefixMatches();
-
+        /// <summary>
+        /// Builds a debug string for this prefix matcher.
+        /// </summary>
+        /// <param name="sb">The string builder to write the debug string to.</param>
+        /// <param name="indent">The preferred indentation level in spaces.</param>
         protected abstract void BuildDebugString(StringBuilder sb, int indent);
         /// <summary>
         /// Tries to match a string to a prefix in the PrefixMatcher.

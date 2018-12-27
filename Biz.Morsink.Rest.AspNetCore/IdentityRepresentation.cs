@@ -24,6 +24,9 @@ namespace Biz.Morsink.Rest.AspNetCore
         private readonly ICurrentHttpRestConverterAccessor currentHttpRestConverterAccessor;
         protected bool UseCuries => useCuries && currentHttpRestConverterAccessor.CurrentHttpRestConverter.SupportsCuries;
 
+        /// <summary>
+        /// The representation of IIdentity values.
+        /// </summary>
         public class Representation
         {
             [Required]
@@ -42,7 +45,6 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.prefixContainerAccessor = prefixContainerAccessor;
             useCuries = options.Value.UseCuries;
             this.currentHttpRestConverterAccessor = currentHttpRestConverterAccessor;
-            
         }
 
         public override Representation GetRepresentation(IIdentity item)

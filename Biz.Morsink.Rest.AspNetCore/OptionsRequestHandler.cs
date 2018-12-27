@@ -10,12 +10,21 @@ using System.Threading.Tasks;
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
+    /// <summary>
+    /// A Rest request handler for the OPTIONS method.
+    /// </summary>
     public class OptionsRequestHandler : IRestRequestHandler
     {
         private readonly RestRequestHandlerDelegate next;
         private readonly IServiceProvider locator;
         private readonly ITypeDescriptorCreator typeDescriptorCreator;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="next">The next request handler in the pipeline.</param>
+        /// <param name="locator">An IServiceProvider.</param>
+        /// <param name="typeDescriptorCreator">The ITypeDescriptorCreator instance.</param>
         public OptionsRequestHandler(RestRequestHandlerDelegate next, IServiceProvider locator, ITypeDescriptorCreator typeDescriptorCreator)
         {
             this.next = next;
@@ -23,6 +32,11 @@ namespace Biz.Morsink.Rest.AspNetCore
             this.typeDescriptorCreator = typeDescriptorCreator;
         }
 
+        /// <summary>
+        /// Handles the Rest request.
+        /// </summary>
+        /// <param name="request">A Rest request.</param>
+        /// <returns>An asynchronous Rest response.</returns>
         public ValueTask<RestResponse> HandleRequest(RestRequest request)
         {
             if (request.Capability.ToUpperInvariant() == "OPTIONS")

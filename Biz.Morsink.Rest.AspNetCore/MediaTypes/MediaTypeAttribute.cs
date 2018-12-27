@@ -10,6 +10,10 @@ namespace Biz.Morsink.Rest.AspNetCore.MediaTypes
     [AttributeUsage(AttributeTargets.Class)]
     public class MediaTypeAttribute : Attribute
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="mediaType">The media type.</param>
         public MediaTypeAttribute(string mediaType)
         {
             MediaType = mediaType;

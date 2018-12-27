@@ -15,8 +15,15 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
         /// Returns true if this represents a reference.
         /// </summary>
         public abstract bool IsReference();
+        /// <summary>
+        /// Implements the Reference option of the OrReference&lt;T&gt; type.
+        /// </summary>
         public sealed class ReferenceImpl : OrReference<T>
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="reference">A reference.</param>
             public ReferenceImpl(Reference reference)
             {
                 Reference = reference;
@@ -27,8 +34,15 @@ namespace Biz.Morsink.Rest.AspNetCore.OpenApi
             public Reference Reference { get; }
             public override bool IsReference() => true;
         }
+        /// <summary>
+        /// Implements the Item option of the OrReference&lt;T&gt; type.
+        /// </summary>
         public sealed class ItemImpl : OrReference<T>
         {
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="item"></param>
             public ItemImpl(T item)
             {
                 Item = item;

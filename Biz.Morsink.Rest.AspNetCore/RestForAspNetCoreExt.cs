@@ -39,6 +39,12 @@ namespace Biz.Morsink.Rest.AspNetCore
 
             return app.UseMiddleware<RestForAspNetCore>();
         }
+        /// <summary>
+        /// Gets a lazily requested service from an IServiceProvider.
+        /// </summary>
+        /// <typeparam name="T">The service type.</typeparam>
+        /// <param name="sp">The service provider.</param>
+        /// <returns>A Lazy&lt;T&gt; which retrieves the service from the specified service provider when forced.</returns>
         public static Lazy<T> GetLazyService<T>(this IServiceProvider sp)
             => new Lazy<T>(() => sp.GetRequiredService<T>());
         /// <summary>

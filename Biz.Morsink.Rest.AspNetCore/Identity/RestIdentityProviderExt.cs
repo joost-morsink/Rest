@@ -2,6 +2,9 @@
 
 namespace Biz.Morsink.Rest.AspNetCore
 {
+    /// <summary>
+    /// Extension methods for IRestIdentityProvider.
+    /// </summary>
     public static class RestIdentityProviderExt
     {
         /// <summary>
