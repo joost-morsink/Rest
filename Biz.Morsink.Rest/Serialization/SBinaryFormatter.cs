@@ -31,7 +31,7 @@ namespace Biz.Morsink.Rest.Serialization
             public const byte DECIMAL = 0x33;
             public const byte DATETIME = 0x40;
             public const byte DATETIME_OFFSET = 0x41;
-
+            public const byte BOOLEAN = 0x50;
         }
         private byte[] buffer;
         private void EnsureBufferLength(int capacity)
@@ -234,6 +234,9 @@ namespace Biz.Morsink.Rest.Serialization
                         throw new InvalidDataException();
                     await Read(stream, 16);
                     return new SValue(new DateTimeOffset(new DateTime(BitConverter.ToInt64(buffer, 0)), new TimeSpan(BitConverter.ToInt64(buffer, 8))));
+                case FieldType.BOOLEAN:
+                    await Read(stream, 1);
+                    return new SValue(buffer[0] != 0);
                 default:
                     throw new InvalidDataException();
             }
@@ -408,7 +411,14 @@ namespace Biz.Morsink.Rest.Serialization
                         BitConverter.GetBytes(dto.Offset.Ticks).CopyTo(buffer, 10);
                         await stream.WriteAsync(buffer, 0, 18);
                         break;
-
+                    case bool bl:
+                        EnsureBufferLength(2);
+                        buffer[0] = FieldType.BOOLEAN;
+                        buffer[1] = (byte)(bl ? 1 : 0);
+                        await stream.WriteAsync(buffer, 0, 2);
+                        break;
+                    default:
+                        throw new InvalidDataException($"Cannot serialize type {v.Value.GetType().FullName}");
                 }
 
             }

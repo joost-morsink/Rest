@@ -69,6 +69,7 @@ namespace Biz.Morsink.Rest.Schema
                 new RepresentableDescriptorKind(representations),
                 NullableDescriptorKind.Instance,
                 EnumDescriptorKind.Instance,
+                ExpandoObjectKind.Instance,
                 DictionaryDescriptorKind.Instance,
                 SemanticStructKind.Instance,
                 TaggedUnionDescriptorKind.Instance,

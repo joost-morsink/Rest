@@ -53,3 +53,4 @@ Little endian encoding is used for primitive values.
 | 0x33      | Decimal         | ubyte (16)      |          |                | 
 | 0x40      | DateTime        | ubyte (8)       |          |                |
 | 0x41      | DateTimeOffset  | ubyte (16)      |          |                | 
+| 0x50      | Boolean         | No              |          |                | 

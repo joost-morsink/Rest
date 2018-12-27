@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Biz.Morsink.Rest.Metadata;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,7 +39,9 @@ namespace Biz.Morsink.Rest
                 else
                 {
                     var response = await next(request);
-                    await cache.SetCachedResult(request, response);
+                    if (response.Metadata.TryGet(out ResponseCaching caching)
+                        && caching.StoreAllowed && caching.CacheAllowed)
+                        await cache.SetCachedResult(request, response);
                     return response;
                 }
             }

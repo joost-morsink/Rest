@@ -66,12 +66,12 @@ namespace Biz.Morsink.Rest.AspNetCore
             serviceCollection.AddTransient<ITypeRepresentation, TypeRepresentation>(sp => new TypeRepresentation(sp.GetLazyService<ITypeDescriptorCreator>()));
             serviceCollection.AddTransient<ITypeRepresentation, RestCapabilitiesRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, EmbeddingRepresentation>();
-            serviceCollection.AddTransient<ITypeRepresentation, ExpandoObjectRepresentation>();
+            //serviceCollection.AddTransient<ITypeRepresentation, ExpandoObjectRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, IdentityRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, LinkRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, ExceptionRepresentation>();
             serviceCollection.AddTransient<ITypeRepresentation, VersionRepresentation>();
-            serviceCollection.AddSingleton<ITypeRepresentation, RestResultTypeRepresentation>();
+            serviceCollection.AddSingleton<ITypeRepresentation, RestResultTypeRepresentation>(_ => RestResultTypeRepresentation.Instance);
             //serviceCollection.AddTransient<ITypeRepresentation, TypeDescriptorTypeRepresentation>(TypeDescriptorTypeRepresentation.Create);
 
             serviceCollection.AddScoped<ITokenProviderFactory, TokenProviderFactory>();
