@@ -10,22 +10,53 @@ using System.Text;
 
 namespace Biz.Morsink.Rest
 {
+    /// <summary>
+    /// This class respresents RestJobResults.
+    /// </summary>
     public class RestJobResultRepresentation : SimpleTypeRepresentation<RestJobResult, RestJobResultRepresentation.Representation>
     {
+        /// <summary>
+        /// The actual representation class for RestJobResults.
+        /// </summary>
         public class Representation
         {
+            /// <summary>
+            /// The identity value of the result.
+            /// </summary>
             [Required]
             public IIdentity Id { get; set; }
+            /// <summary>
+            /// The type.
+            /// </summary>
             [Required]
             public string Type { get; set; }
+            /// <summary>
+            /// Indicator of success for the result.
+            /// </summary>
             [Required]
             public bool IsSuccess { get; set; }
+            /// <summary>
+            /// The result's value, if successful.
+            /// </summary>
             public object Value { get; set; }
+            /// <summary>
+            /// The result's embeddings, if successful.
+            /// </summary>
             public IReadOnlyList<object> Embeddings { get; set; }
+            /// <summary>
+            /// The result's links, if successful.
+            /// </summary>
             public IReadOnlyList<Link> Links { get; set; }
+            /// <summary>
+            /// Metadata in the response.
+            /// </summary>
             [Required]
             public Dictionary<string, object> Metadata { get; set; }
         }
+        /// <summary>
+        /// Only one-way representation is supported.
+        /// This method throws a NotSupportedException.
+        /// </summary>
         public override RestJobResult GetRepresentable(Representation representation)
         {
             throw new NotSupportedException();
