@@ -4,7 +4,7 @@ The solution contains two main library projects:
 * Biz.Morsink.Rest.AspNetCore
 
 The first is a library that supports creating RESTful interfaces, in a protocol-agnostic way.
-The second library supports using this library with ASP.Net core 2.0.
+The second library supports using this library with ASP.Net Core 2.0.
 We will discuss the architectures of both projects separately, as well as any extensibility options.
 
 ## Rest {#Rest}
@@ -84,7 +84,7 @@ This constraint is satisfied by two concepts:
   A Home resource is mandatory for this library to be used in a RESTful context but does not need to contain much data as a type.
   However, it should produce links to all the first-level services.
 * `Link`s.
-  `Link`s are references of a certain type (`Reltype`) to resources (`Address`), paired with a operation (`Capability`).
+  `Link`s are references of a certain type (`Reltype`) to resources (`Address`), paired with an operation (`Capability`).
   This only determines part of the Rest request, but the other information might be dynamic. 
   However, type information should be known about the capability, which can be retrieved using CapabilityDescriptors for the operation.
 
@@ -110,8 +110,8 @@ The response side is a three layered value (see [Values](values.md)), each with 
 * `RestResult` is effectively a [disjoint union type](https://en.wikipedia.org/wiki/Tagged_union) to allow indicating success, failure and redirect.
 * `RestValue` represents the actual underlying value in a response, optionally containing links and embedded objects.
 
-The main implementation of the `IRestRequestHandler` interface is the `CoreRestRequestHandler`.
-This component tries to resolve the RestRequest to an instance of an `IRestRepository` through a `IServiceProvider` instance.
+The main implementation of the `IRestRequestHandler` interface is the `CoreRestRequestHandler` class.
+This component tries to resolve the RestRequest to an instance of an `IRestRepository` through an `IServiceProvider` instance.
 
 The `IRestRepository` supports capability discovery through the `GetCapabilities` method.
 The capability descriptors returned are able to create a delegate to be called by the `CoreRestRequestHandler`.
@@ -155,7 +155,7 @@ It adds the following important concepts that are specific to ASP.Net Core:
   Defines the pipeline interface for the translation of an `HttpRequest` to a `RestRequest`, as well as the translation of the `RestResponse` to the `HttpResponse`.
 * `IHttpRestConverter`.
   Defines the way serialization formats need to be implemented.
-  At the time of writing a JsonHttpConverter library takes care of a general JSON serialization format.
+  A few formats are available: Json, Xml, Html, Hal+json.
 
 ### Architectural constraints
 
@@ -192,7 +192,7 @@ More specific usage of a serialization format could be implemented to support ex
 ##### Self-descriptive messages
 Descriptiveness is dependent upon serialization format.
 Both JSON and XML have a definition of schema, which can be used to make the messages self-descriptive. 
-Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message can be given.
+Using a HTTP header `Link` and the reltype 'describedby' a link to the schema definition for a message is given.
 A translation between `TypeDescriptor`s and schemas is an essential element of implementing a `IHttpRestConverter`. (See [HTTP Converters](./httpConv.md))
 
 ##### Hypermedia as the engine of application state
@@ -209,12 +209,13 @@ The only _out of band_ information needed to discover the entire service is:
 * Knowledge of the HTTP protocol (generic).
 * Knowledge of some standard headers of the HTTP protocol.
 * Knowledge of a supported serialization format.
+* The trivial fact that `"/"` is the entry point (home page) of the api.
 
 ### Dependency injection
 The Rest library is setup with dependency injection in mind, but it does not explicitly use any specific technology.
 ASP.Net Core has some machinery setup to deal with dependency injection, including using the IoC container of your choice. 
 The Rest for ASP.Net core library only uses the generic interface of dependency injection and should be compatible with any compatible IoC container a service implementor could choose.
-Because the `Lazy<>` functor is not supported by the ASP.Net Core IoC container out of the box, a `IServiceProvider` reference may be used to break circular dependency chains.
+Because the `Lazy<>` functor is not supported by the ASP.Net Core IoC container out of the box, a `IServiceProvider` or `IServiceProviderAccessor` reference may be used to break circular dependency chains.
 
 ### Request Pipeline
 The library needs to hook into the ASP.Net request pipeline to handle HTTP requests.

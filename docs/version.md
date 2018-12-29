@@ -24,4 +24,4 @@ These types are associated and ordered (by version number).
 This means you can always find the 'oldest' or 'newest' version of an API.
 
 ### VersionMatcher
-
+A version matcher can be used to specify how to match a requested version to an offered version.

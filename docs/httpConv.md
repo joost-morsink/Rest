@@ -1,11 +1,12 @@
 # HTTP converters
 An Http converter is a component that takes on the responsibility to connect the ASP.Net Core pipeline to the Rest pipeline, by implementing the `IHttpRestConverter` interface.
-The interface looks as follows:
+The interface has the following (partial) definition:
 
 ```csharp
 interface IHttpRestConverter
 {
-    bool Applies(HttpContext context);
+    NegotiationScore AppliesToRequestScore(HttpContext context);
+    NegotiationScore AppliesToResponseScore(HttpContext context, RestRequest request, RestResponse response)
     RestRequest ManipulateRequest(RestRequest req, HttpContext context);
     object ParseBody(Type t, byte[] body);
     Task SerializeResponse(RestResponse response, HttpContext context);
@@ -14,9 +15,10 @@ interface IHttpRestConverter
 
 It is responsible for:
 * Determining if it is applicable to an Http Request.
-* Amending the RestRequest.
-* Parsing the body.
-* Serializing the response.
+* Determining if it is applicable to produced Http Responses.
+* Amending RestRequests.
+* Parsing request bodies.
+* Serializing responses.
 
 The instance of the handling converter is present in the `IHttpRestRequestHandler`, but not in the `IRestRequestHandler`.
 Be sure to handle all serialization format specific aspects in the Http Rest pipeline.
@@ -54,6 +56,7 @@ protected override void ApplyHeaders(...)
 ```
 
 Although plain JSON is not considered to be RESTful, the `JsonHttpConverter` is able to satisfy the HATEOAS constraint by using HTTP-headers and JSON Schemas for `TypeDescriptor`s, as can be seen in the code fragment above.
+The component can also be configured (using `LinkLocation`) to use a json property for the link collection.
 
 ## XmlHttpConverter
 Also included is the `XmlHttpConverter`, which implements a plain XML serialization format for the Rest requests and responses.

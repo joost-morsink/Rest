@@ -46,7 +46,12 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
         {
             UseLinkHeaders(httpResponse, value);
         }
-
+        /// <summary>
+        /// Writes an html string to a body stream.
+        /// </summary>
+        /// <param name="bodyStream">The body stream to write to.</param>
+        /// <param name="html">The html string to write.</param>
+        /// <returns>An asynchronous result.</returns>
         protected async Task WriteHtml(Stream bodyStream, string html)
         {
             var bytes = Encoding.UTF8.GetBytes(html ?? "");

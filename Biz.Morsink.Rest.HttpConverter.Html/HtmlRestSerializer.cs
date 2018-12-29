@@ -13,6 +13,9 @@ using SerializationContext = Biz.Morsink.Rest.Serialization.SerializationContext
 
 namespace Biz.Morsink.Rest.HttpConverter.Html
 {
+    /// <summary>
+    /// A Rest serializer for the text/html media type.
+    /// </summary>
     public class HtmlRestSerializer : Serializer<SerializationContext>
     {
         private readonly IRestIdentityProvider identityProvider;
@@ -129,8 +132,18 @@ namespace Biz.Morsink.Rest.HttpConverter.Html
                     new SProperty("Embeddings", embeddings));
             }
         }
+        /// <summary>
+        /// Convert an object to an intermediate serialization object.
+        /// </summary>
+        /// <param name="o">The object to convert.</param>
+        /// <returns>An intermediate serialization object.</returns>
         public SItem Serialize(object o)
             => Serialize(SerializationContext.Create(identityProvider), o);
+        /// <summary>
+        /// Serializes an intermediate serialization object to an html page string.
+        /// </summary>
+        /// <param name="val">The intermediate serialization object.</param>
+        /// <returns>An html page string.</returns>
         public string ToHtmlPage(SItem val)
         {
             var html = ToHtml(val);
@@ -148,6 +161,11 @@ td, th {
                 .ToString();
 
         }
+        /// <summary>
+        /// Converts an intermediate serialization object to an Html element.
+        /// </summary>
+        /// <param name="val">The intermediate serialization object.</param>
+        /// <returns>An Xml element.</returns>
         public XElement ToHtml(SItem val)
         {
             switch (val)
@@ -162,6 +180,11 @@ td, th {
                     return new XElement("b", "Error");
             }
         }
+        /// <summary>
+        /// Converts an intermediate serialization object to an Html table or link element.
+        /// </summary>
+        /// <param name="obj">The intermediate serialization object.</param>
+        /// <returns>An Xml element.</returns>
         public XElement ToHtml(SObject obj)
         {
             if (obj.Properties.Count == 0)
@@ -179,15 +202,31 @@ td, th {
                             obj.Properties.Select(p => new XElement("tr", new XElement("td", p.Name), ToHtml(p.Token)))));
             }
         }
+        /// <summary>
+        /// Converts an intermediate serialization object to an Html row element.
+        /// </summary>
+        /// <param name="obj">The intermediate serialization object.</param>
+        /// <param name="props">The properties to serialize.</param>
+        /// <returns>An Xml element.</returns>
         public XElement ToHtml(SObject obj, string[] props)
         {
             return new XElement("tr",
                 props.GroupJoin(obj.Properties, p => p, p => p.Name, (p, sps) => sps.Any() ? ToHtml(sps.Select(sp => sp.Token).First()) : new XElement("td")));
         }
+        /// <summary>
+        /// Converts an intermediate serialization value object to an Html element.
+        /// </summary>
+        /// <param name="val">The intermediate serialization object.</param>
+        /// <returns>An Xml element.</returns>
         public XElement ToHtml(SValue val)
         {
             return new XElement("td", val.Value);
         }
+        /// <summary>
+        /// Converts an intermediate serialization array object to an Html table element.
+        /// </summary>
+        /// <param name="val">The intermediate serialization object.</param>
+        /// <returns>An Xml element.</returns>
         public XElement ToHtml(SArray arr)
         {
             var props = arr.Content.OfType<SObject>().SelectMany(o => o.Properties.Select(p => p.Name)).Distinct().ToArray();

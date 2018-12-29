@@ -12,6 +12,9 @@ namespace Biz.Morsink.Rest.HttpConverter.HalJson
         /// Serializer settings for the Newtonsoft.Json library.
         /// </summary>
         public JsonSerializerSettings SerializerSettings { get; set; } = new JsonSerializerSettings { ContractResolver = new HalContractResolver() };
+        /// <summary>
+        /// A naming strategy for json serialization.
+        /// </summary>
         public NamingStrategy NamingStrategy { get; set; } = new CamelCaseNamingStrategy();
     }
 }

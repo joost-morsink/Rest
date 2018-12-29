@@ -7,6 +7,9 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter
 {
+    /// <summary>
+    /// A default naming strategy for Json serialization.
+    /// </summary>
     public class DefaultNamingStrategy : NamingStrategy
     {
 

@@ -1,6 +1,6 @@
 # Rest server
 These libraries support developing Rest services (Richardson maturity model level 3), in a protocol-agnostic way, on top of which HTTP is supported.
-It tries to adhere to the original meaning of the word 'Rest', contrary to what is found on the web in abundance, something which may be called Web Apis.
+It tries to adhere to the original meaning of the word 'Rest', contrary to what is found on the web in abundance, something which may better be called Web Apis.
 Additionally the Rest services can be served over an HTTP connection by using ASP.Net Core.
 
 ## Architecture
@@ -19,12 +19,11 @@ Below is an image of a layered view of this process:
 
 ![RequestFlow.svg](./images/RequestFlow.svg)
 
-# **REVIEW CONTENT BELOW**
-
 ## Identity
 This library uses the Biz.Morsink.Identity library for identifying entities. 
-Every resource in the Rest server corresponds to a type and a identity value.
-There is a decoupling between the Rest pipeline and the actual serving of content over HTTP.
+Every resource in the Rest server corresponds to a type and an identity value.
+The Rest pipeline and the actual serving of content over HTTP is only coupled at runtime.
+No static dependencies are present.
 
 ## Aspects
 The following aspects come into play when designing a Rest repository:
@@ -47,14 +46,13 @@ The following aspects come into play when designing a Rest repository:
   * Embedded objects.
 * HATEOAS.
   * In order to be fully Rest compliant everything must be navigable by content retrieved from the Rest Server.
-  * This includes manipulation methods.
+  * This includes manipulation methods and their input schemas.
 * Security.
   * Based on access checks for identity values/paths.
 * Navigation.
   * LinkProviders.
 * Paging.
 * Versioning & Deprecation.
-* Localization.
 
 ### Home resource
 The home resource, located at `"/"`, is the entry point for the API and provides links to all the resources that can be queried by the client.
@@ -68,9 +66,9 @@ The home resource, located at `"/"`, is the entry point for the API and provides
 
 ### Operation interfaces
 At least two ways of implementing operation interfaces are possible:
-* Have a specific interface per operation with the resource as a generic parameter (`IGet<T>`, `IPut<T>`, etc.).
-* Have an interface implementation per resource `IRepository<T>` which allows for capability discovery.
-  Capability discovery should expose the same interface per operation interfaces.
+* Have a specific interface per operation with the resource as a generic parameter (`IRestGet<T>`, `IRestPut<T>`, etc.).
+* Have an interface implementation per resource `IRestRepository<T>` which allows for capability discovery.
+  Capability discovery should expose the same interfaces for its implemented operations.
 
 The precise specification of the operation interfaces depends on the specification of the `Result` type.
 
@@ -111,7 +109,9 @@ Non-entities are handled by the server component only.
 Of course, it is also possible to let ASP.Net Core handle static files (non-entities) using the UseStaticFiles() extension method.
 
 ### Schema and metadata
-All entities should link to a schema, defining the structure of that entity.
+All entities link to a schema, defining the structure of that entity.
+This is based on the `TypeDescriptor` of that entity.
+Please refer to the section about [Type Descriptors](typeDesc.md) for further information.
 
 ### Content-Type and serialization
 This is purely an HTTP aspect. 
@@ -132,92 +132,81 @@ The serialization strategy is responsible for populating the `HttpResponse` with
 This includes dealing with different Rest aspects and the format's support for them.
 
 ### Result type
-The `RestResponse<T>` class is an abstraction over a subset of HTTP responses.
-It should support everything that is needed for Rest.
+The `RestResponse<T>` and `RestResult<T>` classes are an abstraction over a subset of HTTP responses.
+They should support everything that is needed for Rest.
 
 #### Asynchrony
-**TODO**
+All relevant, possibly asynchronous methods, in classes and interfaces make use of `Task`/`Task<T>`/`ValueTask`/`ValueTask<T>`.
+Also, support for these asynchronous types (as return types) has been implemented for use in repositories.
 
 #### Lazy evaluation
 The actual result of a `RestResponse` might not be needed to fullfil the `HttpRequest`, therefore the evaluation of the requested resource should be delayed until it is necessary.
-This constraint will probably result in a `Lazy<T>`-typed `Result` property.
+For this purpose a `LazyRestValue<T>` type has been designed.
 
-#### Status and failure
-**TODO**
-
-
-#### Result class
-**TODO** How does this differ from the `RestResponse`? Is this actually needed?
+#### Result class, status and failure
+Status and failure has been modelled into a disjoint union type called `RestResult<T>`.
+This class contains any error information when applicable and the actual value when successful.
+If a failure result cannot be communicated by return values, throwing a specific `RestFailureException` or `HttpException` is an easy workaround.
+Please refer to [Rest Values](values.md) for further information about results.
 
 #### Links and navigation
-The result should be able to contain links to navigation targets.
-There needs to be a Provider mechanism to provide these links and the actual links need to be validated against security )(and other) constraints.
-The links can then be contained in a separate collection in the result/response.
+The result is able to contain links to navigation targets.
+You can either implement the addition of links in repository methods or through registration of `ILinkProvider<T>` and `IDynamicLinkProvider<T>` dependencies.
+The links can be contained in a separate collection in the result/response, either in the body or headers.
 
 #### Embedded objects
-It should be possible to embed related objects directly into the response. 
-Because the serialization format may not support this, it should also be lazy loaded.
+There is support for embedding objects in a response which are not strictly part of the requested entity, but might enhance total performance when embedded.
+If and how the embedding is actually serialized depends on the Http converter for the media type.
 
 #### HATEOAS
-This aspect encompasses the following aspects:
-* Linked schema information (Schema type)
-  * Deciding on the type system (union types).
-* Specification of Rest methods/interfaces.
-* Specification of the way in which parameters are passed on the HTTP level. (Query string, HTTP Headers or Request Body)
+From a library perspective all content and functionality needs to be navigable.
+For `GET` operations it is implemented through the proper translation of `IIdentity<T>` values to HTTP addresses. 
+All `GET` operations respond with at least a link to the value's `TypeDescriptor`, which should be serialized in some schema language.
+For `GET` query string and other operations there needs to be schema information for input.
+All addresses can be accessed with the `OPTIONS` method, which will enumerate all capabilities and schemas for the address.
 
 #### Security 
-A security interface needs to be defined that can serve as a back-end for the implementation of link validation on Rest calls and also for the implementation of a ASP.Net Core pipeline component.
+An `IAuthorizationProvider` interface is provided to determine access authorizations for principals to operations on entity instances.
+It is also used to filter out inaccessible links in Rest responses.
 
 #### Paging
 Paging can be made Restful by including navigation links.
-Possible class hierarchy:
-* PagedResult
-* SearchResult
-* ...
+The class `RestCollectionLinks<T,E,I>` does this by implementing `IDynamicLinkProvider<T>`.
 
 #### Versioning and deprecation
-**TODO**
-* URL?
-* Header?
-* Content-Type?
-* Hyperlinking to different versions?
+Versioning is done by using the `Versioning` metadata object.
+Using this object results in `Version` and `Supported-Versions` headers.
+Multiple structural versions of the same entity are able to live in the same address space.
+Depending on the `Version` header the actual entity type is chosen and the object serialized.
 
-#### Localization
-**TODO**
+Deprecation can be done manually by the implementation of repositories.
 
 ## Examples of requests
 
 ### Simple GET
 1. A GET Request is made for `"/api/Person/Joost"`.
 2. The ASP RestServer has a PathIdentityProvider translating it to an `Person("Joost")` identity.
-3. The Rest repository is queried for `IGet<Person>`.
-4. The `IGet<Person>` is passed the `Person("Joost")` value and returns a corresponding `Result<Person>` object.
+3. The Rest repository is queried for `IRestGet<Person>`.
+4. The `IRestGet<Person>` is passed the `Person("Joost")` value and returns a corresponding `RestResponse<Person>` object.
 5. The ASP RestServer inspects the object and determines the best available serialization format by inspecting the Accept header.
 6. The serializer is called to serialize the `Person` object.
 
 ### Search
 1. A GET Request is made for `"api/Person?search=Joost"`
 2. The ASP RestServer translates this to a `PersonCollection(["search" => "Joost"])` identity.
-3. The ASP RestServer translates the parameters into a `PersonCollectionParameters` object.
-4. The Rest repository is queried for `IGet<PersonCollection>`. The PersonCollectionParameters type is implicit because the Identity library hides underlying types.
-5. The `IGet<PersonCollection>` is passed the identity value and retrieves a `PersonCollection` which contains paging details. 
+3. The ASP RestServer translates the parameters into a dictionary object.
+4. The Rest repository is queried for `IRestGet<PersonCollection>`. The dictionary type is implicit because the Identity library hides underlying types.
+5. The `IRestGet<PersonCollection>` is passed the identity value and retrieves a `PersonCollection` which contains paging details. 
    These details include links to other pages and a total count.
 6. The ASP RestServer inspects the object and determines the best available serialization format by inspecting the Accept header.
 7. The serializer is called to serialize the `PersonCollection` object.
 
-The `PersonCollection` type derives from some abstract type that supports paging.
+The `PersonCollection` type could derive from some abstract type that allows paging.
 
 ### Post
 How does a client know what to POST?
 1. Client navigates to the Home resource `"/"`.
-2. The server's return value contains a link to the person collection `"/api/Person"`.
-3. Retrieving `"/api/Person"` yields a response containing a link to the metadata (schema) for the Person collection.
-  This metadata contains:
-  * schema information for `PersonCollection`.
-  * a reference to the `Person` schema. 
-  * a reference to the `PersonCollectionParameters` schema.
-  * an operation `GET` that takes a `PersonCollectionParameters` on the query string.
-  * an operation `POST` that takes a `Person` in the body.
-4. Now the client knows what schema to use to construct a request to post to `"/api/Person"`.
-
-
+2. The server's return value contains a link to the person collection `"/Person"`.
+3. Making an HTTP Options request to `"/Person"`
+4. The result contains all capabilities and schema information for query string, request bodies and response bodies.
+5. Now the client knows what schema to use to construct a request to post to `"/Person"`.

@@ -5,6 +5,10 @@ using System.Text;
 
 namespace Biz.Morsink.Rest.HttpConverter.Json
 {
+    /// <summary>
+    /// A contract resolver for Json serialization.
+    /// Most resolving is done in the intermediate serialization object layer, but DateTime is considered a primitive.
+    /// </summary>
     public class JsonContractResolver : DefaultContractResolver
     {
         protected override JsonContract CreateContract(Type objectType)

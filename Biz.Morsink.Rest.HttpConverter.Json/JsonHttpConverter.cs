@@ -24,7 +24,13 @@ namespace Biz.Morsink.Rest.HttpConverter.Json
     /// </summary>
     public class JsonHttpConverter : AbstractHttpRestConverter
     {
+        /// <summary>
+        /// Application/json
+        /// </summary>
         public const string MEDIA_TYPE = "application/json";
+        /// <summary>
+        /// Json suffix.
+        /// </summary>
         public const string SUFFIX = "json";
         private readonly IOptions<JsonHttpConverterOptions> options;
         private readonly IRestRequestScopeAccessor restRequestScopeAccessor;
