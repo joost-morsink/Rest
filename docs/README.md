@@ -6,3 +6,5 @@ The repository contains:
 * RestServer solution (VS 2017)
   * RestServer project
 * This [gitbook](http://www.gitbook.com) containing documentation for the project.
+
+The MIT license applies as can be found in the [license.txt](../license.txt) file in the root of this Git repo.
